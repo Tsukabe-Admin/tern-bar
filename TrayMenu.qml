@@ -238,8 +238,12 @@ PopupWindow {
                             if (entry.hasChildren) {
                                 menu.push(entry);
                             } else {
-                                if (entry.sendTriggered)
-                                    entry.sendTriggered();
+                                // Activate through QsMenuEntry's QML-visible
+                                // `triggered` signal (calling it emits it);
+                                // DBusMenuItem's sendTriggered() is a private
+                                // C++ slot, invisible to QML, so guarding on it
+                                // made every entry click a silent no-op.
+                                entry.triggered();
                                 menu.visible = false;
                             }
                         }
