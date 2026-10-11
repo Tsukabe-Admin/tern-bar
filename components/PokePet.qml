@@ -159,23 +159,29 @@ PanelWindow {
         }
     }
 
-    // Watch status.json for new alerts: each alert id is shown once. `lastAlert` stays
-    // in runtime.json until the next one fires, so the id the pet starts with counts as
-    // already seen (a bar reload or a pet toggle must not replay an old bubble), and an
-    // id is marked seen even when bubbles are switched off.
-    Component.onCompleted: {
-        if (pet.st && pet.st.alert && pet.st.alert.id)
-            pet.bubbleAlertId = pet.st.alert.id;
-    }
+    // Alert bubbles: each alert id is shown once. `lastAlert` stays in runtime.json until
+    // the next alert fires, so the alert already stored when the pet first sees a status
+    // counts as seen (a bar reload or a pet toggle must not replay it). An id is marked
+    // seen even when bubbles are off, so switching them on later does not show it either.
+    // Reads `st` directly: this runs while the component is still being built, before
+    // the `conf` binding is usable.
+    property bool alertSeeded: false
 
-    onStChanged: {
-        if (!pet.st || !pet.st.alert || !pet.st.alert.id)
+    function noteAlert() {
+        var s = pet.st;
+        if (!s)
             return;
-        var alert = pet.st.alert;
-        if (alert.id === pet.bubbleAlertId)
+        var alert = s.alert;
+        var id = (alert && alert.id) ? alert.id : "";
+        if (!pet.alertSeeded) {
+            pet.alertSeeded = true;
+            pet.bubbleAlertId = id;
             return;
-        pet.bubbleAlertId = alert.id;
-        if (!pet.conf.bubbleAlerts)
+        }
+        if (id === "" || id === pet.bubbleAlertId)
+            return;
+        pet.bubbleAlertId = id;
+        if (!s.pet || s.pet.bubbleAlerts === false)
             return;
         pet.bubbleTitle = alert.title || "Limit";
         pet.bubbleBody = alert.body || "";
@@ -183,6 +189,9 @@ PanelWindow {
         pet.bubbleShown = true;
         bubbleTimer.restart();
     }
+
+    Component.onCompleted: pet.noteAlert()
+    onStChanged: pet.noteAlert()
 
     Timer {
         id: bubbleTimer
