@@ -136,7 +136,7 @@ PanelWindow {
     margins.top: pet.petY
     margins.left: pet.petX - pet.side
     implicitWidth: pet.surfaceW
-    implicitHeight: pet.size + 22 + 72
+    implicitHeight: pet.size + 72
     color: "transparent"
     exclusiveZone: 0
     WlrLayershell.layer: WlrLayer.Overlay
@@ -153,25 +153,35 @@ PanelWindow {
         }
         Region {
             x: pet.bubbleX
-            y: pet.size + 22
+            y: pet.size
             width: pet.bubbleShown ? pet.bubbleW : 0
             height: pet.bubbleShown ? 72 : 0
         }
     }
 
-    // Watch status.json for new alerts: same id must not re-show the bubble.
+    // Watch status.json for new alerts: each alert id is shown once. `lastAlert` stays
+    // in runtime.json until the next one fires, so the id the pet starts with counts as
+    // already seen (a bar reload or a pet toggle must not replay an old bubble), and an
+    // id is marked seen even when bubbles are switched off.
+    Component.onCompleted: {
+        if (pet.st && pet.st.alert && pet.st.alert.id)
+            pet.bubbleAlertId = pet.st.alert.id;
+    }
+
     onStChanged: {
-        if (!pet.st || !pet.st.alert || !pet.conf.bubbleAlerts)
+        if (!pet.st || !pet.st.alert || !pet.st.alert.id)
             return;
         var alert = pet.st.alert;
-        if (alert.id && alert.id !== pet.bubbleAlertId) {
-            pet.bubbleAlertId = alert.id;
-            pet.bubbleTitle = alert.title || "Limit";
-            pet.bubbleBody = alert.body || "";
-            pet.bubbleCritical = !!alert.critical;
-            pet.bubbleShown = true;
-            bubbleTimer.restart();
-        }
+        if (alert.id === pet.bubbleAlertId)
+            return;
+        pet.bubbleAlertId = alert.id;
+        if (!pet.conf.bubbleAlerts)
+            return;
+        pet.bubbleTitle = alert.title || "Limit";
+        pet.bubbleBody = alert.body || "";
+        pet.bubbleCritical = !!alert.critical;
+        pet.bubbleShown = true;
+        bubbleTimer.restart();
     }
 
     Timer {
@@ -278,7 +288,7 @@ PanelWindow {
         id: bubbleRect
         visible: pet.bubbleShown
         x: pet.bubbleX
-        y: pet.size + 22
+        y: pet.size
         width: pet.bubbleW
         height: 72
 
