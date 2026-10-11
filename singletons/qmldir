@@ -2,3 +2,4 @@ singleton Theme 1.0 Theme.qml
 singleton Niri 1.0 Niri.qml
 singleton Tern 1.0 Tern.qml
 singleton BarConfig 1.0 BarConfig.qml
+singleton Poke 1.0 Poke.qml

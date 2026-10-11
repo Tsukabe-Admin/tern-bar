@@ -105,23 +105,37 @@ PanelWindow {
     readonly property bool hoverShown: pet.conf.tooltip !== false && dragArea.containsMouse && !pet.bubbleShown
 
     // The tooltip ("Today: … tokens") and the alert bubble are wider than the
-    // sprite, so the surface carries a fixed 320px strip on the side with room
-    // (left of the sprite unless the pet hugs the left edge). The geometry never
-    // changes: growing it on hover made niri re-place the surface, which pushed the
-    // sprite out from under the pointer and flickered at ~120 Hz. The strip is kept
-    // click-through by the input mask below.
-    readonly property real strip: 320
-    readonly property bool stripLeft: pet.petX >= pet.strip
-    readonly property real spriteX: pet.stripLeft ? pet.strip : 0
-    readonly property real rowX: pet.stripLeft ? 0 : pet.size
-    readonly property real calloutW: Math.max(pet.size, hoverText.implicitWidth + 16)
+    // sprite, so the surface carries a fixed 160px of room on each side of it and
+    // both rows are centred directly under the sprite (clamped to the screen when
+    // the pet hugs an edge). The geometry never changes — not with hover, not with
+    // petX: growing it on hover made niri re-place the surface, which pushed the
+    // sprite out from under the pointer and flickered at ~120 Hz. The room around the
+    // sprite is kept click-through by the input mask below.
+    readonly property real side: 160
+    readonly property real spriteX: pet.side
+    readonly property real surfaceW: pet.size + 2 * pet.side
+    readonly property real calloutW: Math.min(pet.surfaceW, Math.max(pet.size, hoverText.implicitWidth + 16))
     readonly property real bubbleW: Math.max(pet.size, 220)
+
+    // Left edge, in surface coordinates, of a row `w` wide centred under the sprite
+    // and kept inside the screen (the surface itself may hang past an edge).
+    function rowLeft(w) {
+        var x = pet.spriteX + (pet.size - w) / 2;
+        var screenLeft = pet.petX - pet.side;
+        var lo = Math.max(0, -screenLeft);
+        var hi = pet.surfaceW - w;
+        if (pet.screen)
+            hi = Math.min(hi, pet.screen.width - w - screenLeft);
+        return Math.max(lo, Math.min(Math.max(lo, hi), x));
+    }
+    readonly property real calloutX: pet.rowLeft(pet.calloutW)
+    readonly property real bubbleX: pet.rowLeft(pet.bubbleW)
 
     anchors.top: true
     anchors.left: true
     margins.top: pet.petY
-    margins.left: pet.petX - (pet.stripLeft ? pet.strip : 0)
-    implicitWidth: pet.strip + pet.size
+    margins.left: pet.petX - pet.side
+    implicitWidth: pet.surfaceW
     implicitHeight: pet.size + 22 + 72
     color: "transparent"
     exclusiveZone: 0
@@ -132,13 +146,13 @@ PanelWindow {
     mask: Region {
         Region { item: spriteItem }
         Region {
-            x: pet.rowX
+            x: pet.calloutX
             y: pet.size
             width: pet.hoverShown ? pet.calloutW : 0
             height: pet.hoverShown ? 22 : 0
         }
         Region {
-            x: pet.rowX
+            x: pet.bubbleX
             y: pet.size + 22
             width: pet.bubbleShown ? pet.bubbleW : 0
             height: pet.bubbleShown ? 72 : 0
@@ -235,7 +249,7 @@ PanelWindow {
     Item {
         id: hoverRect
         visible: pet.hoverShown
-        x: pet.rowX
+        x: pet.calloutX
         y: pet.size
         width: pet.calloutW
         height: 22
@@ -263,7 +277,7 @@ PanelWindow {
     Item {
         id: bubbleRect
         visible: pet.bubbleShown
-        x: pet.rowX
+        x: pet.bubbleX
         y: pet.size + 22
         width: pet.bubbleW
         height: 72

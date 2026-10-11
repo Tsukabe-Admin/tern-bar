@@ -32,6 +32,7 @@ PanelWindow {
         Region { item: workspacesPill }
         Region { item: titlePill }
         Region { item: ternPill }
+        Region { item: pokePill }
         Region { item: clockPill }
         Region { item: mediaPill }
         Region { item: resourcesPill }
@@ -102,6 +103,29 @@ PanelWindow {
         anchors.rightMargin: Theme.barPadding
         anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.pillSpacing
+
+        // PokeToken: companion sprite + usage/limit parts (hidden until the
+        // engine has written a status.json, so a missing plugin costs no space).
+        Pill {
+            id: pokePill
+            visible: Poke.available
+            PokePill {
+                launch: () => {
+                    Niri.focusMonitor(bar.modelData.name);
+                    Poke.open("");
+                }
+                menuRequested: (item) => {
+                    // Screen coordinates for the card: the bar window sits at the
+                    // theme's margins, the item's own position is window-relative.
+                    const p = item.mapToItem(null, 0, 0);
+                    pokeMenu.barWindow = bar;
+                    pokeMenu.screenInfo = bar.modelData;
+                    pokeMenu.anchorX = Theme.barMarginSide + p.x;
+                    pokeMenu.anchorY = Theme.barMarginTop + p.y + Theme.pillHeight + 4;
+                    pokeMenu.openFor(item);
+                }
+            }
+        }
 
         Pill {
             id: resourcesPill
@@ -180,6 +204,11 @@ PanelWindow {
     }
 
     Component.onCompleted: placeTernPill()
+
+    // Right-click menu for the PokeToken pill (a sibling window, like TrayMenu).
+    PokeMenu {
+        id: pokeMenu
+    }
 
     Connections {
         target: BarConfig
