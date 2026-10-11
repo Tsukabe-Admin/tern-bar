@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import "singletons"
+import "../singletons"
 
 // Reuses the existing network-status.sh helper (same JSON contract waybar
 // consumed). Click toggles the IP-privacy mask, right click opens the
@@ -22,7 +22,7 @@ BarItem {
 
     Process {
         id: fetch
-        command: ["/home/tsu/.config/niri/scripts/network-status.sh"]
+        command: [BarConfig.scriptsDir + "/network-status.sh"]
         stdout: SplitParser {
             onRead: (line) => {
                 try {
@@ -48,6 +48,6 @@ BarItem {
     fg: root.disconnected ? Theme.bad : root.privacy ? Theme.t3 : Theme.t2
     italic: root.privacy
 
-    onClicked: Quickshell.execDetached(["/home/tsu/.config/niri/scripts/toggle-ip-privacy.sh"])
+    onClicked: Quickshell.execDetached([BarConfig.scriptsDir + "/toggle-ip-privacy.sh"])
     onRightClicked: Quickshell.execDetached(["nm-connection-editor"])
 }

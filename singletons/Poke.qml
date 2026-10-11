@@ -15,8 +15,8 @@ Singleton {
 
     // Tern's plugin data dir (what the engine was handed as --data). The engine's
     // own status.json carries it back, so the bar never guesses twice.
-    readonly property string dataDir: "/home/tsu/.local/state/tern/plugin-data/poke"
-    readonly property string ternBin: "/home/tsu/.local/bin/tern"
+    readonly property string dataDir: BarConfig.pokeDataDir
+    readonly property string ternBin: BarConfig.ternBin
 
     property var status: null
     property bool available: false

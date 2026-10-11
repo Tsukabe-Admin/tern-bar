@@ -1,72 +1,77 @@
 # tern-bar
 
-A top bar for the [niri](https://github.com/YaLTeR/niri) Wayland compositor, built with
-[Quickshell](https://quickshell.org). It is a row of capsules ("pills") styled after the active
-Tern theme (`dark-midnight`), and it replaced waybar on 2026-10-08.
+A clean, floating top bar for the [niri](https://github.com/YaLTeR/niri) desktop. Everything sits in
+small rounded "pills" that match your Tern theme.
 
+![tern-bar](screenshots/bar.png)
+
+## What you get
+
+- Workspaces and the name of the window you're using
+- Date and time
+- What's playing, with a click to pause
+- CPU and memory at a glance
+- Wi-Fi, volume, notifications and a power button
+- A system tray with proper right-click menus
+- A Tern pill that shows how many terminal blocks you have open, and opens a new one
+- An optional little desktop pet
+
+## Set it up
+
+You'll need [Quickshell](https://quickshell.org), niri, and the JetBrainsMono Nerd Font. For the
+extras, volume uses PipeWire, notifications use `swaync`, and the buttons open `fuzzel`,
+`pavucontrol` and `nm-connection-editor`.
+
+```bash
+git clone https://github.com/Tsukabe-Admin/tern-bar ~/.config/quickshell/tern-bar
+quickshell -c tern-bar
 ```
-launcher · workspaces · window title  ‖  clock · media  ‖  cpu/mem · network · volume · tray · tools · notifications/power · Tern
-```
 
-## Requirements
-
-| What | Used for |
-| --- | --- |
-| Quickshell 0.3.1 | runs the bar |
-| niri 26.04 | workspaces and window title (IPC over `$NIRI_SOCKET`) |
-| JetBrainsMono Nerd Font | text and icons |
-| PipeWire | volume pill |
-| `swaync` (`swaync-client`) | notification bell |
-| `fuzzel`, `waypaper`, `pavucontrol`, `nm-connection-editor` | click actions |
-| `~/.local/bin/tern` | Tern pill (live block count, opens Tern) |
-| `~/.config/niri/scripts/` | `network-status.sh`, `toggle-ip-privacy.sh`, `cheatsheet.sh`, `powermenu.sh` |
-
-The script and `tern` paths are hardcoded to `/home/tsu`. Change them in `BarPanel.qml`,
-`Network.qml` and `singletons/Tern.qml` on another machine.
-
-## Install and run
-
-Quickshell finds a config by name in `~/.config/quickshell/<name>/`, so this repo lives at
-`~/.config/quickshell/tern-bar`. niri starts it at login (`~/.config/niri/config.kdl`):
+To start it every time you log in, add this line to your niri config:
 
 ```kdl
 spawn-at-startup "quickshell" "-c" "tern-bar"
 ```
 
-Saving a `.qml` file reloads the bar live. A broken file keeps the last working version on screen,
-so check the log for `Configuration Loaded` after an edit.
+Edit any file and the bar updates on the spot.
 
-### Restarting by hand
+The bar looks for the `tern` app in `~/.local/bin`. If yours lives somewhere else, change
+`ternBin` in `singletons/BarConfig.qml`. The small helper scripts it uses (power menu, network
+status, IP hiding) are included in `scripts/`.
 
-The process is called `qs`, not `quickshell`. Pass `NIRI_SOCKET` explicitly: without it the bar
-still runs but shows no workspaces and no window title. Do not pipe the output into `head`, because
-that kills the bar.
+## Make it yours
 
-```bash
-pkill -f "qs -c tern-bar"
-NIRI_SOCKET=$(ls /run/user/$UID/niri.wayland-1.*.sock) qs -c tern-bar --daemonize > /tmp/ternbar.log 2>&1
+- **Colors and sizes:** `singletons/Theme.qml`
+- **Move the Tern pill:** right-click it to hop between the left, middle and right. The bar
+  remembers your choice.
+- **Launch animation:** there's a fancy "grow into a new window" effect. It's off by default. Turn it
+  on with `morphEnabled` in `singletons/BarConfig.qml`, but don't run it in a loop.
+- **Keybinding cheat sheet:** the launcher's right-click runs a script of your own. Point
+  `cheatsheetScript` in `singletons/BarConfig.qml` at it, or ignore it.
+- **Hide your IP:** click the network pill to hide or show your IP address.
+- **Tray menus** close when you click anywhere else.
+
+## What's inside
+
+```
+shell.qml        starts the bar on every screen
+components/      the bar and each of its pills
+singletons/      shared pieces: theme, settings, niri connection
+scripts/         small helpers: power menu, network status, IP hiding
+screenshots/     pictures for this page
 ```
 
-## Layout
+## If it misbehaves
 
-| File | Role |
-| --- | --- |
-| `shell.qml` | entry point: one bar per screen |
-| `BarPanel.qml` | the bar window and its three rows of pills |
-| `Pill.qml`, `BarItem.qml`, `IconButton.qml` | capsule and item building blocks |
-| `Workspaces.qml`, `WindowTitle.qml`, `Clock.qml`, `MprisPill.qml`, `Resources.qml`, `Network.qml`, `Volume.qml`, `Bell.qml` | modules |
-| `Tray.qml`, `TrayMenu.qml` | system tray and its right-click menu, drawn in QML |
-| `TernPill.qml`, `TernMorph.qml` | Tern pill and its optional launch animation |
-| `singletons/Niri.qml` | niri IPC client (event stream, focus actions) |
-| `singletons/Theme.qml` | colors, sizes, font |
-| `singletons/BarConfig.qml`, `bar.json` | preferences; `bar.json` saves the Tern pill's side |
-| `singletons/Tern.qml` | `tern ls --json` poller |
+To restart it by hand:
 
-## Usage notes
+```bash
+quickshell kill -c tern-bar
+NIRI_SOCKET=$(ls /run/user/$UID/niri.wayland-1.*.sock) quickshell -c tern-bar --daemonize
+```
 
-- Right-click the Tern pill to move it between the left, center and right groups. The choice is
-  saved in `bar.json`.
-- The launch morph is off by default (`morphEnabled` in `singletons/BarConfig.qml`). Never trigger
-  it on a repeating timer: a loop of it once crashed niri.
-- Tray menus close when you click outside them. Escape cannot close them, because the menu never
-  gets keyboard focus.
+Without `NIRI_SOCKET` the bar still starts, but workspaces and the window name stay empty.
+
+## License
+
+MIT. See `LICENSE`.

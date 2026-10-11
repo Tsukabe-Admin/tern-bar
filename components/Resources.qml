@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import "singletons"
+import "../singletons"
 
 // CPU and memory sampled every 3s from /proc. CPU is a delta between two
 // samples (same math as top); memory is 1 - MemAvailable/MemTotal.

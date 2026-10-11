@@ -15,7 +15,7 @@ Singleton {
     property string buffer: ""
 
     function open() {
-        Quickshell.execDetached(["/home/tsu/.local/bin/tern"]);
+        Quickshell.execDetached([BarConfig.ternBin]);
     }
 
     function parseOutput(exitCode) {
@@ -47,7 +47,7 @@ Singleton {
 
     Process {
         id: poll
-        command: ["/home/tsu/.local/bin/tern", "ls", "--json"]
+        command: [BarConfig.ternBin, "ls", "--json"]
         stdout: SplitParser {
             onRead: (line) => root.buffer += line
         }

@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import "singletons"
+import "../singletons"
 
 // The floating desktop pet: one always-on-top layer surface per pet output,
 // masked down to the sprite (plus the callout/bubble while shown) so the rest of

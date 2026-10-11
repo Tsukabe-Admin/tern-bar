@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Services.SystemTray
-import "singletons"
+import "../singletons"
 
 // The bar is a row of capsules ("pills"), one per group of items, floating on
 // a transparent surface. Geometry matches waybar's occupancy exactly: 8px from
@@ -56,7 +56,7 @@ PanelWindow {
                 text: "󰣇"
                 fg: Theme.accent
                 action: () => Quickshell.execDetached(["fuzzel"])
-                rightAction: () => Quickshell.execDetached(["/home/tsu/.config/niri/scripts/cheatsheet.sh"])
+                rightAction: () => Quickshell.execDetached([BarConfig.cheatsheetScript])
             }
         }
 
@@ -161,7 +161,7 @@ PanelWindow {
             IconButton {
                 text: "󰋖"
                 fg: Theme.t3
-                action: () => Quickshell.execDetached(["/home/tsu/.config/niri/scripts/cheatsheet.sh"])
+                action: () => Quickshell.execDetached([BarConfig.cheatsheetScript])
             }
         }
 
@@ -171,7 +171,7 @@ PanelWindow {
             IconButton {
                 text: "⏻"
                 fg: Theme.bad
-                action: () => Quickshell.execDetached(["/home/tsu/.config/niri/scripts/powermenu.sh"])
+                action: () => Quickshell.execDetached([BarConfig.scriptsDir + "/power-menu.sh"])
             }
         }
     }

@@ -1,6 +1,6 @@
 import QtQuick
 import Quickshell.Services.SystemTray
-import "singletons"
+import "../singletons"
 
 // StatusNotifier icons. Left click activates, right click opens the item's
 // DBusMenu in TrayMenu.qml (a QML popup — Qt platform menus cannot attach to

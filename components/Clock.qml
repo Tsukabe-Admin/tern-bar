@@ -1,5 +1,5 @@
 import QtQuick
-import "singletons"
+import "../singletons"
 
 // Same clock data as the waybar module: weekday, date, time.
 BarItem {

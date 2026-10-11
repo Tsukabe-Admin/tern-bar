@@ -1,5 +1,5 @@
 import QtQuick
-import "singletons"
+import "../singletons"
 
 // Base interactive item inside a pill. Motion: the width glides when the
 // label changes (network text, titles, counts), the item springs up on hover

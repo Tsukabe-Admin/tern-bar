@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import "singletons"
+import "../singletons"
 
 // swaync bell. Streams waybar-format JSON lines from `swaync-client -swb`
 // and reconnects if the subscription dies. Notifications stay swaync.

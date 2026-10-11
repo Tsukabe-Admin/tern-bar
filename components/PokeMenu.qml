@@ -1,6 +1,6 @@
 import QtQuick
 import Quickshell
-import "singletons"
+import "../singletons"
 
 // Right-click menu for the PokeToken pill, rendered like TrayMenu.qml: the popup
 // window covers the screen anchored at the bar's top-left corner, only the card is

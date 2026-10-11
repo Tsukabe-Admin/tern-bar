@@ -1,5 +1,5 @@
 import QtQuick
-import "singletons"
+import "../singletons"
 
 // Focused window title for one output, truncated the way waybar did
 // (max-length 40). Hidden when the output has no focused window.

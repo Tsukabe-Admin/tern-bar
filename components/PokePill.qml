@@ -1,5 +1,5 @@
 import QtQuick
-import "singletons"
+import "../singletons"
 
 // The bar pill: companion sprite + the engine's precomputed menu-bar parts
 // (today's tokens, cost, each official-limit "Claude NN%").

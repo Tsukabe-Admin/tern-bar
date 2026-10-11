@@ -1,6 +1,6 @@
 import QtQuick
 import Quickshell.Services.Mpris
-import "singletons"
+import "../singletons"
 
 // Media pill: prefers the playing player, falls back to the first one.
 // Hidden when nothing is on the bus. Click toggles playback.

@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import "singletons"
+import "../singletons"
 
 // The Tern launch morph: a capsule of the terminal's own black grows out of the
 // Tern pill toward the tile the terminal will occupy, holds while the client

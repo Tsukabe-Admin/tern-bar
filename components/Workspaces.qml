@@ -1,5 +1,5 @@
 import QtQuick
-import "singletons"
+import "../singletons"
 
 // Workspace chips for one output, ordered by idx. Clicking focuses by
 // workspace Id (indices collide across outputs).

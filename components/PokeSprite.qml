@@ -1,5 +1,5 @@
 import QtQuick
-import "singletons"
+import "../singletons"
 
 // The companion's animated sprite, frame-stepped by a timer.
 //

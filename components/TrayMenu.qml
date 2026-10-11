@@ -1,6 +1,6 @@
 import QtQuick
 import Quickshell
-import "singletons"
+import "../singletons"
 
 // Tray menu rendered in QML from a DBusMenu handle.
 //

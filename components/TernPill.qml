@@ -1,5 +1,5 @@
 import QtQuick
-import "singletons"
+import "../singletons"
 
 // Tern pill: live block count from `tern ls --json`.
 //   left click  — the capsule morphs out into a new terminal window

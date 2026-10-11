@@ -20,7 +20,15 @@ Singleton {
     // reload returns to the safe default.
     property bool morphEnabled: false
 
-    readonly property string configPath: String(Quickshell.env("HOME") || "") + "/.config/quickshell/tern-bar/bar.json"
+    // Where things live. Everything is derived from $HOME or from this repo, so
+    // the bar works for any user. Change these if your setup differs.
+    readonly property string home: String(Quickshell.env("HOME") || "")
+    readonly property string scriptsDir: Quickshell.shellDir + "/scripts"
+    readonly property string configPath: Quickshell.shellDir + "/bar.json"
+    readonly property string ternBin: root.home + "/.local/bin/tern"
+    readonly property string pokeDataDir: root.home + "/.local/state/tern/plugin-data/poke"
+    // Optional: a script that shows your keybindings. The bar does nothing if it is missing.
+    readonly property string cheatsheetScript: root.home + "/.config/niri/scripts/cheatsheet.sh"
 
     function cycleTernPillSide() {
         const order = ["left", "center", "right"];

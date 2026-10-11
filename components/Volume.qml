@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Services.Pipewire
-import "singletons"
+import "../singletons"
 
 // Default sink volume pill. Click mutes, wheel steps 2%, right click opens
 // pavucontrol. Glyphs match the waybar wireplumber module.

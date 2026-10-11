@@ -1,5 +1,5 @@
 import QtQuick
-import "singletons"
+import "../singletons"
 
 // One capsule of the bar. Items declared inside land in a centred Row; the
 // capsule brightens while the pointer is anywhere over it, and its width
