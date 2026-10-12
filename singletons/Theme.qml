@@ -1,60 +1,85 @@
 pragma Singleton
 
 import QtQuick
+import Quickshell
+import Quickshell.Io
 
-// Palette of the ACTIVE Tern theme. Tern's settings.json says
-// {"theme": "Dark", "theme_dark": "dark-midnight"}, so every color below is
-// the dark-midnight entry of Tern's theme registry (src/themes.rs), dumped
-// from the binary:
-//   export:   pageBg #000000, cardBg #050f16, infoBg #001008
-//   terminal: background/chrome #000000 (userMsgBg), widget #050f16
-//   colors:   accent/border #2979ff, borderMuted #263238, muted #b0bec5,
-//             dim #546e7a, success #00e676, warning #ffea00, error #ff1744
-//   vars:     cyan #00e5ff, link/mdLink #40c4ff
-// Tern's default appearance is a "Clear" material (60% opacity, 56px blur —
-// from `tern ctl state`), so the capsules stay translucent with a backdrop
-// blur request instead of going flat.
-//
-// To retheme, either edit the values or re-dump the active theme:
-//   strings ~/.omp/tern/tern | awk '/"name": "dark-midnight"/{f=1} f&&n++<90'
-QtObject {
-    // Surfaces (Tern page, terminal chrome, raised card stock)
-    readonly property color page: "#000000"
-    readonly property color panel: "#000000"
-    readonly property color card: "#050F16"
-    readonly property color raise: "#080810"
+// Colors follow the wallpaper. matugen renders matugen/palette.json (this
+// repo) to ~/.local/state/tern-bar/palette.json every time the wallpaper
+// changes; this singleton watches that file and crossfades to the new colors.
+// With no palette file (matugen not set up) the bar keeps the fallbacks below,
+// which are the dark-midnight entry of Tern's theme registry (src/themes.rs):
+//   card #050F16, ink #EDEDED, muted #B0BEC5, dim #546E7A, darkGray #263238,
+//   accent #2979FF, cyan #00E5FF, error #FF1744.
+// Setup and the token mapping: README, "Wallpaper colors".
+Singleton {
+    id: root
+
+    readonly property string palettePath:
+        String(Quickshell.env("HOME") || "") + "/.local/state/tern-bar/palette.json"
+
+    // Parsed palette; {} when the file is missing or not valid JSON.
+    readonly property var palette: {
+        try {
+            const o = JSON.parse(paletteFile.text());
+            return (o && typeof o === "object") ? o : {};
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function pick(key, fallback) {
+        const v = root.palette[key];
+        return (typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v)) ? v : fallback;
+    }
+
+    FileView {
+        id: paletteFile
+        path: root.palettePath
+        blockLoading: true      // first frame already has the right colors
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+    }
+
+    // ── Base colors (from the palette; animated so a wallpaper change fades) ──
+    property color card: root.pick("card", "#050F16")
+    property color t1: root.pick("ink", "#EDEDED")      // ink
+    property color t2: root.pick("muted", "#B0BEC5")
+    property color t3: root.pick("dim", "#546E7A")
+    property color t4: root.pick("faint", "#263238")
+    property color accent: root.pick("accent", "#2979FF")
+    property color live: root.pick("live", "#00E5FF")
+    property color bad: root.pick("bad", "#FF1744")
+
+    // Status colors keep their meaning whatever the wallpaper is.
+    readonly property color ok: "#00E676"
+    readonly property color warn: "#FFEA00"
+
+    Behavior on card { ColorAnimation { duration: root.paletteFade } }
+    Behavior on t1 { ColorAnimation { duration: root.paletteFade } }
+    Behavior on t2 { ColorAnimation { duration: root.paletteFade } }
+    Behavior on t3 { ColorAnimation { duration: root.paletteFade } }
+    Behavior on t4 { ColorAnimation { duration: root.paletteFade } }
+    Behavior on accent { ColorAnimation { duration: root.paletteFade } }
+    Behavior on live { ColorAnimation { duration: root.paletteFade } }
+    Behavior on bad { ColorAnimation { duration: root.paletteFade } }
+
+    // ── Derived surfaces (Tern's ink-alpha convention) ──
+    // Capsule fill: the card at Tern's --pop-bg alpha, 92% so the requested
+    // backdrop blur keeps a hint of the wallpaper.
+    readonly property color popBg: Qt.alpha(root.card, 0.92)
+    // Hairline: ink 9% PRE-computed over the card (instead of a translucent
+    // border) so the 1px line stays neutral — a translucent border picks up the
+    // wallpaper through the antialiased edge and reads as a tint.
+    readonly property color rim: Qt.tint(root.card, Qt.alpha(root.t1, 0.09))
+    readonly property color hover: Qt.alpha(root.t1, 0.06)   // --l1
+    readonly property color l3: Qt.alpha(root.t1, 0.14)
 
     // Launch morph: the terminal's own black at the bar's translucency, so the
     // growing shape reads as a capsule of the same material as the bar and
-    // dissolves into the real window.
+    // dissolves into the real window. Fixed: it matches the terminal, not the bar.
     readonly property color morphFill: "#DB000000"
-
-    // Capsule fill: the theme's raised surface at Tern's --pop-bg alpha (98%).
-    // 92% so the requested backdrop blur keeps a hint of the wallpaper.
-    readonly property color popBg: "#EB050F16"
-
-    // Hairlines / tints. rim is ink 9% PRE-computed over #050f16 (instead of
-    // alpha) so the 1px line stays a neutral grey — a translucent border picks
-    // up the wallpaper through the antialiased edge and reads as a teal tint.
-    readonly property color rim: "#1A2329"
-    readonly property color glassHi: "#07FFFFFF"  // --sf-card-bg, white 2.8%
-    readonly property color hover: "#0FEDEDED"    // --l1, ink 6%
-    readonly property color l3: "#24EDEDED"       // ink 14%
-    readonly property color l4: "#38EDEDED"       // ink 22%
-
-    // Type (ink + the theme's grays)
-    readonly property color t1: "#EDEDED"  // --ink
-    readonly property color t2: "#B0BEC5"  // theme "gray" (muted)
-    readonly property color t3: "#546E7A"  // theme "dimGray" (dim)
-    readonly property color t4: "#263238"  // theme "darkGray" (borderMuted)
-
-    // Accents
-    readonly property color accent: "#2979FF"     // theme accent / border
-    readonly property color accentInk: "#40C4FF"  // theme link
-    readonly property color live: "#00E5FF"       // theme cyan
-    readonly property color ok: "#00E676"         // theme success
-    readonly property color warn: "#FFEA00"       // theme warning
-    readonly property color bad: "#FF1744"        // theme error
 
     // Bar geometry (40px surface, 8px top margin; Quickshell adds the margin
     // to exclusiveZone, so 40 + 8 = 48 reserved — identical to waybar's)
@@ -85,6 +110,7 @@ QtObject {
     readonly property int motionFast: 140
     readonly property int motionBase: 220
     readonly property int motionSlow: 340
+    readonly property int paletteFade: 600  // wallpaper change crossfade
 
     // Type
     readonly property string fontFamily: "JetBrainsMono Nerd Font"

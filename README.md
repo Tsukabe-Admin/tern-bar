@@ -1,7 +1,7 @@
 # tern-bar
 
 A clean, floating top bar for the [niri](https://github.com/YaLTeR/niri) desktop. Everything sits in
-small rounded "pills" that match your Tern theme.
+small rounded "pills" that can follow your wallpaper's colors.
 
 ![tern-bar](screenshots/bar.png)
 
@@ -39,9 +39,28 @@ The bar looks for the `tern` app in `~/.local/bin`. If yours lives somewhere els
 `ternBin` in `singletons/BarConfig.qml`. The small helper scripts it uses (power menu, network
 status, IP hiding) are included in `scripts/`.
 
+## Wallpaper colors
+
+The bar can take its colors from your wallpaper using [matugen](https://github.com/InioX/matugen).
+Each time matugen runs it writes `~/.local/state/tern-bar/palette.json`; the bar watches that file
+and fades to the new colors. Without it, the bar keeps its built-in dark blue colors.
+
+Add this to `~/.config/matugen/config.toml`:
+
+```toml
+[templates.tern-bar]
+input_path = "~/.config/quickshell/tern-bar/matugen/palette.json"
+output_path = "~/.local/state/tern-bar/palette.json"
+```
+
+Then run matugen however you already do (`matugen image path/to/wallpaper.jpg`, or from your
+wallpaper picker's post-command). The bar always uses matugen's dark colors, whatever the
+wallpaper. Warning and OK colors stay yellow and green so they keep their meaning. To change which
+Material You color feeds which part of the bar, edit `matugen/palette.json`.
+
 ## Make it yours
 
-- **Colors and sizes:** `singletons/Theme.qml`
+- **Sizes and the fallback colors:** `singletons/Theme.qml`
 - **Move the Tern pill:** right-click it to hop between the left, middle and right. The bar
   remembers your choice.
 - **Launch animation:** there's a fancy "grow into a new window" effect. It's off by default. Turn it
@@ -56,6 +75,7 @@ status, IP hiding) are included in `scripts/`.
 ```
 shell.qml        starts the bar on every screen
 components/      the bar and each of its pills
+matugen/         the template that turns your wallpaper into the bar's colors
 singletons/      shared pieces: theme, settings, niri connection
 scripts/         small helpers: power menu, network status, IP hiding
 screenshots/     pictures for this page

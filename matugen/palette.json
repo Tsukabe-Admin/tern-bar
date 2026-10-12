@@ -1,0 +1,10 @@
+{
+  "card": "{{colors.surface_container_lowest.dark.hex}}",
+  "ink": "{{colors.on_surface.dark.hex}}",
+  "muted": "{{colors.on_surface_variant.dark.hex}}",
+  "dim": "{{colors.outline.dark.hex}}",
+  "faint": "{{colors.outline_variant.dark.hex}}",
+  "accent": "{{colors.primary.dark.hex}}",
+  "live": "{{colors.tertiary.dark.hex}}",
+  "bad": "{{colors.error.dark.hex}}"
+}
