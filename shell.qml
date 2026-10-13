@@ -32,6 +32,14 @@ ShellRoot {
         }
     }
 
+    // The launcher card: one window for the whole shell, kept alive between
+    // openings so opening costs no QML compilation and icons stay cached.
+    LauncherWindow {}
+
+    // Volume OSD: one surface for the whole shell, shown near the bottom of the
+    // focused screen when the volume changes.
+    VolumeOsd {}
+
     IpcHandler {
         target: "settings"
 
@@ -54,8 +62,49 @@ ShellRoot {
         }
     }
 
+    // Keyboard shortcuts: quickshell ipc -c tern-bar call launcher <toggle|clipboard|power|close>
+    IpcHandler {
+        target: "launcher"
+
+        function toggle(): void {
+            Launcher.toggleOnFocused("all", "");
+        }
+
+        function clipboard(): void {
+            Launcher.toggleOnFocused("all", ";");
+        }
+
+        function power(): void {
+            Launcher.toggleOnFocused("power", "");
+        }
+
+        function close(): void {
+            Launcher.close();
+        }
+    }
+
+    // quickshell ipc -c tern-bar call bar <calendar|quickSettings|close>
+    IpcHandler {
+        target: "bar"
+
+        function calendar(): void {
+            Popups.toggle("calendar", Popups.focusedScreenName());
+        }
+
+        function quickSettings(): void {
+            Popups.toggle("quick", Popups.focusedScreenName());
+        }
+
+        function close(): void {
+            Popups.close();
+        }
+    }
+
     // Singletons are built the first time something uses them, so without this
     // the rotation timer and the screen hotplug handler would not exist until
-    // the Wallpaper tab had been opened once.
-    Component.onCompleted: Wallpaper.rescan()
+    // the Wallpaper tab had been opened once. NightLight likewise.
+    Component.onCompleted: {
+        Wallpaper.rescan();
+        NightLight.available;
+    }
 }

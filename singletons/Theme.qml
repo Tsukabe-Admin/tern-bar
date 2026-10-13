@@ -4,19 +4,18 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Colors follow the wallpaper. matugen renders matugen/palette.json (this
-// repo) to ~/.local/state/tern-bar/palette.json every time the wallpaper
-// changes; this singleton watches that file and crossfades to the new colors.
-// With no palette file (matugen not set up) the bar keeps the fallbacks below,
-// which are the dark-midnight entry of Tern's theme registry (src/themes.rs):
+// Colors follow the wallpaper or a preset theme. scripts/theme-sync.sh (run by
+// the Wallpaper tab) writes ~/.local/state/tern-bar/palette.json; this
+// singleton watches that file and crossfades to the new colors. With no
+// palette file yet the bar keeps the fallbacks below, which are the
+// dark-midnight entry of Tern's theme registry (src/themes.rs):
 //   card #050F16, ink #EDEDED, muted #B0BEC5, dim #546E7A, darkGray #263238,
 //   accent #2979FF, cyan #00E5FF, error #FF1744.
-// Setup and the token mapping: README, "Wallpaper colors".
+// Setup and the token mapping: README, "Wallpaper and colors".
 Singleton {
     id: root
 
-    readonly property string palettePath:
-        String(Quickshell.env("HOME") || "") + "/.local/state/tern-bar/palette.json"
+    readonly property string palettePath: BarConfig.palettePath
 
     // Parsed palette; {} when the file is missing or not valid JSON.
     readonly property var palette: {
@@ -40,6 +39,16 @@ Singleton {
         watchChanges: true
         printErrors: false
         onFileChanged: reload()
+    }
+
+    // theme-sync.sh just wrote a new palette. Toggling watchChanges rebuilds
+    // the file watcher, then the file is read at once. Needed on a fresh
+    // install: ~/.local/state/tern-bar did not exist when the bar started, so
+    // the watcher had no folder to watch and would never see the first palette.
+    function reloadPalette() {
+        paletteFile.watchChanges = false;
+        paletteFile.watchChanges = true;
+        paletteFile.reload();
     }
 
     // ── Base colors (from the palette; animated so a wallpaper change fades) ──

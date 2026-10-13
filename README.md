@@ -8,65 +8,123 @@ small rounded "pills" that can follow your wallpaper's colors.
 ## What you get
 
 - Workspaces and the name of the window you're using
+- An app launcher built into the bar: apps, open windows, a calculator, clipboard history and
+  power actions, in a card that drops out of the launcher pill
+- Quick settings: Wi-Fi, Bluetooth (with your paired devices), Do Not Disturb, night light and
+  power profile
+- A month calendar under the clock
+- A small volume pop-up whenever the volume changes
 - Date and time
 - What's playing, with a click to pause
 - CPU and memory at a glance
 - Wi-Fi, volume, notifications and a power button
 - A system tray with proper right-click menus
-- A Tern pill that shows how many terminal blocks you have open, and opens a new one
+- A Tern pill that shows how many Tern windows are open, and opens a new one (only if you use Tern)
 - A wallpaper picker and colour controls, in the same window as the layout editor
 - An optional little desktop pet
 
 ## Set it up
 
-You'll need [Quickshell](https://quickshell.org), niri, and the JetBrainsMono Nerd Font. For the
-extras, volume uses PipeWire, notifications use `swaync`, and the buttons open `fuzzel`,
-`pavucontrol` and `nm-connection-editor`.
+You'll need [Quickshell](https://quickshell.org) 0.3 or newer, [niri](https://github.com/YaLTeR/niri),
+and the JetBrainsMono Nerd Font.
 
 ```bash
 git clone https://github.com/Tsukabe-Admin/tern-bar ~/.config/quickshell/tern-bar
 quickshell -c tern-bar
 ```
 
-To start it every time you log in, add this line to your niri config:
+To start it every time you log in, and to make the settings window float, add this to your niri
+config (`~/.config/niri/config.kdl`):
 
 ```kdl
 spawn-at-startup "quickshell" "-c" "tern-bar"
+
+window-rule {
+    match title="^tern-bar settings$"
+    match title="^Wallpaper folder$"
+    open-floating true
+}
+
+binds {
+    Mod+B { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "settings" "toggle"; }
+    Mod+W { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "settings" "wallpaper"; }
+    Mod+Space { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "launcher" "toggle"; }
+    Mod+V { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "launcher" "clipboard"; }
 ```
 
-Edit any file and the bar updates on the spot.
+(If you already have a `binds { }` block, put those lines inside it instead. Other things a key can call:
+`launcher power`, `launcher close`, `bar calendar`, `bar quickSettings`, `bar close`.)
 
-The bar looks for the `tern` app in `~/.local/bin`. If yours lives somewhere else, change
-`ternBin` in `singletons/BarConfig.qml`. The small helper scripts it uses (power menu, network
-status, IP hiding) are included in `scripts/`.
+Edit any file and the bar updates on the spot. Your own settings are saved in
+`~/.config/tern-bar/`, never inside this folder, so `git pull` is always safe.
+
+### Other programs it uses
+
+Each one is only needed for the part it powers; the rest of the bar works without it.
+
+| Program | Used for |
+|---|---|
+| `awww` | setting the wallpaper (Wallpaper tab) |
+| `matugen` | colours taken from the wallpaper (the built-in themes don't need it) |
+| `jq`, `python3` | the wallpaper and colour scripts |
+| `zenity` | the "Change folder…" picker |
+| `swaync` | the notification bell and Do Not Disturb |
+| `cliphist`, `wl-clipboard` | clipboard history in the launcher (with `wl-paste --watch cliphist store` running); copying calculator answers |
+| `swaylock` | Lock and Suspend (without it, `loginctl lock-session` is used) |
+| `wlsunset` | night light |
+| `power-profiles-daemon` | the power profile switch |
+| BlueZ, `blueman` | the Bluetooth tile and device list; the "Bluetooth settings" button |
+| NetworkManager | the Wi-Fi tile |
+| `pavucontrol`, PipeWire | right-click on volume; the volume pill itself |
+| `nm-connection-editor`, `nmcli` or `iwgetid` | right-click on network; the Wi-Fi name |
+| `notify-send` | the "IP hidden / shown" message |
+| `tern` | the Tern pill — it hides itself when `tern` isn't on your PATH or in `~/.local/bin` |
 
 ## Wallpaper and colors
 
 The settings page has two tabs: **Layout** (see [Make it yours](#make-it-yours)) and **Wallpaper**.
-The Wallpaper tab is a thumbnail grid of your wallpaper folder — search, favourites, shuffle and
-automatic rotation — plus a per-screen choice (one image everywhere, or a single screen with its
-own), fill mode and edge colour, animated transitions, and the colour controls below.
+The Wallpaper tab is a thumbnail grid of your wallpaper folder (`~/Pictures/Wallpapers` until you
+pick another) — search, favourites, shuffle and automatic rotation — plus a per-screen choice (one
+image everywhere, or a single screen with its own), fill mode and edge colour, animated
+transitions, and the colour controls below. Wallpapers are drawn by `awww`; the bar starts it when
+needed and puts your wallpaper back every time it starts. Until you pick one, the bar leaves your
+desktop's wallpaper alone.
 
-Two scripts outside this repo do the actual work. Point `wallpaperScript`, `themeSyncScript`,
-`wallpaperStatePath` and `themePresetsPath` in `singletons/BarConfig.qml` at yours:
-
-| Script | Job |
-|---|---|
-| `~/.config/niri/scripts/wallpaper.sh` | puts an image on one screen or on all of them (via `awww`) |
-| `~/.config/niri/scripts/theme-sync.sh` | recolours the desktop, from the image or from a preset |
-
-The bar is the only writer of the settings file (`~/.config/niri/wallpaper.json`); the scripts only
-read it.
+Everything the tab does is two scripts in `scripts/`: `wallpaper.sh` puts an image on screen and
+`theme-sync.sh` recolours. Your choices are saved in `~/.config/tern-bar/wallpaper.json`; the bar is
+its only writer.
 
 ### Colors from the wallpaper
 
-The bar can take its colors from your wallpaper using [matugen](https://github.com/InioX/matugen).
-Each time matugen runs it writes `~/.local/state/tern-bar/palette.json`; the bar watches that file
-and fades to the new colors. Without it, the bar keeps its built-in dark blue colors. The Wallpaper
-tab drives this for you: with "Colours from wallpaper" on, it runs matugen itself with the Material
-scheme and contrast you pick, and colours always come from the *All screens* image.
+With "Colours from wallpaper" on (and [matugen](https://github.com/InioX/matugen) installed), the
+bar takes its colours from the *All screens* image, using the Material scheme and contrast you
+pick. Without a wallpaper or matugen, it keeps its built-in dark blue colours. The bar always uses
+the dark variant, whatever the wallpaper. Warning and OK colours stay yellow and green so they keep
+their meaning.
 
-Add this to `~/.config/matugen/config.toml`:
+If you already use matugen for other apps, nothing extra is needed: the same run also renders
+the templates in your `~/.config/matugen/config.toml`.
+
+### Built-in themes
+
+Turn "Colours from wallpaper" off and the bar is painted from one of ten presets — Catppuccin
+Mocha, Tokyo Night, Nord, Gruvbox Dark, Dracula, Rosé Pine, Everforest Dark, Kanagawa Wave, One
+Dark, Solarized Dark — listed in `themes/presets.json`. They don't need matugen. Changing the
+wallpaper then leaves the colours alone. If matugen is installed, your matugen templates follow
+the preset too.
+
+### Recolour your other apps
+
+After every recolour, `theme-sync.sh` runs `~/.config/tern-bar/theme-hook.sh` if it exists and is
+executable, as `theme-hook.sh <colors.json> <label>`. `colors.json` holds every Material colour
+role in matugen's format (`.colors.primary.default.color`, …), and `<label>` is the theme's name
+or the wallpaper's file name. Use it to reload apps that don't notice new colours on their own,
+for example `pkill -SIGUSR1 kitty`.
+
+### Using your own matugen setup instead
+
+If you'd rather run matugen yourself (from another wallpaper tool), add this to
+`~/.config/matugen/config.toml` and don't use the Wallpaper tab's colour switch:
 
 ```toml
 [templates.tern-bar]
@@ -74,25 +132,15 @@ input_path = "~/.config/quickshell/tern-bar/matugen/palette.json"
 output_path = "~/.local/state/tern-bar/palette.json"
 ```
 
-Then run matugen however you already do (`matugen image path/to/wallpaper.jpg`, or from your
-wallpaper picker's post-command). The bar always uses matugen's dark colors, whatever the
-wallpaper. Warning and OK colors stay yellow and green so they keep their meaning. To change which
-Material You color feeds which part of the bar, edit `matugen/palette.json`.
-
-### Built-in themes
-
-Turn "Colours from wallpaper" off and the desktop is painted from one of ten presets — Catppuccin
-Mocha, Tokyo Night, Nord, Gruvbox Dark, Dracula, Rosé Pine, Everforest Dark, Kanagawa Wave, One
-Dark, Solarized Dark — listed in `~/.config/matugen/presets.json`. Changing the wallpaper then
-leaves the colours alone. `theme-sync.sh` expands a preset's base colours into the Material roles
-your matugen templates ask for, so the templates need no changes.
+The bar watches that file and fades to the new colours. To change which Material You colour feeds
+which part of the bar, edit `matugen/palette.json`.
 
 ## Make it yours
 
 - **Sizes and the fallback colors:** `singletons/Theme.qml`
 - **Rearrange the bar:** open the settings page — the gear in the tools pill, a right-click on the
   launcher, or Mod+B — then drag a pill to another group or click it to show/hide it. Every change
-  lands in `bar.json`, and the page applies to all screens at once. Right-clicking the Tern pill
+  lands in `~/.config/tern-bar/bar.json`, and the page applies to all screens at once. Right-clicking the Tern pill
   still hops it straight to the next group. Any other key can call the same thing:
   `quickshell ipc -c tern-bar call settings toggle` (also `open` / `close`).
 - **Wallpaper:** Mod+W, or the wallpaper button in the tools pill, opens the settings page straight
@@ -100,8 +148,13 @@ your matugen templates ask for, so the templates need no changes.
   pressing it again closes the page.
 - **Launch animation:** there's a fancy "grow into a new window" effect. It's off by default. Turn it
   on with `morphEnabled` in `singletons/BarConfig.qml`, but don't run it in a loop.
-- **Keybinding cheat sheet:** the `?` button in the tools pill runs a script of your own. Point
-  `cheatsheetScript` in `singletons/BarConfig.qml` at it, or ignore it.
+- **Keybinding cheat sheet:** the `?` button in the tools pill shows niri's built-in hotkey overlay.
+- **Launcher:** click the launcher pill (or Mod+Space). Type to search apps and open windows; type
+  a sum like `2*(3+4)` to see the answer (Enter copies it); start with `;` to search clipboard
+  history. Up/Down pick, Enter opens, Esc clears and then closes. Apps you open often move to the
+  top (counts in `~/.local/state/tern-bar/launcher.json`). The ⏻ button opens the power actions;
+  Log out, Reboot and Power off need a second Enter.
+- **Quick settings:** the sliders button in the right-hand pill. **Calendar:** click the clock.
 - **Hide your IP:** click the network pill to hide or show your IP address.
 - **Tray menus** close when you click anywhere else.
 
@@ -110,9 +163,10 @@ your matugen templates ask for, so the templates need no changes.
 ```
 shell.qml        starts the bar on every screen
 components/      the bar and each of its pills
-matugen/         the template that turns your wallpaper into the bar's colors
-singletons/      shared pieces: theme, settings, niri connection
-scripts/         small helpers: power menu, network status, IP hiding
+singletons/      shared pieces: theme, settings, wallpaper, niri connection
+scripts/         helpers: wallpaper, colours, network status, IP hiding
+themes/          the ten built-in colour themes
+matugen/         an optional template, for driving the colours from your own matugen setup
 screenshots/     pictures for this page
 ```
 

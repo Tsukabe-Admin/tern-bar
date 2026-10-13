@@ -85,7 +85,7 @@ PanelWindow {
             IconButton {
                 text: "󰣇"
                 fg: Theme.accent
-                action: () => Quickshell.execDetached(["fuzzel"])
+                action: () => Launcher.toggleFrom(bar.modelData.name, launcherPill, "all")
                 rightAction: () => bar.openSettings("layout")
             }
         }
@@ -108,7 +108,7 @@ PanelWindow {
 
         Pill {
             id: clockPill
-            Clock {}
+            Clock { onClicked: Popups.toggle("calendar", bar.modelData.name) }
         }
 
         Pill {
@@ -176,7 +176,7 @@ PanelWindow {
             IconButton {
                 text: "󰋖"
                 fg: Theme.t3
-                action: () => Quickshell.execDetached([BarConfig.cheatsheetScript])
+                action: () => Niri.showHotkeyOverlay()
             }
             IconButton {
                 text: "\uf013"
@@ -187,17 +187,23 @@ PanelWindow {
 
         Pill {
             id: systemPill
+            IconButton {
+                text: "\uf1de"
+                fg: Theme.t2
+                action: () => Popups.toggle("quick", bar.modelData.name)
+            }
             Bell {}
             IconButton {
                 text: "⏻"
                 fg: Theme.bad
-                action: () => Quickshell.execDetached([BarConfig.scriptsDir + "/power-menu.sh"])
+                action: () => Launcher.toggleFrom(bar.modelData.name, systemPill, "power")
             }
         }
 
-        // Tern pill: right-click moves it to the next group (saved in bar.json).
+        // Tern pill (shown only when the tern app is installed): right-click moves it to the next group (saved in bar.json).
         Pill {
             id: ternPill
+            visible: Tern.installed
             TernPill {
                 launch: () => {
                     // Open on the screen whose pill was clicked: niri puts new
@@ -254,12 +260,19 @@ PanelWindow {
         BarConfig.openSettings(tab);
     }
 
-    Component.onCompleted: applyLayout()
+    Component.onCompleted: {
+        applyLayout();
+        Launcher.registerPill(bar.modelData.name, launcherPill);
+    }
 
     // Right-click menu for the PokeToken pill (a sibling window, like TrayMenu).
     PokeMenu {
         id: pokeMenu
     }
+
+    // The two popups this bar can own (Popups decides which is open, and where).
+    CalendarPopup { barWindow: bar; screenInfo: bar.modelData; anchorItem: clockPill }
+    QuickSettings { barWindow: bar; screenInfo: bar.modelData; anchorItem: systemPill }
 
     Connections {
         target: BarConfig

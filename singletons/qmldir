@@ -4,3 +4,8 @@ singleton Tern 1.0 Tern.qml
 singleton BarConfig 1.0 BarConfig.qml
 singleton Poke 1.0 Poke.qml
 singleton Wallpaper 1.0 Wallpaper.qml
+singleton Programs 1.0 Programs.qml
+singleton Popups 1.0 Popups.qml
+singleton Swaync 1.0 Swaync.qml
+singleton NightLight 1.0 NightLight.qml
+singleton Launcher 1.0 Launcher.qml

@@ -16,7 +16,6 @@ Singleton {
     // Tern's plugin data dir (what the engine was handed as --data). The engine's
     // own status.json carries it back, so the bar never guesses twice.
     readonly property string dataDir: BarConfig.pokeDataDir
-    readonly property string ternBin: BarConfig.ternBin
 
     property var status: null
     property bool available: false
@@ -50,11 +49,13 @@ Singleton {
     // sentinel files in the data dir; the plugin's window half routes them to the
     // block, so no palette interaction is needed.
     function open(tab) {
+        if (!Tern.installed)
+            return;
         var base = (root.status && root.status.data) ? root.status.data : root.dataDir;
         var file = base + "/open" + (tab ? "-" + tab : "") + ".poke";
         Quickshell.execDetached(["sh", "-c",
-            root.ternBin + " focus PokeToken >/dev/null 2>&1 || " + root.ternBin + " open \"$1\"",
-            "sh", file]);
+            "\"$1\" focus PokeToken >/dev/null 2>&1 || \"$1\" open \"$2\"",
+            "sh", Tern.bin, file]);
     }
 
     // Run one engine command detached (scan --force, act …).

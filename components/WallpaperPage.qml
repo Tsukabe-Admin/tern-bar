@@ -6,7 +6,7 @@ import "../singletons"
 // it is drawn, what colours the desktop takes from it, and whether it rotates.
 //
 // Every change goes through the Wallpaper singleton, which writes
-// ~/.config/niri/wallpaper.json and runs the niri scripts that act on it.
+// ~/.config/tern-bar/wallpaper.json and runs scripts/wallpaper.sh and scripts/theme-sync.sh.
 Item {
     id: page
 
@@ -572,7 +572,7 @@ Item {
                         width: side.width
                         wrapMode: Text.WordWrap
                         visible: Wallpaper.presets.length === 0
-                        text: "No presets file at ~/.config/matugen/presets.json"
+                        text: "Couldn't read themes/presets.json"
                         color: Theme.t2
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSize

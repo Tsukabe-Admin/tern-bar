@@ -4,12 +4,13 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// The Wallpaper tab's backend. One settings file, ~/.config/niri/wallpaper.json,
-// which this bar is the only writer of — the niri scripts only read it — plus the
-// two scripts that actually act on it:
+// The Wallpaper tab's backend. One settings file, ~/.config/tern-bar/wallpaper.json,
+// which this bar is the only writer of — the scripts only read it — plus the
+// two scripts in this repo that act on it:
 //
-//   wallpaper.sh    puts an image on one screen ("DP-3") or on all of them ("*")
-//   theme-sync.sh   recolours the desktop, either from that image or from a preset
+//   scripts/wallpaper.sh    puts an image on one screen ("DP-3") or on all of them ("*")
+//   scripts/theme-sync.sh   recolours the bar (and matugen's templates), from that
+//                           image or from a preset in themes/presets.json
 //
 // Both are run as short-lived processes; nothing here talks to their internals.
 Singleton {
@@ -80,15 +81,32 @@ Singleton {
             } catch (e) {
                 root.settings = root.normalize(null);
             }
+            root.restoreOnce();
             root.rescan();
         }
 
         // No file yet: the defaults are already in place, just fill the grid.
-        onLoadFailed: root.rescan()
+        onLoadFailed: {
+            root.restoreOnce();
+            root.rescan();
+        }
     }
 
     function save() {
         file.setText(JSON.stringify(root.settings, null, 2) + "\n");
+    }
+
+    // Put the saved wallpaper back once per start (login, a restart, a hot
+    // reload). With nothing chosen yet the desktop is left alone: the bar only
+    // manages the wallpaper once you have picked one.
+    property bool restored: false
+
+    function restoreOnce() {
+        if (root.restored)
+            return;
+        root.restored = true;
+        if (Object.keys(root.settings.wallpapers).length > 0)
+            root.runWallpaper([], false);
     }
 
     // ── Normalising ────────────────────────────────────────────────────────
@@ -402,7 +420,7 @@ Singleton {
             return;
         }
 
-        let command = [BarConfig.wallpaperScript];
+        let command = [BarConfig.scriptsDir + "/wallpaper.sh"];
         if (animate)
             command.push("--animate");
         wpProcess.command = command.concat(outputs);
@@ -414,7 +432,7 @@ Singleton {
             root.pendingThemeSync = true;
             return;
         }
-        themeProcess.command = [BarConfig.themeSyncScript, "--quiet"];
+        themeProcess.command = [BarConfig.scriptsDir + "/theme-sync.sh"];
         themeProcess.running = true;
     }
 
@@ -422,8 +440,8 @@ Singleton {
         id: wpProcess
 
         onExited: (exitCode, exitStatus) => {
-            root.lastError = (exitCode === 0)
-                ? ""
+            root.lastError = (exitCode === 0) ? ""
+                : (exitCode === 3) ? "Install awww to set wallpapers"
                 : "Couldn't set the wallpaper (wallpaper.sh exited " + exitCode + ")";
 
             const queued = root.pendingWallpaper;
@@ -437,9 +455,12 @@ Singleton {
         id: themeProcess
 
         onExited: (exitCode, exitStatus) => {
-            root.lastError = (exitCode === 0)
-                ? ""
+            root.lastError = (exitCode === 0) ? ""
+                : (exitCode === 3) ? "Install matugen to take colours from the wallpaper, or pick a theme"
+                : (exitCode === 4) ? "Choose an All screens wallpaper first, or pick a theme"
                 : "Couldn't recolour (theme-sync.sh exited " + exitCode + ")";
+            if (exitCode === 0)
+                Theme.reloadPalette();
 
             if (root.pendingThemeSync) {
                 root.pendingThemeSync = false;

@@ -88,7 +88,14 @@ Item {
         }
     }
 
-    WheelHandler {
-        onWheel: (event) => root.scrolled(event.angleDelta.y > 0 ? 1 : -1)
+    // Wheel events: a MouseArea, not a WheelHandler. On a layer-shell surface a
+    // WheelHandler never receives wheel events (verified on Quickshell 0.3.2:
+    // WheelHandler is silent while HoverHandler and MouseArea.onWheel both
+    // fire), so the volume pill's wheel used to do nothing. `Qt.NoButton` keeps
+    // presses going to the TapHandler above.
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.NoButton
+        onWheel: (wheel) => root.scrolled(wheel.angleDelta.y > 0 ? 1 : -1)
     }
 }

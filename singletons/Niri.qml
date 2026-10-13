@@ -156,6 +156,29 @@ Singleton {
         sendAction({ Action: { FocusMonitor: { output: outputName } } });
     }
 
+    // The tools pill's ? button: niri's own "Important Hotkeys" overlay.
+    function showHotkeyOverlay() {
+        sendAction({ Action: { ShowHotkeyOverlay: {} } });
+    }
+
+    // The output holding the focused workspace, or "" before niri has said.
+    function focusedOutput() {
+        for (var i = 0; i < root.workspaces.length; i++) {
+            if (root.workspaces[i].is_focused)
+                return root.workspaces[i].output || "";
+        }
+        return "";
+    }
+
+    function focusWindow(id) {
+        sendAction({ Action: { FocusWindow: { id: id } } });
+    }
+
+    // Log out: niri's quit, without its own confirmation (the launcher asks).
+    function quit() {
+        sendAction({ Action: { Quit: { skip_confirmation: true } } });
+    }
+
     // niri ignores Actions written to the event-stream socket (verified: no
     // reply, no state change), so actions go on their own short-lived
     // connection, mirroring what `niri msg action` does internally.

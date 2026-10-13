@@ -4,7 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Bar preferences, persisted to bar.json: the order of the pills inside the
+// Bar preferences, persisted to ~/.config/tern-bar/bar.json: the order of the pills in the
 // bar's three groups ("left", "center", "right") and which of them are hidden.
 // Edit it from the settings page — the gear in the tools pill, a right-click on
 // the launcher, or Mod+B — or by hand; the bar reloads on save.
@@ -23,7 +23,7 @@ Singleton {
     readonly property var pillNames: ({
         launcher: "Launcher", workspaces: "Workspaces", title: "Window title", clock: "Clock",
         media: "Media", poke: "PokeToken", resources: "CPU & memory", network: "Network",
-        volume: "Volume", tray: "System tray", tools: "Tools", system: "Notifications & power",
+        volume: "Volume", tray: "System tray", tools: "Tools", system: "Quick settings, notifications & power",
         tern: "Tern"
     })
 
@@ -39,6 +39,8 @@ Singleton {
     property var layout: root.normalize(null, "")
     // Pills that keep their slot in the layout but are not shown on the bar.
     property var hidden: []
+    // Night light on/off (singletons/NightLight.qml), kept across restarts.
+    property bool nightLight: false
     // Whether the settings page is open, and which of its two tabs it shows.
     // Neither is persisted, so a reload closes the page on the Layout tab.
     property bool settingsOpen: false
@@ -164,8 +166,15 @@ Singleton {
         root.save();
     }
 
+    function setNightLight(on) {
+        if (root.nightLight === !!on)
+            return;
+        root.nightLight = !!on;
+        root.save();
+    }
+
     function save() {
-        file.setText(JSON.stringify({ layout: root.layout, hidden: root.hidden }, null, 2) + "\n");
+        file.setText(JSON.stringify({ layout: root.layout, hidden: root.hidden, nightLight: root.nightLight }, null, 2) + "\n");
     }
 
     // ── Settings page ──────────────────────────────────────────────────────
@@ -188,21 +197,25 @@ Singleton {
         }
     }
 
-    // Where things live. Everything is derived from $HOME or from this repo, so
-    // the bar works for any user. Change these if your setup differs.
+    // Where things live. Your settings go in $XDG_CONFIG_HOME/tern-bar
+    // (~/.config/tern-bar), files the bar generates in $XDG_STATE_HOME/tern-bar
+    // (~/.local/state/tern-bar), and everything else ships in this repo — so the
+    // bar works for anyone who clones it, and `git pull` never touches your
+    // settings. scripts/*.sh compute the same two folders the same way.
     readonly property string home: String(Quickshell.env("HOME") || "")
+    readonly property string configDir:
+        (String(Quickshell.env("XDG_CONFIG_HOME") || "") || (root.home + "/.config")) + "/tern-bar"
+    readonly property string stateDir:
+        (String(Quickshell.env("XDG_STATE_HOME") || "") || (root.home + "/.local/state")) + "/tern-bar"
     readonly property string scriptsDir: Quickshell.shellDir + "/scripts"
-    readonly property string configPath: Quickshell.shellDir + "/bar.json"
-    readonly property string ternBin: root.home + "/.local/bin/tern"
+    readonly property string configPath: root.configDir + "/bar.json"
+    // The Wallpaper tab: the settings file it alone writes, the palette
+    // scripts/theme-sync.sh generates, and the preset themes it lists.
+    readonly property string wallpaperStatePath: root.configDir + "/wallpaper.json"
+    readonly property string palettePath: root.stateDir + "/palette.json"
+    readonly property string themePresetsPath: Quickshell.shellDir + "/themes/presets.json"
+    // The PokeToken plugin's data, where the Tern app keeps it.
     readonly property string pokeDataDir: root.home + "/.local/state/tern/plugin-data/poke"
-    // The wallpaper page's backend: the settings file it alone writes, the two
-    // scripts it runs, and the preset themes it lists.
-    readonly property string wallpaperStatePath: root.home + "/.config/niri/wallpaper.json"
-    readonly property string wallpaperScript: root.home + "/.config/niri/scripts/wallpaper.sh"
-    readonly property string themeSyncScript: root.home + "/.config/niri/scripts/theme-sync.sh"
-    readonly property string themePresetsPath: root.home + "/.config/matugen/presets.json"
-    // Optional: a script that shows your keybindings. The bar does nothing if it is missing.
-    readonly property string cheatsheetScript: root.home + "/.config/niri/scripts/cheatsheet.sh"
 
     FileView {
         id: file
@@ -218,6 +231,7 @@ Singleton {
                 root.hidden = (Array.isArray(o.hidden) ? o.hidden : [])
                     .filter((id, i, a) => root.pillIds.indexOf(id) !== -1 && a.indexOf(id) === i);
                 root.layout = root.normalize(o.layout, o.ternPillSide);
+                root.nightLight = o.nightLight === true;
             } catch (e) {
             }
         }
