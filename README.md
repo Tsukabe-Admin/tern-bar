@@ -21,7 +21,7 @@ small rounded "pills" that can follow your wallpaper's colors.
 - A system tray with proper right-click menus
 - A Tern pill that shows how many Tern windows are open, and opens a new one (only if you use Tern)
 - A wallpaper picker and colour controls, in the same window as the layout editor
-- An optional little desktop pet
+- An optional little desktop pet — needs the tern-poke plugin for Tern (not released yet)
 
 ## Set it up
 
@@ -64,14 +64,15 @@ Each one is only needed for the part it powers; the rest of the bar works withou
 
 | Program | Used for |
 |---|---|
-| `awww` | setting the wallpaper (Wallpaper tab) |
+| `awww` (and its `awww-daemon`) | setting the wallpaper (Wallpaper tab) |
 | `matugen` | colours taken from the wallpaper (the built-in themes don't need it) |
 | `jq`, `python3` | the wallpaper and colour scripts |
 | `zenity` | the "Change folder…" picker |
-| `swaync` | the notification bell and Do Not Disturb |
+| `swaync` | the notification bell and Do Not Disturb (the bell hides itself without it) |
 | `cliphist`, `wl-clipboard` | clipboard history in the launcher (with `wl-paste --watch cliphist store` running); copying calculator answers |
 | `swaylock` | Lock and Suspend (without it, `loginctl lock-session` is used) |
 | `wlsunset` | night light |
+| `systemd` (`systemctl`, `loginctl`, `busctl`) | Suspend, Reboot and Power off; Lock when swaylock is missing; finding the power-profile service |
 | `power-profiles-daemon` | the power profile switch |
 | BlueZ, `blueman` | the Bluetooth tile and device list; the "Bluetooth settings" button |
 | NetworkManager | the Wi-Fi tile |
@@ -79,6 +80,7 @@ Each one is only needed for the part it powers; the rest of the bar works withou
 | `nm-connection-editor`, `nmcli` or `iwgetid` | right-click on network; the Wi-Fi name |
 | `notify-send` | the "IP hidden / shown" message |
 | `tern` | the Tern pill — it hides itself when `tern` isn't on your PATH or in `~/.local/bin` |
+| tern-poke (a Tern plugin, not released yet) | the PokeToken pill and the desktop pet — both stay hidden without it |
 
 ## Wallpaper and colors
 
@@ -155,7 +157,8 @@ which part of the bar, edit `matugen/palette.json`.
   top (counts in `~/.local/state/tern-bar/launcher.json`). The ⏻ button opens the power actions;
   Log out, Reboot and Power off need a second Enter.
 - **Quick settings:** the sliders button in the right-hand pill. **Calendar:** click the clock.
-- **Hide your IP:** click the network pill to hide or show your IP address.
+- **Your IP stays hidden:** the network pill shows only the Wi-Fi name until you click it; click
+  again to hide the IP. The choice is the file `~/.local/state/tern-bar/show_ip`.
 - **Tray menus** close when you click anywhere else.
 
 ## What's inside

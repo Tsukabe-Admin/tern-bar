@@ -10,9 +10,17 @@
 # or a key that is absent or out of range, falls back to the defaults. A screen
 # with no image of its own and no "All screens" image is left alone.
 #
-# Exit codes: 0 done (or nothing to do), 3 awww is not installed, 1 anything else.
+# Exit codes: 0 done (or nothing to do), 3 awww is not installed, 5 jq is not
+# installed, 1 anything else.
 
 set -uo pipefail
+
+# Every setting below is read with jq; without it read_setting falls back to the
+# defaults and the script would silently do nothing.
+if ! command -v jq >/dev/null 2>&1; then
+    echo "wallpaper.sh: jq is not installed" >&2
+    exit 5
+fi
 
 STATE="${XDG_CONFIG_HOME:-$HOME/.config}/tern-bar/wallpaper.json"
 

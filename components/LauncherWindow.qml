@@ -108,6 +108,7 @@ PanelWindow {
                 height: 40
 
                 Text {
+                    textFormat: Text.PlainText
                     id: glyph
                     anchors.left: parent.left
                     anchors.leftMargin: 12
@@ -119,6 +120,7 @@ PanelWindow {
                 }
 
                 Text {
+                    textFormat: Text.PlainText
                     anchors.left: search.left
                     anchors.verticalCenter: parent.verticalCenter
                     visible: search.text === ""
@@ -187,6 +189,7 @@ PanelWindow {
                 }
 
                 Text {
+                    textFormat: Text.PlainText
                     anchors.centerIn: parent
                     visible: list.count === 0
                     text: "No matches"

@@ -57,6 +57,7 @@ Item {
     }
 
     component SectionTitle: Text {
+        textFormat: Text.PlainText
         color: Theme.t3
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSize
@@ -107,6 +108,7 @@ Item {
         }
 
         Text {
+            textFormat: Text.PlainText
             id: screenHint
             anchors.left: parent.left
             anchors.right: parent.right
@@ -139,6 +141,7 @@ Item {
                 border.color: Theme.rim
 
                 Text {
+                    textFormat: Text.PlainText
                     anchors.left: parent.left
                     anchors.leftMargin: 14
                     anchors.verticalCenter: parent.verticalCenter
@@ -202,6 +205,7 @@ Item {
         }
 
         Text {
+            textFormat: Text.PlainText
             id: folderText
             anchors.left: parent.left
             anchors.right: changeFolder.left
@@ -250,6 +254,7 @@ Item {
         }
 
         Text {
+            textFormat: Text.PlainText
             anchors.centerIn: grid
             visible: grid.count === 0
             text: (Wallpaper.files.length === 0)
@@ -261,6 +266,7 @@ Item {
         }
 
         Text {
+            textFormat: Text.PlainText
             id: errorLine
             anchors.left: parent.left
             anchors.right: parent.right
@@ -329,6 +335,7 @@ Item {
                     opacity: relevant ? 1 : 0.4
 
                     Text {
+                        textFormat: Text.PlainText
                         text: "Edge colour"
                         color: Theme.t3
                         font.family: Theme.fontFamily
@@ -412,6 +419,7 @@ Item {
                 }
 
                 Text {
+                    textFormat: Text.PlainText
                     text: "Duration: " + durationSlider.shownValue.toFixed(2).replace(/0$/, "") + " s"
                     color: Theme.t3
                     font.family: Theme.fontFamily
@@ -450,6 +458,7 @@ Item {
                 }
 
                 Text {
+                    textFormat: Text.PlainText
                     width: side.width
                     wrapMode: Text.WordWrap
                     color: Theme.t3
@@ -484,6 +493,7 @@ Item {
                     }
 
                     Text {
+                        textFormat: Text.PlainText
                         text: "Contrast: " + (contrastSlider.shownValue === 0
                             ? "Standard"
                             : (contrastSlider.shownValue > 0 ? "+" : "") + contrastSlider.shownValue.toFixed(2).replace(/0$/, ""))
@@ -526,6 +536,7 @@ Item {
                                 : modelData.outlineVariant
 
                             Text {
+                                textFormat: Text.PlainText
                                 anchors.left: parent.left
                                 anchors.leftMargin: 12
                                 anchors.right: swatches.left
@@ -569,6 +580,7 @@ Item {
                     }
 
                     Text {
+                        textFormat: Text.PlainText
                         width: side.width
                         wrapMode: Text.WordWrap
                         visible: Wallpaper.presets.length === 0
@@ -623,6 +635,7 @@ Item {
                 }
 
                 Text {
+                    textFormat: Text.PlainText
                     width: side.width
                     wrapMode: Text.WordWrap
                     text: "Changes the All screens wallpaper; screens with their own keep it."

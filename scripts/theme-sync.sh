@@ -20,9 +20,17 @@
 # reload apps that do not watch their own colour files.
 #
 # Exit codes: 0 done, 3 matugen is not installed (wallpaper mode),
-# 4 no "All screens" wallpaper to read (wallpaper mode), 1 anything else.
+# 4 no "All screens" wallpaper to read (wallpaper mode), 5 jq is not installed,
+# 6 python3 is not installed (preset mode), 1 anything else.
 
 set -uo pipefail
+
+# Every setting below is read with jq, and preset mode expands the preset with
+# python3; without either one the script would name the wrong reason.
+if ! command -v jq >/dev/null 2>&1; then
+    echo "theme-sync.sh: jq is not installed" >&2
+    exit 5
+fi
 
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/tern-bar"
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/tern-bar"
@@ -46,6 +54,10 @@ if [ "$SOURCE" = preset ]; then
     # use, in matugen's import format (one entry per role, each with the three
     # modes). Prints the preset's display name.
     PRESET_ID=$(jq -r '.preset // empty' "$STATE" 2>/dev/null || true)
+    if ! command -v python3 >/dev/null 2>&1; then
+        echo "theme-sync.sh: python3 is not installed" >&2
+        exit 6
+    fi
     if ! LABEL=$(python3 - "$PRESETS" "$PRESET_ID" "$COLORS_TMP" << 'PYEOF'
 import json, sys
 

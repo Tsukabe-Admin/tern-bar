@@ -145,6 +145,7 @@ PopupWindow {
                     }
 
                     Text {
+                        textFormat: Text.PlainText
                         visible: entryRow.modelData.action !== "separator"
                         anchors.left: parent.left
                         anchors.leftMargin: 14
@@ -153,6 +154,7 @@ PopupWindow {
                         anchors.verticalCenter: parent.verticalCenter
                         text: entryRow.modelData.text
                         elide: Text.ElideRight
+                        maximumLineCount: 1
                         color: entryRow.modelData.enabled ? Theme.t1 : Theme.t4
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSize

@@ -91,6 +91,7 @@ Item {
             color: Qt.alpha(Theme.card, 0.8)
 
             Text {
+                textFormat: Text.PlainText
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.leftMargin: 8
@@ -98,6 +99,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.name
                 elide: Text.ElideRight
+                maximumLineCount: 1
                 color: Theme.t1
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSize
@@ -132,6 +134,7 @@ Item {
                     color: Theme.popBg
 
                     Text {
+                        textFormat: Text.PlainText
                         id: badge
                         anchors.centerIn: parent
                         text: parent.modelData
@@ -154,6 +157,7 @@ Item {
             visible: root.hovered || root.fav
 
             Text {
+                textFormat: Text.PlainText
                 anchors.centerIn: parent
                 text: root.fav ? "\u2605" : "\u2606"
                 color: root.fav ? Theme.accent : Theme.t1

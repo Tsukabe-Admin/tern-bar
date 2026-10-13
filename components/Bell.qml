@@ -2,8 +2,11 @@ import QtQuick
 import "../singletons"
 
 // swaync bell, from the shared Swaync singleton. Click opens swaync's panel, right click toggles Do Not Disturb.
+// Hidden when swaync is not installed.
 BarItem {
     id: root
+
+    visible: Swaync.available
 
     text: Swaync.hasNotifications ? "󱅫" : Swaync.dnd ? "󰂛" : "󰂚"
     fg: Swaync.dnd ? Theme.warn : Swaync.hasNotifications ? Theme.t1 : Theme.t2

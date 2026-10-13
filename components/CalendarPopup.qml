@@ -93,6 +93,7 @@ PopupWindow {
             spacing: 8
 
             Text {
+                textFormat: Text.PlainText
                 width: parent.width
                 text: Qt.formatDate(pop.today, "dddd, d MMMM yyyy")
                 color: Theme.t2
@@ -105,6 +106,7 @@ PopupWindow {
                 height: 28
 
                 Text {
+                    textFormat: Text.PlainText
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     width: 28
@@ -117,6 +119,7 @@ PopupWindow {
                 }
 
                 Text {
+                    textFormat: Text.PlainText
                     anchors.centerIn: parent
                     text: Qt.formatDate(new Date(pop.year, pop.month, 1), "MMMM yyyy")
                     color: Theme.t1
@@ -127,6 +130,7 @@ PopupWindow {
                 }
 
                 Text {
+                    textFormat: Text.PlainText
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     width: 28
@@ -146,6 +150,7 @@ PopupWindow {
                     model: 7
 
                     Text {
+                        textFormat: Text.PlainText
                         width: 36
                         height: 22
                         horizontalAlignment: Text.AlignHCenter
@@ -177,6 +182,7 @@ PopupWindow {
                         }
 
                         Text {
+                            textFormat: Text.PlainText
                             anchors.centerIn: parent
                             text: cell.modelData.getDate()
                             color: cell.isToday ? Theme.card : (cell.inMonth ? Theme.t1 : Theme.t4)

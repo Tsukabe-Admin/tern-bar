@@ -44,6 +44,7 @@ Rectangle {
     }
 
     Text {
+        textFormat: Text.PlainText
         id: grip
         anchors.left: parent.left
         anchors.leftMargin: 14
@@ -55,6 +56,7 @@ Rectangle {
     }
 
     Text {
+        textFormat: Text.PlainText
         id: name
         anchors.left: grip.right
         anchors.leftMargin: 10

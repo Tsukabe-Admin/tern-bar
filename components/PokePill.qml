@@ -66,6 +66,7 @@ Item {
                 spacing: 5
 
                 Text {
+                    textFormat: Text.PlainText
                     visible: index > 0
                     anchors.verticalCenter: parent.verticalCenter
                     text: "·"

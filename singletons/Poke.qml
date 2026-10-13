@@ -7,9 +7,12 @@ import Quickshell.Io
 // Shared state for the PokeToken pill and the floating pet.
 //
 // The engine (a Tern plugin's Python half) rewrites `<data>/status.json` whole on
-// every scan; this singleton polls it. Reads go through `cat` for the same reason
-// Resources.qml does: FileView.reload() is not synchronous, and a stale read here
-// would freeze the pill for a whole poll interval.
+// every scan; this singleton polls it while Tern is installed, so a machine
+// without Tern costs nothing. (Tern without the plugin still polls: the file can
+// appear at any scan, and one `cat` per interval is cheaper than missing it.)
+// Reads go through `cat` for the same reason SysStats.qml does:
+// FileView.reload() is not synchronous, and a stale read here would freeze the
+// pill for a whole poll interval.
 Singleton {
     id: root
 
@@ -83,17 +86,14 @@ Singleton {
     Timer {
         interval: 2000
         repeat: true
-        running: true
+        // The status file only exists when Tern and its plugin are installed.
+        running: Tern.installed
+        triggeredOnStart: true
         onTriggered: {
             if (!poll.running) {
                 root.buffer = "";
                 poll.running = true;
             }
         }
-    }
-
-    Component.onCompleted: {
-        root.buffer = "";
-        poll.running = true;
     }
 }

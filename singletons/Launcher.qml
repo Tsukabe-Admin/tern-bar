@@ -278,7 +278,7 @@ Singleton {
     }
 
     function clipRows(q) {
-        if (!Programs.has("cliphist") || root.clipsFailed) {
+        if (!Programs.has("cliphist") || !Programs.has("wl-copy") || root.clipsFailed) {
             return [{
                 kind: "info", key: "info:clip", title: "Clipboard history needs cliphist",
                 subtitle: "and wl-clipboard, with `wl-paste --watch cliphist store` running",

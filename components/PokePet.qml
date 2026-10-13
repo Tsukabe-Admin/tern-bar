@@ -281,6 +281,7 @@ PanelWindow {
             border.color: Theme.rim
 
             Text {
+                textFormat: Text.PlainText
                 id: hoverText
                 anchors.centerIn: parent
                 text: pet.st ? (pet.st.hover || "") : ""
@@ -314,6 +315,7 @@ PanelWindow {
                 spacing: 2
 
                 Text {
+                    textFormat: Text.PlainText
                     width: parent.width
                     text: pet.bubbleTitle
                     color: pet.bubbleCritical ? Theme.bad : Theme.warn
@@ -321,9 +323,11 @@ PanelWindow {
                     font.pixelSize: Theme.fontSize
                     font.bold: true
                     elide: Text.ElideRight
+                    maximumLineCount: 1
                 }
 
                 Text {
+                    textFormat: Text.PlainText
                     width: parent.width
                     height: parent.height - 18
                     text: pet.bubbleBody
@@ -442,6 +446,7 @@ PanelWindow {
                         }
 
                         Text {
+                            textFormat: Text.PlainText
                             anchors.left: parent.left
                             anchors.leftMargin: 14
                             anchors.verticalCenter: parent.verticalCenter

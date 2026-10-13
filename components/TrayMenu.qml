@@ -137,6 +137,7 @@ PopupWindow {
                 }
 
                 Text {
+                    textFormat: Text.PlainText
                     anchors.left: parent.left
                     anchors.leftMargin: 14
                     anchors.verticalCenter: parent.verticalCenter
@@ -186,6 +187,7 @@ PopupWindow {
                     }
 
                     Text {
+                        textFormat: Text.PlainText
                         visible: !entryRow.modelData.isSeparator
                         anchors.left: parent.left
                         anchors.leftMargin: 14
@@ -199,6 +201,7 @@ PopupWindow {
                     }
 
                     Text {
+                        textFormat: Text.PlainText
                         visible: !entryRow.modelData.isSeparator
                         anchors.left: parent.left
                         anchors.leftMargin: 36
@@ -207,6 +210,7 @@ PopupWindow {
                         anchors.verticalCenter: parent.verticalCenter
                         text: entryRow.modelData.text
                         elide: Text.ElideRight
+                        maximumLineCount: 1
                         color: entryRow.modelData.enabled ? Theme.t1 : Theme.t4
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSize
@@ -214,6 +218,7 @@ PopupWindow {
                     }
 
                     Text {
+                        textFormat: Text.PlainText
                         id: arrowText
                         visible: !entryRow.modelData.isSeparator
                         anchors.right: parent.right

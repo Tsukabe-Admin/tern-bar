@@ -16,6 +16,7 @@ Item {
     opacity: root.enabled ? 1 : 0.4
 
     Text {
+        textFormat: Text.PlainText
         anchors.left: parent.left
         anchors.right: toggle.left
         anchors.rightMargin: 10

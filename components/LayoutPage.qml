@@ -62,6 +62,7 @@ Item {
         spacing: 4
 
         Text {
+            textFormat: Text.PlainText
             text: "Bar layout"
             color: Theme.t1
             font.family: Theme.fontFamily
@@ -70,6 +71,7 @@ Item {
         }
 
         Text {
+            textFormat: Text.PlainText
             text: "Drag a pill to move it. Click it to show or hide it."
             color: Theme.t2
             font.family: Theme.fontFamily
@@ -145,6 +147,7 @@ Item {
         y: at.y - height / 2
 
         Text {
+            textFormat: Text.PlainText
             anchors.centerIn: parent
             text: BarConfig.pillNames[page.dragId] || ""
             color: Theme.t1

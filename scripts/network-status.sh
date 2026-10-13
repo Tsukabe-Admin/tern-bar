@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 # Network status for tern-bar, with an option to hide your IP address.
 # Prints one line of JSON: {"text", "tooltip", "class"}.
+#
+# The IP is hidden unless $XDG_STATE_HOME/tern-bar/show_ip exists, so a fresh
+# install never shows it.
 
-STATE_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/tern-bar/hide_ip"
+STATE_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/tern-bar/show_ip"
 
 # Escape a value for a JSON string literal.
 json_escape() {
@@ -10,6 +13,9 @@ json_escape() {
     s=${s//\\/\\\\}
     s=${s//\"/\\\"}
     s=${s//$'\n'/\\n}
+    # Any other control byte (a TAB in an SSID, say) would make the JSON
+    # invalid, and the bar would keep showing the previous label.
+    s=${s//[[:cntrl:]]/ }
     printf '%s' "$s"
 }
 
@@ -32,34 +38,34 @@ if [ -d "/sys/class/net/$IFACE/wireless" ]; then
     [ -z "$SSID" ] && SSID="$IFACE"
 
     if [ -f "$STATE_FILE" ]; then
-        TEXT="󰤨  ${SSID}"
-        TOOLTIP="Interface: ${IFACE}
-SSID: ${SSID}
-IP: [Hidden for Privacy]
-(Click to reveal IP)"
-        CLASS="wifi privacy"
-    else
         TEXT="󰤨  ${SSID} (${IP})"
         TOOLTIP="Interface: ${IFACE}
 SSID: ${SSID}
 IP: ${IP}
 (Click to hide IP)"
         CLASS="wifi"
+    else
+        TEXT="󰤨  ${SSID}"
+        TOOLTIP="Interface: ${IFACE}
+SSID: ${SSID}
+IP: [Hidden for Privacy]
+(Click to reveal IP)"
+        CLASS="wifi privacy"
     fi
 else
     # Ethernet
     if [ -f "$STATE_FILE" ]; then
-        TEXT="󰈀  • • • • • •"
-        TOOLTIP="Interface: ${IFACE}
-IP: [Hidden for Privacy]
-(Click to reveal IP)"
-        CLASS="ethernet privacy"
-    else
         TEXT="󰈀  ${IP}"
         TOOLTIP="Interface: ${IFACE}
 IP: ${IP}
 (Click to hide IP)"
         CLASS="ethernet"
+    else
+        TEXT="󰈀  • • • • • •"
+        TOOLTIP="Interface: ${IFACE}
+IP: [Hidden for Privacy]
+(Click to reveal IP)"
+        CLASS="ethernet privacy"
     fi
 fi
 

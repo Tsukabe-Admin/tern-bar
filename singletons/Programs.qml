@@ -10,7 +10,8 @@ Singleton {
     id: root
 
     // program name → true, for: wlsunset blueman-manager cliphist wl-copy
-    // swaylock, plus the pseudo-name "power-profiles" (the D-Bus service).
+    // swaylock swaync-client, plus the pseudo-name "power-profiles" (the D-Bus
+    // service).
     property var found: ({})
     // The terminal for desktop entries with Terminal=true: $TERMINAL, else the
     // first one installed of xdg-terminal-exec kitty foot alacritty ghostty wezterm.
@@ -35,7 +36,7 @@ Singleton {
     Process {
         id: probe
         command: ["sh", "-c",
-            "for p in wlsunset blueman-manager cliphist wl-copy swaylock; do "
+            "for p in wlsunset blueman-manager cliphist wl-copy swaylock swaync-client; do "
             + "command -v \"$p\" >/dev/null 2>&1 && echo \"have $p\"; done; "
             + "for t in xdg-terminal-exec kitty foot alacritty ghostty wezterm; do "
             + "command -v \"$t\" >/dev/null 2>&1 && { echo \"term $t\"; break; }; done; "

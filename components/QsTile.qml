@@ -33,6 +33,7 @@ Rectangle {
     }
 
     Text {
+        textFormat: Text.PlainText
         id: glyphText
         x: 14
         anchors.verticalCenter: parent.verticalCenter
@@ -51,9 +52,11 @@ Rectangle {
         spacing: 2
 
         Text {
+            textFormat: Text.PlainText
             width: parent.width
             text: tile.title
             elide: Text.ElideRight
+            maximumLineCount: 1
             color: Theme.t1
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSize
@@ -61,9 +64,11 @@ Rectangle {
         }
 
         Text {
+            textFormat: Text.PlainText
             width: parent.width
             text: tile.subtitle
             elide: Text.ElideRight
+            maximumLineCount: 1
             color: Theme.t3
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSize - 2

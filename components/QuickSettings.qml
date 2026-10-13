@@ -116,9 +116,10 @@ PopupWindow {
                 }
 
                 QsTile {
+                    enabled: Swaync.available
                     glyph: "\uf1f6"
                     title: "Do not disturb"
-                    subtitle: Swaync.dnd ? "On" : "Off"
+                    subtitle: !Swaync.available ? "Install swaync" : Swaync.dnd ? "On" : "Off"
                     on: Swaync.dnd
                     onClicked: Swaync.toggleDnd()
                 }
@@ -139,6 +140,7 @@ PopupWindow {
                 spacing: 6
 
                 Text {
+                    textFormat: Text.PlainText
                     text: "Power profile"
                     color: Theme.t3
                     font.family: Theme.fontFamily
@@ -175,6 +177,7 @@ PopupWindow {
                 spacing: 2
 
                 Text {
+                    textFormat: Text.PlainText
                     text: "Bluetooth devices"
                     color: Theme.t3
                     font.family: Theme.fontFamily
@@ -198,6 +201,7 @@ PopupWindow {
                         }
 
                         Text {
+                            textFormat: Text.PlainText
                             anchors.left: parent.left
                             anchors.leftMargin: 8
                             anchors.right: devState.left
@@ -205,12 +209,14 @@ PopupWindow {
                             anchors.verticalCenter: parent.verticalCenter
                             text: devRow.modelData.deviceName || devRow.modelData.name
                             elide: Text.ElideRight
+                            maximumLineCount: 1
                             color: Theme.t1
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontSize
                         }
 
                         Text {
+                            textFormat: Text.PlainText
                             id: devState
                             anchors.right: parent.right
                             anchors.rightMargin: 8

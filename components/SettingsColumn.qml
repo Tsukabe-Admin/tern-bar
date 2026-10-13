@@ -26,6 +26,7 @@ Item {
     }
 
     Text {
+        textFormat: Text.PlainText
         id: titleLabel
         anchors.left: parent.left
         anchors.top: parent.top
@@ -66,6 +67,7 @@ Item {
             border.color: Theme.rim
 
             Text {
+                textFormat: Text.PlainText
                 anchors.centerIn: parent
                 text: "Drop pills here"
                 color: Theme.t3

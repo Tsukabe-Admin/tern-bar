@@ -56,11 +56,13 @@ Item {
     }
 
     Text {
+        textFormat: Text.PlainText
         id: label
         anchors.centerIn: parent
         width: Math.max(0, root.width - 2 * root.sidePadding)
         horizontalAlignment: Text.AlignHCenter
         elide: Text.ElideRight
+        maximumLineCount: 1
         text: root.text
         color: root.fg
         font.family: Theme.fontFamily

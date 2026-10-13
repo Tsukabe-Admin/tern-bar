@@ -47,6 +47,7 @@ Item {
         }
 
         Text {
+            textFormat: Text.PlainText
             anchors.centerIn: parent
             visible: row.iconSource === ""
             text: row.modelData.glyph || "\uf2d0"
@@ -65,6 +66,7 @@ Item {
         spacing: 1
 
         Text {
+            textFormat: Text.PlainText
             width: parent.width
             text: row.modelData.title
             elide: Text.ElideRight
@@ -76,6 +78,7 @@ Item {
         }
 
         Text {
+            textFormat: Text.PlainText
             width: parent.width
             visible: text !== ""
             text: row.modelData.subtitle || ""

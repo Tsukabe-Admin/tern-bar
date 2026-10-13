@@ -144,7 +144,10 @@ Singleton {
         }
 
         return {
-            folder: (typeof o.folder === "string" && o.folder !== "") ? o.folder : d.folder,
+            // An absolute path only: this value is handed to `find` as its
+            // first argument, where something like "-delete" would be read as
+            // an action.
+            folder: (typeof o.folder === "string" && o.folder.indexOf("/") === 0) ? o.folder : d.folder,
             wallpapers: wallpapers,
             fill: root.pickFrom(o.fill, root.fills, d.fill),
             fillColor: (typeof o.fillColor === "string" && /^#[0-9a-fA-F]{6}$/.test(o.fillColor))
@@ -312,6 +315,9 @@ Singleton {
     }
 
     function setFolder(path) {
+        // Absolute paths only, for the same reason normalize() enforces it.
+        if (typeof path !== "string" || path.indexOf("/") !== 0)
+            return;
         root.update({ folder: path });
         root.rescan();
     }
@@ -442,6 +448,7 @@ Singleton {
         onExited: (exitCode, exitStatus) => {
             root.lastError = (exitCode === 0) ? ""
                 : (exitCode === 3) ? "Install awww to set wallpapers"
+                : (exitCode === 5) ? "Install jq to use the Wallpaper tab"
                 : "Couldn't set the wallpaper (wallpaper.sh exited " + exitCode + ")";
 
             const queued = root.pendingWallpaper;
@@ -458,6 +465,8 @@ Singleton {
             root.lastError = (exitCode === 0) ? ""
                 : (exitCode === 3) ? "Install matugen to take colours from the wallpaper, or pick a theme"
                 : (exitCode === 4) ? "Choose an All screens wallpaper first, or pick a theme"
+                : (exitCode === 5) ? "Install jq to use the Wallpaper tab"
+                : (exitCode === 6) ? "Install python3 to use the built-in themes"
                 : "Couldn't recolour (theme-sync.sh exited " + exitCode + ")";
             if (exitCode === 0)
                 Theme.reloadPalette();
@@ -511,13 +520,13 @@ Singleton {
         const path = line.slice(tab + 1);
         if (path === "")
             return;
-        const next = root.scanBuffer.slice();
-        next.push({
+        // Nothing binds to the buffer, so appending in place is safe and keeps
+        // this O(1) per file instead of copying the whole array each time.
+        root.scanBuffer.push({
             path: path,
             name: path.slice(path.lastIndexOf("/") + 1),
             mtime: isFinite(mtime) ? mtime : 0
         });
-        root.scanBuffer = next;
     }
 
     Process {

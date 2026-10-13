@@ -7,7 +7,8 @@ import Quickshell.Io
 // Bar preferences, persisted to ~/.config/tern-bar/bar.json: the order of the pills in the
 // bar's three groups ("left", "center", "right") and which of them are hidden.
 // Edit it from the settings page — the gear in the tools pill, a right-click on
-// the launcher, or Mod+B — or by hand; the bar reloads on save.
+// the launcher, or Mod+B — or by hand, then restart the bar (the file is read
+// once at start).
 Singleton {
     id: root
 
@@ -39,6 +40,10 @@ Singleton {
     property var layout: root.normalize(null, "")
     // Pills that keep their slot in the layout but are not shown on the bar.
     property var hidden: []
+    // True once bar.json has been read — or its absence established. Pills that
+    // pause their polling while hidden must wait for it: until the file lands,
+    // `hidden` is the empty default and a hidden pill would poll once.
+    property bool configLoaded: false
     // Night light on/off (singletons/NightLight.qml), kept across restarts.
     property bool nightLight: false
     // Whether the settings page is open, and which of its two tabs it shows.
@@ -234,6 +239,10 @@ Singleton {
                 root.nightLight = o.nightLight === true;
             } catch (e) {
             }
+            root.configLoaded = true;
         }
+
+        // No bar.json yet (a fresh install): the defaults above are the answer.
+        onLoadFailed: root.configLoaded = true
     }
 }

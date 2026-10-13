@@ -83,6 +83,7 @@ PanelWindow {
             spacing: 12
 
             Text {
+                textFormat: Text.PlainText
                 anchors.verticalCenter: parent.verticalCenter
                 width: 20
                 horizontalAlignment: Text.AlignHCenter
@@ -112,6 +113,7 @@ PanelWindow {
             }
 
             Text {
+                textFormat: Text.PlainText
                 anchors.verticalCenter: parent.verticalCenter
                 width: 44
                 text: osd.muted ? "Muted" : Math.round(osd.vol * 100) + "%"
