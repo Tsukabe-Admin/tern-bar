@@ -3,7 +3,7 @@ import "../singletons"
 
 // Tern pill: live block count from `tern ls --json`.
 //   left click  — the capsule morphs out into a new terminal window
-//   right click — moves this pill to the bar's next group (persisted)
+//   right click — moves this pill to the end of the next group (saved in bar.json)
 Row {
     id: root
 

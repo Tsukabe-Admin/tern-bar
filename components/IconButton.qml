@@ -1,6 +1,6 @@
 import QtQuick
 
-// Single-glyph action button (launcher, wallpaper, cheatsheet, power).
+// Single-glyph action button (launcher, wallpaper, cheatsheet, settings, power).
 BarItem {
     id: root
 
