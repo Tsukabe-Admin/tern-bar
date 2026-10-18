@@ -150,12 +150,16 @@ def from_wttr():
             "icon": w_icon,
             "max": f"{max_c}°",
             "min": f"{min_c}°",
+            "maxC": max_c,
+            "minC": min_c,
             "desc": w_desc.strip(),
         })
 
     return {
         "temp": f"{temp_c}°C",
         "feelsLike": f"{feels_c}°C",
+        "tempC": temp_c,
+        "feelsC": feels_c,
         "icon": icon,
         "desc": desc.strip(),
         "forecast": forecast,
@@ -219,12 +223,16 @@ def from_open_meteo():
             "icon": d_icon,
             "max": f"{hi}°",
             "min": f"{lo}°",
+            "maxC": hi,
+            "minC": lo,
             "desc": d_desc,
         })
 
     return {
         "temp": f"{temp_c}°C",
         "feelsLike": f"{feels_c}°C",
+        "tempC": temp_c,
+        "feelsC": feels_c,
         "icon": icon,
         "desc": desc,
         "forecast": forecast,

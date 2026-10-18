@@ -240,6 +240,51 @@ PopupWindow {
                     }
                 }
 
+                Item {
+                    width: parent.width
+                    height: 16
+
+                    Row {
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 6
+
+                        Text {
+                            textFormat: Text.PlainText
+                            text: "Units"
+                            color: Theme.t4
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontSize - 2
+                        }
+
+                        Text {
+                            textFormat: Text.PlainText
+                            text: "°C"
+                            color: BarConfig.weatherFahrenheit ? Theme.t3 : Theme.accent
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontSize - 2
+                            font.bold: !BarConfig.weatherFahrenheit
+
+                            TapHandler {
+                                onTapped: BarConfig.setWeatherFahrenheit(false)
+                            }
+                        }
+
+                        Text {
+                            textFormat: Text.PlainText
+                            text: "°F"
+                            color: BarConfig.weatherFahrenheit ? Theme.accent : Theme.t3
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontSize - 2
+                            font.bold: BarConfig.weatherFahrenheit
+
+                            TapHandler {
+                                onTapped: BarConfig.setWeatherFahrenheit(true)
+                            }
+                        }
+                    }
+                }
+
                 Row {
                     visible: Weather.forecast.length > 0
                     width: parent.width
@@ -282,7 +327,8 @@ PopupWindow {
                                 textFormat: Text.PlainText
                                 width: parent.width
                                 horizontalAlignment: Text.AlignHCenter
-                                text: String(dayCol.modelData.max || "") + "/" + String(dayCol.modelData.min || "")
+                                text: Weather.formatTemp(dayCol.modelData.maxC, false)
+                                    + "/" + Weather.formatTemp(dayCol.modelData.minC, false)
                                 elide: Text.ElideRight
                                 maximumLineCount: 1
                                 color: Theme.t3

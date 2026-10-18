@@ -176,6 +176,9 @@ which part of the bar, edit `matugen/palette.json`.
   (`ipwho.is`, or `wttr.in`) where you are, then fetches the forecast from Open-Meteo — no API
   key, but your IP is sent. Set `TERN_BAR_WEATHER_LOCATION="City"` or
   `TERN_BAR_WEATHER_COORDS="lat,lon"` in the bar's environment to skip the IP lookup.
+- **Weather units:** open the forecast (click the weather or clock pill) and tap °C / °F. The
+  choice is saved in `bar.json` (`weatherFahrenheit`); it re-formats the cached numbers, so no new
+  fetch is needed.
 - **Tray menus** close when you click anywhere else.
 
 ## What's inside

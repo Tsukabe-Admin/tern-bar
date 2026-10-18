@@ -49,6 +49,8 @@ Singleton {
     property bool configLoaded: false
     // Night light on/off (singletons/NightLight.qml), kept across restarts.
     property bool nightLight: false
+    // Weather in Fahrenheit instead of Celsius; toggled from the forecast popup.
+    property bool weatherFahrenheit: false
     // Whether the settings page is open, and which of its two tabs it shows.
     // Neither is persisted, so a reload closes the page on the Layout tab.
     property bool settingsOpen: false
@@ -196,8 +198,20 @@ Singleton {
         root.save();
     }
 
+    function setWeatherFahrenheit(on) {
+        if (root.weatherFahrenheit === !!on)
+            return;
+        root.weatherFahrenheit = !!on;
+        root.save();
+    }
+
     function save() {
-        file.setText(JSON.stringify({ layout: root.layout, hidden: root.hidden, nightLight: root.nightLight }, null, 2) + "\n");
+        file.setText(JSON.stringify({
+            layout: root.layout,
+            hidden: root.hidden,
+            nightLight: root.nightLight,
+            weatherFahrenheit: root.weatherFahrenheit
+        }, null, 2) + "\n");
     }
 
     // ── Settings page ──────────────────────────────────────────────────────
@@ -248,6 +262,7 @@ Singleton {
                     .filter((id, i, a) => root.pillIds.indexOf(id) !== -1 && a.indexOf(id) === i);
                 root.layout = root.normalize(o.layout, o.ternPillSide);
                 root.nightLight = o.nightLight === true;
+                root.weatherFahrenheit = o.weatherFahrenheit === true;
             }
         } catch (e) {
         }
