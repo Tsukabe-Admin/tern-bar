@@ -32,15 +32,21 @@ PanelWindow {
     implicitHeight: Theme.barHeight
     color: "transparent"
 
-    Row {
+    // A crowded row turns into one island: see components/PillRow.qml and
+    // components/GroupBackground.qml. The backgrounds come first so the pills
+    // paint on top of them.
+    GroupBackground { row: leftRow }
+    GroupBackground { row: centerRow }
+    GroupBackground { row: rightRow }
+
+    PillRow {
         id: leftRow
         anchors.left: parent.left
         anchors.leftMargin: Theme.barPadding
         anchors.verticalCenter: parent.verticalCenter
-        spacing: Theme.pillSpacing
     }
 
-    Row {
+    PillRow {
         id: centerRow
         // Keep the centre group between the side groups. On a wide bar this is
         // exactly the centred position; on a narrow output — or when the tray
@@ -50,15 +56,13 @@ PanelWindow {
         readonly property real rightLimit: rightRow.x - width - Theme.pillSpacing
         x: Math.max(leftLimit, Math.min(preferredX, rightLimit))
         anchors.verticalCenter: parent.verticalCenter
-        spacing: Theme.pillSpacing
     }
 
-    Row {
+    PillRow {
         id: rightRow
         anchors.right: parent.right
         anchors.rightMargin: Theme.barPadding
         anchors.verticalCenter: parent.verticalCenter
-        spacing: Theme.pillSpacing
     }
 
     // Where every pill is declared, and where the hidden ones stay. Invisible,

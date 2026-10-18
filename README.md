@@ -151,6 +151,8 @@ which part of the bar, edit `matugen/palette.json`.
 ## Make it yours
 
 - **Sizes and the fallback colors:** `singletons/Theme.qml`
+- **Crowded rows:** a row with four or more visible pills merges into one continuous island
+  (`pillMergeThreshold` in `singletons/Theme.qml`). Set it to 5 to keep more capsules separate.
 - **Rearrange the bar:** open the settings page — the gear in the tools pill, a right-click on the
   launcher, or Mod+B — then drag a pill to another group or click it to show/hide it. Every change
   lands in `~/.config/tern-bar/bar.json`, and the page applies to all screens at once. Right-clicking the Tern pill

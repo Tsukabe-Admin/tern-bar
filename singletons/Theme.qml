@@ -102,6 +102,10 @@ Singleton {
     readonly property int pillHeight: 32
     readonly property int pillRadius: 16  // stadium: half the pill height
     readonly property int pillSpacing: 6
+    // A row with this many visible capsules merges into one continuous island
+    // (the individual fills fade out and the gaps close). Raise it to keep
+    // capsules separate, or lower it to merge sooner.
+    readonly property int pillMergeThreshold: 4
     readonly property int pillPadding: 3       // vertical inset (items stay 26px tall)
     readonly property int pillPaddingSide: 6   // horizontal breathing room inside a capsule
     readonly property int itemRadius: 10

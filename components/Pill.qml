@@ -10,13 +10,23 @@ Rectangle {
     default property alias content: inner.data
 
     readonly property bool hovered: hoverHandler.hovered
+    // The parent row draws one GroupBackground when it has enough pills; the
+    // individual fill and rim then fade away so the row reads as one capsule.
+    readonly property bool merged: parent !== null && parent.merged === true
 
     implicitWidth: inner.implicitWidth + 2 * Theme.pillPaddingSide
     implicitHeight: Theme.pillHeight
     radius: Theme.pillRadius
-    color: Theme.popBg
-    border.width: 1
+    color: merged ? "transparent" : Theme.popBg
+    border.width: merged ? 0 : 1
     border.color: Theme.rim
+
+    Behavior on color { ColorAnimation { duration: Theme.motionSlow } }
+    Behavior on border.width { NumberAnimation { duration: Theme.motionSlow } }
+
+    // Visibility changes (a media player appears, the title empties, a pill is
+    // hidden) change how crowded the row is; let it recount and merge/unmerge.
+    onVisibleChanged: if (parent && parent.recount) parent.recount()
 
     HoverHandler {
         id: hoverHandler
