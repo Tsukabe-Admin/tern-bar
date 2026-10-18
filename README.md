@@ -199,6 +199,21 @@ NIRI_SOCKET=$(ls /run/user/$UID/niri.wayland-1.*.sock) quickshell -c tern-bar --
 
 Without `NIRI_SOCKET` the bar still starts, but workspaces and the window name stay empty.
 
+## An experiment in vibecoding
+
+This bar is an experiment in **vibecoding** — building software by describing what you want to an
+AI coding assistant and iterating on what it produces. It is a new way to work, and I wanted to
+see how far it can go: not a toy demo, but a daily-driver bar with a launcher, settings, wallpaper
+tools, weather, media controls and the rest.
+
+It runs every day on my machine (Arch, niri, Quickshell 0.3.2). It has not been tested on every
+distro, GPU or Quickshell version, so treat it as a working experiment rather than a finished
+product. The parts that matter were checked on the live desktop, not only compiled.
+
+Bug reports, ideas, pull requests and questions are welcome — especially from people who know QML
+or Quickshell better than I do. Screenshots of odd behaviour are just as useful as patches. I am
+happy to help with this project or any other; open an issue or say hello.
+
 ## License
 
 MIT. See `LICENSE`.
