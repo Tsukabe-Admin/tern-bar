@@ -28,9 +28,25 @@ Singleton {
         return n;
     }
 
+    // `tern` with no argument only hands the launch to a running window, and
+    // that window has no directory to put a tab in, so nothing appears. Since
+    // 0.7 the CLI opens a *tab* (`tern` typed in a shell, `tern .`), never a
+    // window, while a window exists: pass home to make the tab real, and bring
+    // an existing window forward so the tab lands on screen.
+    readonly property string home: String(Quickshell.env("HOME") || "")
+
     function open() {
-        if (root.installed)
-            Quickshell.execDetached([root.bin]);
+        if (!root.installed)
+            return;
+        var id = -1;
+        for (var i = 0; i < Niri.windows.length; i++) {
+            var w = Niri.windows[i];
+            if (w.app_id === "so.stencil.tern" && (id < 0 || w.id < id))
+                id = w.id;
+        }
+        if (id >= 0)
+            Niri.focusWindow(id);
+        Quickshell.execDetached([root.bin, root.home]);
     }
 
     Process {

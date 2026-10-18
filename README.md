@@ -10,16 +10,22 @@ small rounded "pills" that can follow your wallpaper's colors.
 - Workspaces and the name of the window you're using
 - An app launcher built into the bar: apps, open windows, a calculator, clipboard history and
   power actions, in a card that drops out of the launcher pill
-- Quick settings: Wi-Fi, Bluetooth (with your paired devices), Do Not Disturb, night light and
-  power profile
-- A month calendar under the clock
-- A small volume pop-up whenever the volume changes
-- Date and time
-- What's playing, with a click to pause
+- Quick settings: Wi-Fi, Bluetooth (with your paired devices), Do Not Disturb, night light,
+  microphone mute, screen brightness and microphone input volume sliders, and power profile
+- A month calendar and a five-day weather forecast under the clock and weather pills
+- A small volume or brightness pop-up whenever the volume or screen brightness changes
+- Date, time and current weather (condition icon + temperature, no API key needed)
+- What's playing, with an expanded media player card (album art, track progress/seek bar, previous /
+  play-pause / next, and a player switcher) on left-click, or quick play/pause on right/middle-click
+- Pending Arch/Pacman/AUR package updates (`󰏗 <count>`), with a click to update in your terminal
+- Active XKB keyboard layout indicator (`󰌌 US`, `JP`, …) from niri, with a click or scroll to switch
+- System battery status with charging state and low-battery warnings (hidden on desktops without a battery)
+- Microphone input status and mute pill (`󰍬` / `󰍭`) alongside output volume
 - CPU and memory at a glance
 - Wi-Fi, volume, notifications and a power button
 - A system tray with proper right-click menus
-- A Tern pill that shows how many Tern windows are open, and opens a new one (only if you use Tern)
+- A Tern pill that shows how many Tern windows are open, and opens a terminal tab in one — or a new
+  window when none is open (only if you use Tern)
 - A wallpaper picker and colour controls, in the same window as the layout editor
 - An optional little desktop pet — needs the tern-poke plugin for Tern (not released yet)
 
@@ -50,10 +56,13 @@ binds {
     Mod+W { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "settings" "wallpaper"; }
     Mod+Space { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "launcher" "toggle"; }
     Mod+V { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "launcher" "clipboard"; }
+    Mod+Return { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "tern" "open"; }
+}
 ```
 
 (If you already have a `binds { }` block, put those lines inside it instead. Other things a key can call:
-`launcher power`, `launcher close`, `bar calendar`, `bar quickSettings`, `bar close`.)
+`launcher power`, `launcher close`, `bar calendar`, `bar media`, `bar quickSettings`, `bar close`,
+`tern open`.)
 
 Edit any file and the bar updates on the spot. Your own settings are saved in
 `~/.config/tern-bar/`, never inside this folder, so `git pull` is always safe.
@@ -66,17 +75,19 @@ Each one is only needed for the part it powers; the rest of the bar works withou
 |---|---|
 | `awww` (and its `awww-daemon`) | setting the wallpaper (Wallpaper tab) |
 | `matugen` | colours taken from the wallpaper (the built-in themes don't need it) |
-| `jq`, `python3` | the wallpaper and colour scripts |
+| `jq`, `python3` | the wallpaper, colour and weather scripts |
 | `zenity` | the "Change folder…" picker |
 | `swaync` | the notification bell and Do Not Disturb (the bell hides itself without it) |
 | `cliphist`, `wl-clipboard` | clipboard history in the launcher (with `wl-paste --watch cliphist store` running); copying calculator answers |
 | `swaylock` | Lock and Suspend (without it, `loginctl lock-session` is used) |
 | `wlsunset` | night light |
-| `systemd` (`systemctl`, `loginctl`, `busctl`) | Suspend, Reboot and Power off; Lock when swaylock is missing; finding the power-profile service |
-| `power-profiles-daemon` | the power profile switch |
+| `brightnessctl`, `/sys/class/backlight` | the screen brightness slider in quick settings and the brightness OSD (hidden when no backlight device exists) |
+| `checkupdates` (`pacman-contrib`), `paru` or `yay` | the package updates pill (hidden when 0 updates are pending or `pacman` is absent) |
+| `systemd` (`systemctl`, `loginctl`, `busctl`, `udevadm`) | Suspend, Reboot and Power off; Lock when swaylock is missing; finding the power-profile service; backlight uevents |
+| `power-profiles-daemon`, UPower | the power profile switch; the system battery pill (hidden on desktops without a battery) |
 | BlueZ, `blueman` | the Bluetooth tile and device list; the "Bluetooth settings" button |
 | NetworkManager | the Wi-Fi tile |
-| `pavucontrol`, PipeWire | right-click on volume; the volume pill itself |
+| `pavucontrol`, PipeWire | right-click on volume or microphone; the volume and microphone pills and quick-settings controls |
 | `nm-connection-editor`, `nmcli` or `iwgetid` | right-click on network; the Wi-Fi name |
 | `notify-send` | the "IP hidden / shown" message |
 | `tern` | the Tern pill — it hides itself when `tern` isn't on your PATH or in `~/.local/bin` |
@@ -159,6 +170,10 @@ which part of the bar, edit `matugen/palette.json`.
 - **Quick settings:** the sliders button in the right-hand pill. **Calendar:** click the clock.
 - **Your IP stays hidden:** the network pill shows only the Wi-Fi name until you click it; click
   again to hide the IP. The choice is the file `~/.local/state/tern-bar/show_ip`.
+- **Weather lookup:** the weather pill is on by default and asks a geolocation service
+  (`ipwho.is`, or `wttr.in`) where you are, then fetches the forecast from Open-Meteo — no API
+  key, but your IP is sent. Set `TERN_BAR_WEATHER_LOCATION="City"` or
+  `TERN_BAR_WEATHER_COORDS="lat,lon"` in the bar's environment to skip the IP lookup.
 - **Tray menus** close when you click anywhere else.
 
 ## What's inside

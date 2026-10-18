@@ -14,6 +14,7 @@ Item {
 
     signal clicked()
     signal rightClicked()
+    signal middleClicked()
     signal scrolled(int delta)
 
     // The width animates, but the label's text changes instantly; the label is
@@ -81,10 +82,12 @@ Item {
 
     TapHandler {
         id: tapHandler
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         onTapped: (eventPoint, button) => {
             if (button === Qt.RightButton)
                 root.rightClicked();
+            else if (button === Qt.MiddleButton)
+                root.middleClicked();
             else
                 root.clicked();
         }

@@ -25,4 +25,8 @@ Region {
     y: root.shown ? root.boxY : 0
     width: root.shown ? root.pill.width : 0
     height: root.shown ? root.pill.height : 0
+    // Round the blurred area like the capsule itself. Without this the blur is
+    // a plain rectangle, so its square corners show around every rounded pill.
+    // Clamped to half the shortest side, the most a corner can round.
+    radius: root.shown ? Math.min(root.pill.radius || 0, root.pill.width / 2, root.pill.height / 2) : 0
 }

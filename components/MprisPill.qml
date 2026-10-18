@@ -2,42 +2,36 @@ import QtQuick
 import Quickshell.Services.Mpris
 import "../singletons"
 
-// Media pill: prefers the playing player, falls back to the first one.
-// Hidden when nothing is on the bus. Click toggles playback.
+// Media pill: prefers the selected or playing player, falls back to the first
+// one. Hidden when nothing is on the bus. Left-click opens the media popup;
+// right-click or middle-click toggles playback directly.
 BarItem {
     id: root
 
-    readonly property var player: pickPlayer()
+    readonly property var player: Popups.pickPlayer(Mpris.players.values)
     readonly property bool hasPlayer: root.player !== null
 
-    function pickPlayer() {
-        var arr = Mpris.players.values;
-        if (!arr)
-            return null;
-        var first = null;
-        for (var i = 0; i < arr.length; i++) {
-            var p = arr[i];
-            if (!first)
-                first = p;
-            if (p.isPlaying)
-                return p;
-        }
-        return first;
+    function togglePlay() {
+        if (!root.player)
+            return;
+        if (root.player.canTogglePlaying)
+            root.player.togglePlaying();
+        else if (root.player.isPlaying && root.player.canPause)
+            root.player.pause();
+        else if (!root.player.isPlaying && root.player.canPlay)
+            root.player.play();
     }
 
-    visible: root.hasPlayer
     text: {
         var p = root.player;
         if (!p)
             return "";
         var icon = (p.identity && p.identity.toLowerCase().indexOf("spotify") !== -1) ? "󰓇" : "󰎆";
-        var title = p.trackTitle || "";
+        var title = p.trackTitle || p.identity || "";
         return icon + "  " + (title.length > 35 ? title.substr(0, 35) : title);
     }
     fg: Theme.t2
 
-    onClicked: {
-        if (root.player && root.player.canTogglePlaying)
-            root.player.togglePlaying();
-    }
+    onRightClicked: root.togglePlay()
+    onMiddleClicked: root.togglePlay()
 }

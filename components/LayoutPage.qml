@@ -58,7 +58,7 @@ Item {
         anchors.top: parent.top
         anchors.leftMargin: 24
         anchors.rightMargin: 24
-        anchors.topMargin: 60
+        anchors.topMargin: 20
         spacing: 4
 
         Text {
@@ -83,7 +83,7 @@ Item {
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.rightMargin: 24
-        anchors.topMargin: 60
+        anchors.topMargin: 20
         text: "Reset layout"
         onClicked: BarConfig.resetLayout()
     }
@@ -96,8 +96,8 @@ Item {
         anchors.bottom: parent.bottom
         anchors.leftMargin: 24
         anchors.rightMargin: 24
-        anchors.topMargin: 20
-        anchors.bottomMargin: 24
+        anchors.topMargin: 16
+        anchors.bottomMargin: 20
         spacing: 16
 
         SettingsColumn {
@@ -134,8 +134,8 @@ Item {
         id: ghost
         visible: page.dragId !== ""
         width: leftCol.width
-        height: 36
-        radius: 18
+        height: 32
+        radius: 16
         color: Theme.popBg
         border.width: 1
         border.color: Theme.accent

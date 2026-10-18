@@ -11,3 +11,6 @@ singleton Popups 1.0 Popups.qml
 singleton Swaync 1.0 Swaync.qml
 singleton NightLight 1.0 NightLight.qml
 singleton Launcher 1.0 Launcher.qml
+singleton Brightness 1.0 Brightness.qml
+singleton Weather 1.0 Weather.qml
+singleton Updates 1.0 Updates.qml

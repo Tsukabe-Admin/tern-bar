@@ -13,9 +13,15 @@ Item {
     // Slot the pointer is hovering during a drag, or -1 when it is elsewhere.
     property int dropIndex: -1
 
-    readonly property int rowHeight: 36
-    readonly property int pitch: root.rowHeight + 6
     readonly property int count: (BarConfig.layout[root.side] || []).length
+    readonly property real availHeight: Math.max(120, root.height - list.y)
+    readonly property int gap: root.count > 1
+        ? Math.max(2, Math.min(5, Math.floor((root.availHeight - root.count * 22) / (root.count - 1))))
+        : 5
+    readonly property int rowHeight: root.count > 0
+        ? Math.max(18, Math.min(34, Math.floor((root.availHeight - Math.max(0, root.count - 1) * root.gap) / root.count)))
+        : 32
+    readonly property int pitch: root.rowHeight + root.gap
 
     // Slot a point lands in: above the first row is slot 0, past the last row is
     // the end of the list. Rounded, so the middle of a gap picks the nearer of
@@ -42,8 +48,8 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: titleLabel.bottom
-        anchors.topMargin: 10
-        spacing: 6
+        anchors.topMargin: 8
+        spacing: root.gap
 
         Repeater {
             model: BarConfig.layout[root.side]
@@ -53,6 +59,7 @@ Item {
                 pillId: modelData
                 page: root.page
                 width: list.width
+                height: root.rowHeight
             }
         }
 
@@ -80,7 +87,7 @@ Item {
     Rectangle {
         visible: root.dropIndex >= 0
         x: 0
-        y: list.y + root.dropIndex * root.pitch - 4
+        y: list.y + root.dropIndex * root.pitch - Math.ceil(root.gap / 2) - 1
         width: list.width
         height: 2
         radius: 1

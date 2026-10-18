@@ -37,6 +37,7 @@ PanelWindow {
         y: card.y
         width: card.width
         height: card.height
+        radius: card.radius
     }
 
     onVisibleChanged: {

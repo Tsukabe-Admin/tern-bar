@@ -65,7 +65,7 @@ Singleton {
     function run(args) {
         if (!root.status || !root.status.engine)
             return;
-        Quickshell.execDetached(["python3", root.status.engine, "--data", root.status.data].concat(args));
+        Quickshell.execDetached(["python3", "-B", root.status.engine, "--data", root.status.data].concat(args));
     }
 
     property string buffer: ""

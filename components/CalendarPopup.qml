@@ -28,7 +28,8 @@ PopupWindow {
     implicitWidth: (pop.screenInfo ? pop.screenInfo.width : 1000) - Theme.barMarginSide
     implicitHeight: (pop.screenInfo ? pop.screenInfo.height : 1000) - Theme.barMarginTop
 
-    readonly property point anchorPos: (pop.visible && pop.anchorItem)
+    readonly property bool hasAnchor: pop.anchorItem !== null && pop.anchorItem.visible
+    readonly property point anchorPos: (pop.visible && pop.hasAnchor)
         ? pop.anchorItem.mapToItem(null, 0, 0) : Qt.point(0, 0)
 
     onVisibleChanged: {
@@ -71,8 +72,9 @@ PopupWindow {
         id: card
         width: 7 * 36 + 24
         height: col.implicitHeight + 24
-        x: Math.max(0, Math.min(pop.anchorPos.x + (pop.anchorItem ? pop.anchorItem.width / 2 : 0) - card.width / 2,
-            pop.width - card.width))
+        x: pop.hasAnchor
+            ? Math.max(0, Math.min(pop.anchorPos.x + pop.anchorItem.width / 2 - card.width / 2, pop.width - card.width))
+            : Math.max(0, Math.round((pop.width - card.width) / 2))
         y: Theme.barHeight + 4
         radius: Theme.radiusCard
         color: Theme.popBg
@@ -189,6 +191,104 @@ PopupWindow {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontSize
                             font.bold: cell.isToday
+                        }
+                    }
+                }
+            }
+
+            Column {
+                visible: Weather.available
+                width: parent.width
+                spacing: 8
+
+                Rectangle {
+                    width: parent.width
+                    height: 1
+                    color: Theme.rim
+                }
+
+                Item {
+                    width: parent.width
+                    height: 24
+
+                    Text {
+                        textFormat: Text.PlainText
+                        anchors.left: parent.left
+                        anchors.right: feelsLabel.visible ? feelsLabel.left : parent.right
+                        anchors.rightMargin: feelsLabel.visible ? 8 : 0
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: Weather.icon + "  " + Weather.temp
+                            + (Weather.desc !== "" ? " · " + Weather.desc : "")
+                        elide: Text.ElideRight
+                        maximumLineCount: 1
+                        color: Theme.t1
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSize
+                        font.bold: true
+                    }
+
+                    Text {
+                        textFormat: Text.PlainText
+                        id: feelsLabel
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: Weather.feelsLike !== ""
+                        text: "Feels " + Weather.feelsLike
+                        color: Theme.t3
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSize - 2
+                    }
+                }
+
+                Row {
+                    visible: Weather.forecast.length > 0
+                    width: parent.width
+                    spacing: 4
+
+                    Repeater {
+                        model: Weather.forecast.slice(0, 5)
+
+                        Column {
+                            id: dayCol
+                            required property var modelData
+                            readonly property int count: Math.max(1, Math.min(5, Weather.forecast.length))
+                            width: (col.width - 4 * (dayCol.count - 1)) / dayCol.count
+                            spacing: 2
+
+                            Text {
+                                textFormat: Text.PlainText
+                                width: parent.width
+                                horizontalAlignment: Text.AlignHCenter
+                                text: String(dayCol.modelData.day || "")
+                                elide: Text.ElideRight
+                                maximumLineCount: 1
+                                color: Theme.t2
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontSize - 2
+                                font.bold: true
+                            }
+
+                            Text {
+                                textFormat: Text.PlainText
+                                width: parent.width
+                                horizontalAlignment: Text.AlignHCenter
+                                text: String(dayCol.modelData.icon || "󰖕")
+                                color: Theme.accent
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontSize + 3
+                            }
+
+                            Text {
+                                textFormat: Text.PlainText
+                                width: parent.width
+                                horizontalAlignment: Text.AlignHCenter
+                                text: String(dayCol.modelData.max || "") + "/" + String(dayCol.modelData.min || "")
+                                elide: Text.ElideRight
+                                maximumLineCount: 1
+                                color: Theme.t3
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontSize - 2
+                            }
                         }
                     }
                 }

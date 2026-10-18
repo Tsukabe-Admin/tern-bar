@@ -3,13 +3,15 @@ import Quickshell
 import Quickshell.Networking
 import Quickshell.Bluetooth
 import Quickshell.Services.UPower
+import Quickshell.Services.Pipewire
 import "../singletons"
 
-// Quick settings: Wi-Fi, Bluetooth, Do Not Disturb and night light tiles, the
-// power profile, paired Bluetooth devices (click to connect/disconnect) and
-// links to the full settings apps. Shown while Popups.open is "quick" on this
-// bar's screen. A tile whose service is missing is hidden; night light without
-// wlsunset says what to install.
+// Quick settings: Wi-Fi, Bluetooth, Do Not Disturb, night light and microphone
+// tiles, screen brightness and microphone input volume sliders, the power
+// profile, paired Bluetooth devices (click to connect/disconnect) and links to
+// the full settings apps. Shown while Popups.open is "quick" on this bar's
+// screen. A tile or slider whose hardware/service is missing is hidden; night
+// light without wlsunset says what to install.
 PopupWindow {
     id: pop
 
@@ -29,8 +31,18 @@ PopupWindow {
     implicitWidth: (pop.screenInfo ? pop.screenInfo.width : 1000) - Theme.barMarginSide
     implicitHeight: (pop.screenInfo ? pop.screenInfo.height : 1000) - Theme.barMarginTop
 
-    readonly property point anchorPos: (pop.visible && pop.anchorItem)
+    readonly property bool hasAnchor: pop.anchorItem !== null && pop.anchorItem.visible
+    readonly property point anchorPos: (pop.visible && pop.hasAnchor)
         ? pop.anchorItem.mapToItem(null, 0, 0) : Qt.point(0, 0)
+
+    readonly property var mic: Pipewire.defaultAudioSource
+    readonly property bool hasMic: pop.mic !== null && pop.mic.audio !== null
+    readonly property real micVol: pop.hasMic ? pop.mic.audio.volume : 0
+    readonly property bool micMuted: pop.hasMic ? pop.mic.audio.muted : false
+
+    PwObjectTracker {
+        objects: pop.mic ? [pop.mic] : []
+    }
 
     readonly property var adapter: Bluetooth.defaultAdapter
     readonly property var wifiDevice: {
@@ -72,8 +84,9 @@ PopupWindow {
         id: card
         width: 340
         height: col.implicitHeight + 24
-        x: Math.max(0, Math.min(pop.anchorPos.x + (pop.anchorItem ? pop.anchorItem.width : 0) - card.width,
-            pop.width - card.width))
+        x: pop.hasAnchor
+            ? Math.max(0, Math.min(pop.anchorPos.x + pop.anchorItem.width - card.width, pop.width - card.width))
+            : Math.max(0, pop.width - card.width)
         y: Theme.barHeight + 4
         radius: Theme.radiusCard
         color: Theme.popBg
@@ -131,6 +144,120 @@ PopupWindow {
                     subtitle: !NightLight.available ? "Install wlsunset" : NightLight.on ? "4000 K" : "Off"
                     on: NightLight.on
                     onClicked: NightLight.toggle()
+                }
+
+                QsTile {
+                    visible: pop.hasMic
+                    glyph: pop.micMuted ? "󰍭" : "󰍬"
+                    title: "Microphone"
+                    subtitle: pop.micMuted ? "Muted" : Math.round(pop.micVol * 100) + "%"
+                    on: !pop.micMuted
+                    onClicked: {
+                        if (pop.hasMic)
+                            pop.mic.audio.muted = !pop.mic.audio.muted;
+                    }
+                }
+            }
+
+            Column {
+                visible: Brightness.available
+                width: parent.width
+                spacing: 4
+
+                Row {
+                    width: parent.width
+                    spacing: 10
+
+                    Text {
+                        textFormat: Text.PlainText
+                        id: brIcon
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 20
+                        horizontalAlignment: Text.AlignHCenter
+                        text: brSlider.shownValue < 0.34 ? "󰃞" : brSlider.shownValue < 0.67 ? "󰃟" : "󰃠"
+                        color: Theme.t2
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSize + 2
+                    }
+
+                    SettingsSlider {
+                        id: brSlider
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width - brIcon.width - brLabel.width - 20
+                        from: 0.01
+                        to: 1.0
+                        stepSize: 0.01
+                        value: Brightness.value
+                        onCommitted: (val) => Brightness.set(val)
+                    }
+
+                    Text {
+                        textFormat: Text.PlainText
+                        id: brLabel
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 40
+                        horizontalAlignment: Text.AlignRight
+                        text: Math.round(brSlider.shownValue * 100) + "%"
+                        color: Theme.t2
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSize - 1
+                    }
+                }
+            }
+
+            Column {
+                visible: pop.hasMic
+                width: parent.width
+                spacing: 4
+
+                Row {
+                    width: parent.width
+                    spacing: 10
+
+                    Text {
+                        textFormat: Text.PlainText
+                        id: micIcon
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 20
+                        horizontalAlignment: Text.AlignHCenter
+                        text: pop.micMuted ? "󰍭" : "󰍬"
+                        color: pop.micMuted ? Theme.t3 : Theme.t2
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSize + 2
+
+                        TapHandler {
+                            onTapped: {
+                                if (pop.hasMic)
+                                    pop.mic.audio.muted = !pop.mic.audio.muted;
+                            }
+                        }
+                    }
+
+                    SettingsSlider {
+                        id: micSlider
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width - micIcon.width - micLabel.width - 20
+                        from: 0
+                        to: 1.0
+                        stepSize: 0.01
+                        value: pop.micVol
+                        onCommitted: (val) => {
+                            if (pop.hasMic)
+                                pop.mic.audio.volume = val;
+                        }
+                    }
+
+                    Text {
+                        textFormat: Text.PlainText
+                        id: micLabel
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 40
+                        horizontalAlignment: Text.AlignRight
+                        text: pop.micMuted ? "Mute" : Math.round(micSlider.shownValue * 100) + "%"
+                        color: pop.micMuted ? Theme.t3 : Theme.t2
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSize - 1
+                    }
                 }
             }
 

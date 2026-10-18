@@ -17,23 +17,26 @@ Singleton {
 
     // Every pill the bar has. A pill is known here under the same id it uses in
     // BarPanel.pills; anything else in bar.json is ignored.
-    readonly property var pillIds: ["launcher", "workspaces", "title", "clock", "media", "poke",
-        "resources", "network", "volume", "tray", "tools", "system", "tern"]
+    readonly property var pillIds: ["launcher", "workspaces", "title", "clock", "weather", "media",
+        "poke", "updates", "resources", "network", "volume", "mic", "keyboard", "battery", "tray",
+        "tools", "system", "tern"]
 
     // Display names for the settings page.
     readonly property var pillNames: ({
         launcher: "Launcher", workspaces: "Workspaces", title: "Window title", clock: "Clock",
-        media: "Media", poke: "PokeToken", resources: "CPU & memory", network: "Network",
-        volume: "Volume", tray: "System tray", tools: "Tools", system: "Quick settings, notifications & power",
-        tern: "Tern"
+        weather: "Weather", media: "Media", poke: "PokeToken", updates: "System updates",
+        resources: "CPU & memory", network: "Network", volume: "Volume", mic: "Microphone",
+        keyboard: "Keyboard layout", battery: "Battery", tray: "System tray", tools: "Tools",
+        system: "Quick settings, notifications & power", tern: "Tern"
     })
 
     // The order the bar ships with — also what "Reset layout" restores. A pill
     // added to the bar in future lands in the group it appears in here.
     readonly property var defaultLayout: ({
         left: ["launcher", "workspaces", "title"],
-        center: ["clock", "media"],
-        right: ["poke", "resources", "network", "volume", "tray", "tools", "system", "tern"]
+        center: ["clock", "weather", "media"],
+        right: ["poke", "updates", "resources", "network", "volume", "mic", "keyboard", "battery",
+            "tray", "tools", "system", "tern"]
     })
 
     // Current layout: { left: [pillId], center: [pillId], right: [pillId] }.
@@ -94,7 +97,22 @@ Singleton {
                     continue;
                 seen.push(id);
                 const legacy = (id === "tern" && !stored && root.sides.indexOf(legacyTernSide) !== -1);
-                out[legacy ? legacyTernSide : defSide].push(id);
+                const targetSide = legacy ? legacyTernSide : defSide;
+                const targetList = out[targetSide];
+                let insertPos = -1;
+                if (!legacy) {
+                    for (let k = j + 1; k < defs.length; k++) {
+                        const pos = targetList.indexOf(defs[k]);
+                        if (pos !== -1) {
+                            insertPos = pos;
+                            break;
+                        }
+                    }
+                }
+                if (insertPos !== -1)
+                    targetList.splice(insertPos, 0, id);
+                else
+                    targetList.push(id);
             }
         }
         return out;
@@ -222,27 +240,26 @@ Singleton {
     // The PokeToken plugin's data, where the Tern app keeps it.
     readonly property string pokeDataDir: root.home + "/.local/state/tern/plugin-data/poke"
 
-    FileView {
-        id: file
-        path: root.configPath
-        printErrors: false
-
-        // A missing or broken file just leaves the defaults in place.
-        onLoaded: {
-            try {
-                const o = JSON.parse(file.text());
-                // Hidden first, so the layout change that follows already knows
-                // which pills to leave out.
+    function loadFromText(rawText) {
+        try {
+            const o = JSON.parse(rawText);
+            if (o && typeof o === "object") {
                 root.hidden = (Array.isArray(o.hidden) ? o.hidden : [])
                     .filter((id, i, a) => root.pillIds.indexOf(id) !== -1 && a.indexOf(id) === i);
                 root.layout = root.normalize(o.layout, o.ternPillSide);
                 root.nightLight = o.nightLight === true;
-            } catch (e) {
             }
-            root.configLoaded = true;
+        } catch (e) {
         }
-
-        // No bar.json yet (a fresh install): the defaults above are the answer.
-        onLoadFailed: root.configLoaded = true
+        root.configLoaded = true;
     }
+
+    FileView {
+        id: file
+        path: root.configPath
+        blockLoading: true
+        printErrors: false
+    }
+
+    Component.onCompleted: root.loadFromText(file.text())
 }

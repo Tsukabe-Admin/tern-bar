@@ -32,12 +32,6 @@ PanelWindow {
     WlrLayershell.namespace: "tern-bar-osd"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
-    BackgroundEffect.blurRegion: Region {
-        x: 0
-        y: 0
-        width: osd.implicitWidth
-        height: osd.implicitHeight
-    }
 
     PwObjectTracker {
         objects: osd.sink ? [osd.sink] : []

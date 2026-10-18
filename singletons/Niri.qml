@@ -15,8 +15,56 @@ Singleton {
     property var workspaces: []
     property var windows: []
     property int focusedWindowId: -1
+    property var keyboardLayouts: []
+    property int keyboardLayoutIdx: 0
+
+    readonly property string currentKeyboardLayout:
+        (root.keyboardLayoutIdx >= 0 && root.keyboardLayoutIdx < root.keyboardLayouts.length)
+            ? String(root.keyboardLayouts[root.keyboardLayoutIdx] || "") : ""
+    readonly property string shortKeyboardLayout: root.abbreviateLayout(root.currentKeyboardLayout)
 
     readonly property alias connected: socket.connected
+
+    function abbreviateLayout(name) {
+        const s = String(name || "").trim();
+        if (s === "")
+            return "";
+        const paren = /\(([^)]+)\)/.exec(s);
+        if (paren) {
+            const inner = paren[1].trim();
+            if (/^[A-Za-z]{2,3}$/.test(inner))
+                return inner.toUpperCase();
+            const codePrefix = /^([A-Z]{2,3})(?:[,;\s]|$)/.exec(inner);
+            if (codePrefix)
+                return codePrefix[1];
+            const lowerInner = inner.toLowerCase();
+            if (lowerInner.indexOf("dvorak") !== -1)
+                return "DV";
+            if (lowerInner.indexOf("colemak") !== -1)
+                return "CM";
+            if (lowerInner.indexOf("workman") !== -1)
+                return "WM";
+            if (lowerInner.indexOf("brazil") !== -1)
+                return "BR";
+            if (lowerInner.indexOf("canada") !== -1)
+                return "CA";
+            if (lowerInner.indexOf("austral") !== -1)
+                return "AU";
+            if (lowerInner.indexOf("latin") !== -1)
+                return "LA";
+        }
+        const map = {
+            english: "US", japanese: "JP", russian: "RU", german: "DE", french: "FR",
+            spanish: "ES", italian: "IT", portuguese: "PT", korean: "KR", chinese: "CN",
+            arabic: "AR", hebrew: "IL", ukrainian: "UA", polish: "PL", dutch: "NL",
+            swedish: "SE", norwegian: "NO", danish: "DK", finnish: "FI", turkish: "TR",
+            czech: "CZ", greek: "GR", vietnamese: "VN", thai: "TH", hindi: "IN"
+        };
+        const firstWord = s.split(/[\s(]+/)[0].toLowerCase();
+        if (firstWord in map)
+            return map[firstWord];
+        return s.slice(0, 2).toUpperCase();
+    }
 
     function handle(line) {
         var obj;
@@ -113,6 +161,16 @@ Singleton {
             root.windows = kept;
             if (root.focusedWindowId === cid)
                 root.focusedWindowId = -1;
+        } else if (obj.KeyboardLayoutsChanged) {
+            var kl = obj.KeyboardLayoutsChanged.keyboard_layouts;
+            if (kl) {
+                root.keyboardLayouts = kl.names || [];
+                root.keyboardLayoutIdx = typeof kl.current_idx === "number" ? kl.current_idx : 0;
+            }
+        } else if (obj.KeyboardLayoutSwitched) {
+            var kidx = obj.KeyboardLayoutSwitched.idx;
+            if (typeof kidx === "number")
+                root.keyboardLayoutIdx = kidx;
         }
     }
 
@@ -161,6 +219,15 @@ Singleton {
         sendAction({ Action: { ShowHotkeyOverlay: {} } });
     }
 
+    // Cycle active keyboard layout via niri IPC.
+    function switchLayoutNext() {
+        sendAction({ Action: { SwitchLayout: { layout: "Next" } } });
+    }
+
+    function switchLayoutPrev() {
+        sendAction({ Action: { SwitchLayout: { layout: "Prev" } } });
+    }
+
     // The output holding the focused workspace, or "" before niri has said.
     function focusedOutput() {
         for (var i = 0; i < root.workspaces.length; i++) {
@@ -182,14 +249,15 @@ Singleton {
     // niri ignores Actions written to the event-stream socket (verified: no
     // reply, no state change), so actions go on their own short-lived
     // connection, mirroring what `niri msg action` does internally.
-    property var pendingAction: null
+    property var pendingActions: []
 
     function sendAction(payload) {
         if (actionSocket.connected) {
             actionSocket.write(JSON.stringify(payload) + "\n");
+            actionTimer.restart();
             return;
         }
-        root.pendingAction = payload;
+        root.pendingActions.push(payload);
         actionSocket.connected = true;
     }
 
@@ -197,9 +265,11 @@ Singleton {
         id: actionSocket
         path: root.socketPath
         onConnectionStateChanged: {
-            if (actionSocket.connected && root.pendingAction !== null) {
-                actionSocket.write(JSON.stringify(root.pendingAction) + "\n");
-                root.pendingAction = null;
+            if (actionSocket.connected && root.pendingActions.length > 0) {
+                const queue = root.pendingActions.slice();
+                root.pendingActions = [];
+                for (let i = 0; i < queue.length; i++)
+                    actionSocket.write(JSON.stringify(queue[i]) + "\n");
                 actionTimer.restart();
             }
         }

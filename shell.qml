@@ -36,9 +36,10 @@ ShellRoot {
     // openings so opening costs no QML compilation and icons stay cached.
     LauncherWindow {}
 
-    // Volume OSD: one surface for the whole shell, shown near the bottom of the
-    // focused screen when the volume changes.
+    // Volume and Brightness OSDs: one surface each for the whole shell, shown
+    // near the bottom of the focused screen when volume or brightness changes.
     VolumeOsd {}
+    BrightnessOsd {}
 
     IpcHandler {
         target: "settings"
@@ -83,12 +84,26 @@ ShellRoot {
         }
     }
 
-    // quickshell ipc -c tern-bar call bar <calendar|quickSettings|close>
+    // The terminal shortcut (Mod+Return, Mod+T): the same launch as the pill,
+    // so the tab opens in a window that is brought forward first.
+    IpcHandler {
+        target: "tern"
+
+        function open(): void {
+            Tern.open();
+        }
+    }
+
+    // quickshell ipc -c tern-bar call bar <calendar|media|quickSettings|close>
     IpcHandler {
         target: "bar"
 
         function calendar(): void {
             Popups.toggle("calendar", Popups.focusedScreenName());
+        }
+
+        function media(): void {
+            Popups.toggle("media", Popups.focusedScreenName());
         }
 
         function quickSettings(): void {
@@ -102,9 +117,13 @@ ShellRoot {
 
     // Singletons are built the first time something uses them, so without this
     // the rotation timer and the screen hotplug handler would not exist until
-    // the Wallpaper tab had been opened once. NightLight likewise.
+    // the Wallpaper tab had been opened once. NightLight, Brightness, Weather
+    // and Updates likewise.
     Component.onCompleted: {
         Wallpaper.rescan();
         NightLight.available;
+        Brightness.available;
+        Weather.wanted;
+        Updates.wanted;
     }
 }

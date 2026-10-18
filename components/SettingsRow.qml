@@ -14,8 +14,8 @@ Rectangle {
     // replaced, which is how every other part of the bar stays in sync.
     readonly property bool shown: !BarConfig.isHidden(root.pillId)
 
-    height: 36
-    radius: 18
+    height: 32
+    radius: height / 2
     color: Theme.popBg
     border.width: 1
     border.color: Theme.rim

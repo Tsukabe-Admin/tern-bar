@@ -34,11 +34,23 @@ PanelWindow {
         return screens[0];
     }
 
+    readonly property real maxX: pet.screen ? Math.max(0, pet.screen.width - pet.size) : 0
+    readonly property real maxY: pet.screen ? Math.max(0, pet.screen.height - Theme.workAreaTop - pet.size) : 0
+
     // Bottom-right default, 24px in from the corner.
-    readonly property real defaultX: pet.screen ? pet.screen.width - pet.size - 24 : 0
-    readonly property real defaultY: pet.screen ? pet.screen.height - pet.size - 24 : 0
-    property real petX: conf.x !== null && conf.x !== undefined ? conf.x : defaultX
-    property real petY: conf.y !== null && conf.y !== undefined ? conf.y : defaultY
+    readonly property real defaultX: Math.max(0, pet.maxX - 24)
+    readonly property real defaultY: Math.max(0, pet.maxY - 24)
+
+    function clampX(x) {
+        return Math.max(0, Math.min(pet.maxX, x));
+    }
+
+    function clampY(y) {
+        return Math.max(0, Math.min(pet.maxY, y));
+    }
+
+    property real petX: pet.clampX(conf.x !== null && conf.x !== undefined ? conf.x : defaultX)
+    property real petY: pet.clampY(conf.y !== null && conf.y !== undefined ? conf.y : defaultY)
 
     // The size (or the output) can change while x/y are still "default": the
     // corner must follow, or a resized sprite hangs off the screen edge. A drag
@@ -46,6 +58,8 @@ PanelWindow {
     property bool dragging: false
     onSizeChanged: if (!pet.dragging) pet.reinitDefaults()
     onScreenChanged: if (!pet.dragging) pet.reinitDefaults()
+    onMaxXChanged: if (!pet.dragging) pet.reinitDefaults()
+    onMaxYChanged: if (!pet.dragging) pet.reinitDefaults()
     onConfChanged: if (!pet.dragging) pet.reinitDefaults()
 
     // `act pet_move` runs in a fresh engine process, so for a few hundred ms
@@ -58,6 +72,7 @@ PanelWindow {
     property bool movePending: false
     property real pendingX: 0
     property real pendingY: 0
+    property string pendingOutput: ""
 
     Timer {
         id: pendingTimer
@@ -70,13 +85,19 @@ PanelWindow {
     }
 
     function reinitDefaults() {
-        var nx = (conf.x !== null && conf.x !== undefined) ? conf.x : pet.defaultX;
-        var ny = (conf.y !== null && conf.y !== undefined) ? conf.y : pet.defaultY;
+        var nx = pet.clampX((conf.x !== null && conf.x !== undefined) ? conf.x : pet.defaultX);
+        var ny = pet.clampY((conf.y !== null && conf.y !== undefined) ? conf.y : pet.defaultY);
+        var curOut = pet.screen ? pet.screen.name : "";
         if (pet.movePending) {
-            if (Math.abs(nx - pet.pendingX) >= 0.5 || Math.abs(ny - pet.pendingY) >= 0.5)
+            if (pet.pendingOutput !== "" && curOut !== "" && curOut !== pet.pendingOutput) {
+                pet.movePending = false;
+                pendingTimer.stop();
+            } else if (Math.abs(nx - pet.pendingX) >= 1.5 || Math.abs(ny - pet.pendingY) >= 1.5) {
                 return;              // a poll that read status.json before our write
-            pet.movePending = false;
-            pendingTimer.stop();
+            } else {
+                pet.movePending = false;
+                pendingTimer.stop();
+            }
         }
         pet.petX = nx;
         pet.petY = ny;
@@ -84,12 +105,18 @@ PanelWindow {
 
     // Persist a drop: `x`/`y` are the sprite's work-area coordinates.
     function sendMove(x, y) {
+        var cx = Math.round(pet.clampX(x));
+        var cy = Math.round(pet.clampY(y));
+        var out = pet.screen ? pet.screen.name : "";
+        pet.petX = cx;
+        pet.petY = cy;
         pet.movePending = true;
-        pet.pendingX = x;
-        pet.pendingY = y;
+        pet.pendingX = cx;
+        pet.pendingY = cy;
+        pet.pendingOutput = out;
         pendingTimer.restart();
         Poke.run(["act", "pet_move", JSON.stringify({
-            x: x, y: y, output: pet.screen ? pet.screen.name : ""
+            x: cx, y: cy, output: out
         })]);
     }
 
@@ -216,40 +243,40 @@ PanelWindow {
             acceptedButtons: Qt.LeftButton | Qt.RightButton
             hoverEnabled: true
 
+            property real startX: 0
+            property real startY: 0
+            property real grabX: 0
+            property real grabY: 0
             property real lastX: 0
             property real lastY: 0
             property real moved: 0
 
             onPressed: (mouse) => {
                 if (mouse.button === Qt.RightButton) {
-                            petMenu.openFor(dragArea);
+                    petMenu.openFor(dragArea);
                     return;
                 }
-                // The window moves with the pointer, so each event's local
-                // coordinate is (pointer travel - window travel). Applying the
-                // *incremental* local delta keeps the two in lockstep; applying
-                // the cumulative one makes the sprite fly past the pointer.
+                // Only a left drag moves the pet. Qt reports button == NoButton on
+                // move events, so motion is gated on `pet.dragging`.
                 pet.dragging = true;
+                startX = pet.petX;
+                startY = pet.petY;
+                grabX = mouse.x;
+                grabY = mouse.y;
                 lastX = mouse.x;
                 lastY = mouse.y;
                 moved = 0;
             }
             onPositionChanged: (mouse) => {
-                // Only a left drag moves the pet. Qt reports button == NoButton on move
-                // events, so checking `mouse.button === Qt.RightButton` here never
-                // matched: a right-drag (menu open) dragged the sprite by the stale
-                // lastX/lastY and followed the pointer, and a right release persists
-                // nothing, so the next poll snapped the sprite back. `pet.dragging` is
-                // only set by a left press.
                 if (!pet.dragging)
                     return;
                 var dx = mouse.x - lastX;
                 var dy = mouse.y - lastY;
                 moved += Math.abs(dx) + Math.abs(dy);
-                pet.petX += dx;
-                pet.petY += dy;
                 lastX = mouse.x;
                 lastY = mouse.y;
+                pet.petX = pet.clampX(startX + (mouse.x - grabX));
+                pet.petY = pet.clampY(startY + (mouse.y - grabY));
             }
             onReleased: (mouse) => {
                 if (mouse.button === Qt.RightButton)
@@ -370,6 +397,8 @@ PanelWindow {
                 Poke.open("");
                 break;
             case "next":
+                pet.movePending = false;
+                pendingTimer.stop();
                 var screens = Quickshell.screens;
                 var idx = 0;
                 for (var i = 0; i < screens.length; i++) {
