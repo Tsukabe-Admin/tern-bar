@@ -42,7 +42,13 @@ PanelWindow {
 
     Row {
         id: centerRow
-        anchors.horizontalCenter: parent.horizontalCenter
+        // Keep the centre group between the side groups. On a wide bar this is
+        // exactly the centred position; on a narrow output — or when the tray
+        // grows — it slides instead of drawing pills on top of the right group.
+        readonly property real preferredX: (bar.width - width) / 2
+        readonly property real leftLimit: leftRow.x + leftRow.width + Theme.pillSpacing
+        readonly property real rightLimit: rightRow.x - width - Theme.pillSpacing
+        x: Math.max(leftLimit, Math.min(preferredX, rightLimit))
         anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.pillSpacing
     }
