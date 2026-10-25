@@ -130,7 +130,9 @@ Singleton {
         if (o.wallpapers && typeof o.wallpapers === "object" && !Array.isArray(o.wallpapers)) {
             for (const key of Object.keys(o.wallpapers)) {
                 const value = o.wallpapers[key];
-                if (typeof value === "string" && value !== "")
+                // Absolute paths only: this value is handed to `awww img`, where
+                // an option-like string (--help, --foo) would be parsed as a flag.
+                if (typeof value === "string" && value.indexOf("/") === 0)
                     wallpapers[key] = value;
             }
         }

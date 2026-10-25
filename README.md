@@ -161,6 +161,9 @@ which part of the bar, edit `matugen/palette.json`.
 - **Wallpaper:** Mod+W, or the wallpaper button in the tools pill, opens the settings page straight
   on its Wallpaper tab — `quickshell ipc -c tern-bar call settings wallpaper` does the same, and
   pressing it again closes the page.
+- **Album art:** the media popup only loads local cover art (`file:`, `image:`, `data:image`), because a
+  remote `https` cover is a tracking pixel the player controls. Start the bar with `TERN_BAR_REMOTE_ART=1`
+  to allow it.
 - **Launch animation:** there's a fancy "grow into a new window" effect. It's off by default. Turn it
   on with `morphEnabled` in `singletons/BarConfig.qml`, but don't run it in a loop.
 - **Keybinding cheat sheet:** the `?` button in the tools pill shows niri's built-in hotkey overlay.

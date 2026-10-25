@@ -133,7 +133,7 @@ else
     fi
 
     WALLPAPER=$(jq -r '.wallpapers["*"] // empty' "$STATE" 2>/dev/null || true)
-    if [ -z "$WALLPAPER" ] || [ ! -f "$WALLPAPER" ]; then
+    if [ -z "$WALLPAPER" ] || [ "${WALLPAPER#/}" = "$WALLPAPER" ] || [ ! -f "$WALLPAPER" ]; then
         echo "theme-sync.sh: no \"All screens\" wallpaper to take colours from" >&2
         exit 4
     fi

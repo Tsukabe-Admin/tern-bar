@@ -74,7 +74,7 @@ DURATION=$(read_setting '.transitionDuration | select(type == "number")' 1.5)
 star_image() {
     local image
     image=$(jq -r '.wallpapers["*"] // empty' "$STATE" 2>/dev/null || true)
-    if [ -n "$image" ] && [ -f "$image" ]; then
+    if [ -n "$image" ] && [ "${image#/}" != "$image" ] && [ -f "$image" ]; then
         printf '%s' "$image"
     fi
 }
@@ -83,7 +83,7 @@ star_image() {
 image_for() {
     local image
     image=$(jq -r --arg o "$1" '.wallpapers[$o] // empty' "$STATE" 2>/dev/null || true)
-    if [ -n "$image" ] && [ -f "$image" ]; then
+    if [ -n "$image" ] && [ "${image#/}" != "$image" ] && [ -f "$image" ]; then
         printf '%s' "$image"
     else
         star_image

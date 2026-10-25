@@ -17,6 +17,20 @@ PopupWindow {
     readonly property var players: Mpris.players.values || []
     readonly property var player: Popups.pickPlayer(pop.players)
 
+    // Album art is remote content controlled by the MPRIS player. Loading an
+    // https URL here is a tracking pixel, so local schemes only by default;
+    // set TERN_BAR_REMOTE_ART=1 to opt back into remote art.
+    readonly property bool allowRemoteArt: Quickshell.env("TERN_BAR_REMOTE_ART") === "1"
+
+    function artSource(url) {
+        const s = url ? String(url) : "";
+        if (s === "")
+            return "";
+        if (/^(file|image):/.test(s) || /^data:image\//.test(s))
+            return s;
+        return (pop.allowRemoteArt && /^https?:/.test(s)) ? s : "";
+    }
+
     visible: Popups.open === "media" && pop.screenInfo !== null
         && Popups.screenName === pop.screenInfo.name && pop.player !== null
     anchor.window: pop.barWindow
@@ -133,7 +147,7 @@ PopupWindow {
                     Image {
                         id: artImg
                         anchors.fill: parent
-                        source: (pop.player && pop.player.trackArtUrl) ? pop.player.trackArtUrl : ""
+                        source: pop.player ? pop.artSource(pop.player.trackArtUrl) : ""
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
                         visible: status === Image.Ready
