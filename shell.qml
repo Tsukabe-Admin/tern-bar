@@ -58,6 +58,11 @@ ShellRoot {
             BarConfig.toggleSettings("wallpaper");
         }
 
+        // Right-click on the ASCII pill: the animated-wallpaper and pill controls.
+        function ascii(): void {
+            BarConfig.toggleSettings("ascii");
+        }
+
         function close(): void {
             BarConfig.settingsOpen = false;
         }

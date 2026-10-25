@@ -189,14 +189,26 @@ PanelWindow {
                     onActivated: Launcher.activate(modelData)
                 }
 
-                Text {
-                    textFormat: Text.PlainText
+                Row {
                     anchors.centerIn: parent
                     visible: list.count === 0
-                    text: "No matches"
-                    color: Theme.t3
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSize
+                    spacing: 14
+
+                    AsciiArt {
+                        anchors.verticalCenter: parent.verticalCenter
+                        name: "drift"
+                        tint: Theme.t3
+                        playing: win.visible
+                    }
+
+                    Text {
+                        textFormat: Text.PlainText
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "No matches"
+                        color: Theme.t3
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSize
+                    }
                 }
             }
         }

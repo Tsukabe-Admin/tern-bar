@@ -18,14 +18,14 @@ Singleton {
     // Every pill the bar has. A pill is known here under the same id it uses in
     // BarPanel.pills; anything else in bar.json is ignored.
     readonly property var pillIds: ["launcher", "workspaces", "title", "clock", "weather", "media",
-        "poke", "updates", "resources", "network", "volume", "mic", "keyboard", "battery", "tray",
+        "poke", "updates", "resources", "network", "ascii", "volume", "mic", "keyboard", "battery", "tray",
         "tools", "system", "tern"]
 
     // Display names for the settings page.
     readonly property var pillNames: ({
         launcher: "Launcher", workspaces: "Workspaces", title: "Window title", clock: "Clock",
         weather: "Weather", media: "Media", poke: "PokeToken", updates: "System updates",
-        resources: "CPU & memory", network: "Network", volume: "Volume", mic: "Microphone",
+        resources: "CPU & memory", network: "Network", ascii: "ASCII animation", volume: "Volume", mic: "Microphone",
         keyboard: "Keyboard layout", battery: "Battery", tray: "System tray", tools: "Tools",
         system: "Quick settings, notifications & power", tern: "Tern"
     })
@@ -35,7 +35,7 @@ Singleton {
     readonly property var defaultLayout: ({
         left: ["launcher", "workspaces", "title"],
         center: ["clock", "weather", "media"],
-        right: ["poke", "updates", "resources", "network", "volume", "mic", "keyboard", "battery",
+        right: ["poke", "updates", "resources", "network", "ascii", "volume", "mic", "keyboard", "battery",
             "tray", "tools", "system", "tern"]
     })
 
@@ -51,7 +51,7 @@ Singleton {
     property bool nightLight: false
     // Weather in Fahrenheit instead of Celsius; toggled from the forecast popup.
     property bool weatherFahrenheit: false
-    // Whether the settings page is open, and which of its two tabs it shows.
+    // Whether the settings page is open, and which of its three tabs it shows.
     // Neither is persisted, so a reload closes the page on the Layout tab.
     property bool settingsOpen: false
     property string settingsTab: "layout"
@@ -216,10 +216,10 @@ Singleton {
 
     // ── Settings page ──────────────────────────────────────────────────────
 
-    // Open the page on `tab` — "layout" or "wallpaper". Anything else falls
-    // back to the layout editor.
+    // Open the page on `tab` — "layout", "wallpaper" or "ascii". Anything else
+    // falls back to the layout editor.
     function openSettings(tab) {
-        root.settingsTab = (tab === "wallpaper") ? "wallpaper" : "layout";
+        root.settingsTab = (tab === "wallpaper" || tab === "ascii") ? tab : "layout";
         root.settingsOpen = true;
     }
 
@@ -249,6 +249,8 @@ Singleton {
     // The Wallpaper tab: the settings file it alone writes, the palette
     // scripts/theme-sync.sh generates, and the preset themes it lists.
     readonly property string wallpaperStatePath: root.configDir + "/wallpaper.json"
+    // The ASCII tab's settings (wallpaper look/colour/speed, pill piece/colour/speed).
+    readonly property string asciiStatePath: root.configDir + "/ascii.json"
     readonly property string palettePath: root.stateDir + "/palette.json"
     readonly property string themePresetsPath: Quickshell.shellDir + "/themes/presets.json"
     // The PokeToken plugin's data, where the Tern app keeps it.

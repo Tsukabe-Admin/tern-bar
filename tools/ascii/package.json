@@ -1,0 +1,10 @@
+{
+  "name": "tern-bar-ascii",
+  "private": true,
+  "type": "module",
+  "description": "Generates animated ASCII wallpapers and bar elements for tern-bar from ascii.rest looks",
+  "dependencies": {
+    "@napi-rs/canvas": "^1.0.13",
+    "ascii.rest": "^0.4.0"
+  }
+}

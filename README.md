@@ -180,6 +180,16 @@ which part of the bar, edit `matugen/palette.json`.
   choice is saved in `bar.json` (`weatherFahrenheit`); it re-formats the cached numbers, so no new
   fetch is needed.
 - **Tray menus** close when you click anywhere else.
+- **ASCII animations:** the settings window's **ASCII** tab (right-click the ASCII pill, or
+  `quickshell ipc -c tern-bar call settings ascii`) picks a look, colour, speed, size and brightness for
+  an animated ASCII wallpaper and renders it to a GIF that `awww` plays (about 15–45 s; saved in
+  `<wallpaper folder>/ascii/`). The same tab sets the bar pill's piece, colour and speed, which apply
+  at once; left-click the pill for the next piece. Choices are saved in `~/.config/tern-bar/ascii.json`.
+  The launcher's "No matches" line uses the same player. The frames are plain text in `assets/ascii/`,
+  so nothing is computed while the bar runs. Everything is made by `tools/ascii/gen.mjs` from
+  [ascii.rest](https://github.com/bas3line/ascii) (MIT) looks. The pill, previews and launcher line work
+  out of the box; rendering a wallpaper also needs `node`, `ffmpeg` and a one-time `npm install` in
+  `tools/ascii` (the tab says which is missing). See `tools/ascii/README.md`.
 
 ## What's inside
 
@@ -191,6 +201,8 @@ scripts/         helpers: wallpaper, colours, network status, IP hiding
 themes/          the ten built-in colour themes
 matugen/         an optional template, for driving the colours from your own matugen setup
 screenshots/     pictures for this page
+assets/ascii/    text frames for the ASCII pill and the launcher's empty state
+tools/ascii/     generator for those frames and for animated ASCII wallpapers (needs node)
 ```
 
 ## If it misbehaves

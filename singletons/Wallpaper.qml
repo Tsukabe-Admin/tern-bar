@@ -534,7 +534,7 @@ Singleton {
 
         command: ["find", "-L", root.settings.folder, "-type", "f",
             "(", "-iname", "*.jpg", "-o", "-iname", "*.jpeg", "-o", "-iname", "*.png",
-            "-o", "-iname", "*.webp", ")", "-not", "-name", ".*",
+            "-o", "-iname", "*.webp", "-o", "-iname", "*.gif", ")", "-not", "-name", ".*",
             "-printf", "%T@\\t%p\\n"]
 
         stdout: SplitParser {

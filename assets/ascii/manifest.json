@@ -1,0 +1,356 @@
+{
+  "looks": [
+    {
+      "id": "aurora",
+      "name": "Aurora"
+    },
+    {
+      "id": "clouds",
+      "name": "Clouds"
+    },
+    {
+      "id": "flames",
+      "name": "Flames"
+    },
+    {
+      "id": "galaxy",
+      "name": "Galaxy"
+    },
+    {
+      "id": "lava-lamp",
+      "name": "Lava lamp"
+    },
+    {
+      "id": "marble",
+      "name": "Marble"
+    },
+    {
+      "id": "matrix",
+      "name": "Matrix"
+    },
+    {
+      "id": "plasma",
+      "name": "Plasma"
+    },
+    {
+      "id": "plume",
+      "name": "Plume"
+    },
+    {
+      "id": "rainfall",
+      "name": "Rainfall"
+    },
+    {
+      "id": "rings",
+      "name": "Rings"
+    },
+    {
+      "id": "ripple",
+      "name": "Ripple"
+    },
+    {
+      "id": "sea",
+      "name": "Sea"
+    },
+    {
+      "id": "snowfall",
+      "name": "Snowfall"
+    },
+    {
+      "id": "spiral",
+      "name": "Spiral"
+    },
+    {
+      "id": "stars",
+      "name": "Stars"
+    },
+    {
+      "id": "sun",
+      "name": "Sun"
+    },
+    {
+      "id": "tunnel",
+      "name": "Tunnel"
+    },
+    {
+      "id": "turbulence",
+      "name": "Turbulence"
+    },
+    {
+      "id": "vortex",
+      "name": "Vortex"
+    },
+    {
+      "id": "waves",
+      "name": "Waves"
+    }
+  ],
+  "palettes": [
+    {
+      "id": "ocean",
+      "name": "Ocean",
+      "background": "#03091c",
+      "colors": [
+        "#0a1f5c",
+        "#0353a4",
+        "#0077b6",
+        "#00b4d8",
+        "#90e0ef",
+        "#e0fbfc"
+      ],
+      "accent": "#00b4d8"
+    },
+    {
+      "id": "sunset",
+      "name": "Sunset",
+      "background": "#12051c",
+      "colors": [
+        "#3b0f5c",
+        "#7b2cbf",
+        "#c9184a",
+        "#ff6b35",
+        "#ffb627",
+        "#ffe8a3"
+      ],
+      "accent": "#ff6b35"
+    },
+    {
+      "id": "neon",
+      "name": "Neon",
+      "background": "#120320",
+      "colors": [
+        "#3c096c",
+        "#7b2ff7",
+        "#f107a3",
+        "#ff5edf",
+        "#00e5ff",
+        "#e0ffff"
+      ],
+      "accent": "#ff5edf"
+    },
+    {
+      "id": "fire",
+      "name": "Fire",
+      "background": "#160401",
+      "colors": [
+        "#4a0d02",
+        "#991b1b",
+        "#dc2626",
+        "#f97316",
+        "#facc15",
+        "#fef9c3"
+      ],
+      "accent": "#f97316"
+    },
+    {
+      "id": "aurora",
+      "name": "Aurora",
+      "background": "#0f0e27",
+      "colors": [
+        "#312e81",
+        "#0e7490",
+        "#059669",
+        "#22c55e",
+        "#86efac",
+        "#ecfdf5"
+      ],
+      "accent": "#22c55e"
+    },
+    {
+      "id": "forest",
+      "name": "Forest",
+      "background": "#020e07",
+      "colors": [
+        "#052e16",
+        "#14532d",
+        "#15803d",
+        "#22c55e",
+        "#86efac",
+        "#dcfce7"
+      ],
+      "accent": "#22c55e"
+    },
+    {
+      "id": "candy",
+      "name": "Candy",
+      "background": "#270714",
+      "colors": [
+        "#831843",
+        "#db2777",
+        "#f472b6",
+        "#c084fc",
+        "#67e8f9",
+        "#fef08a"
+      ],
+      "accent": "#c084fc"
+    },
+    {
+      "id": "ice",
+      "name": "Ice",
+      "background": "#041621",
+      "colors": [
+        "#0c4a6e",
+        "#0369a1",
+        "#38bdf8",
+        "#bae6fd",
+        "#f0f9ff"
+      ],
+      "accent": "#bae6fd"
+    },
+    {
+      "id": "gold",
+      "name": "Gold",
+      "background": "#221305",
+      "colors": [
+        "#713f12",
+        "#ca8a04",
+        "#facc15",
+        "#fef08a",
+        "#fffbeb"
+      ],
+      "accent": "#fef08a"
+    },
+    {
+      "id": "lava",
+      "name": "Lava",
+      "background": "#150303",
+      "colors": [
+        "#450a0a",
+        "#991b1b",
+        "#ef4444",
+        "#f97316",
+        "#fde047"
+      ],
+      "accent": "#f97316"
+    },
+    {
+      "id": "matrix",
+      "name": "Terminal",
+      "background": "#010d05",
+      "colors": [
+        "#022c0f",
+        "#15803d",
+        "#22c55e",
+        "#86efac",
+        "#f0fdf4"
+      ],
+      "accent": "#86efac"
+    },
+    {
+      "id": "night",
+      "name": "Night",
+      "background": "#090c12",
+      "colors": [
+        "#1e293b",
+        "#1e40af",
+        "#3b82f6",
+        "#93c5fd",
+        "#f8fafc"
+      ],
+      "accent": "#93c5fd"
+    },
+    {
+      "id": "space",
+      "name": "Space",
+      "background": "#0e051e",
+      "colors": [
+        "#2e1065",
+        "#5b21b6",
+        "#7c3aed",
+        "#60a5fa",
+        "#e0e7ff",
+        "#fff7ed"
+      ],
+      "accent": "#60a5fa"
+    },
+    {
+      "id": "paper",
+      "name": "Paper",
+      "background": "#130e0a",
+      "colors": [
+        "#3f2d20",
+        "#6b4f3a",
+        "#a07850",
+        "#d4b483",
+        "#f3e3c3"
+      ],
+      "accent": "#d4b483"
+    },
+    {
+      "id": "mono",
+      "name": "Mono",
+      "background": "#131315",
+      "colors": [
+        "#3f3f46",
+        "#71717a",
+        "#a1a1aa",
+        "#d4d4d8",
+        "#fafafa"
+      ],
+      "accent": "#d4d4d8"
+    }
+  ],
+  "pillPieces": [
+    {
+      "id": "waves",
+      "name": "Waves"
+    },
+    {
+      "id": "flames",
+      "name": "Flames"
+    },
+    {
+      "id": "stars",
+      "name": "Stars"
+    },
+    {
+      "id": "rainfall",
+      "name": "Rainfall"
+    },
+    {
+      "id": "snowfall",
+      "name": "Snowfall"
+    },
+    {
+      "id": "sea",
+      "name": "Sea"
+    },
+    {
+      "id": "aurora",
+      "name": "Aurora"
+    },
+    {
+      "id": "clouds",
+      "name": "Clouds"
+    },
+    {
+      "id": "lava-lamp",
+      "name": "Lava lamp"
+    },
+    {
+      "id": "rings",
+      "name": "Rings"
+    },
+    {
+      "id": "tunnel",
+      "name": "Tunnel"
+    }
+  ],
+  "wallpaperSpeeds": [
+    "calm",
+    "slow",
+    "normal",
+    "fast"
+  ],
+  "pillSpeeds": [
+    "slow",
+    "normal",
+    "fast"
+  ],
+  "sizes": [
+    "small",
+    "medium",
+    "large",
+    "huge"
+  ]
+}

@@ -2,12 +2,14 @@ import QtQuick
 import Quickshell
 import "../singletons"
 
-// tern-bar's settings window: two tabs, switched by the chips at the top-left.
+// tern-bar's settings window: three tabs, switched by the chips at the top-left.
 //
 //   Layout     the bar's pill layout — opened by the tools pill's gear, a
 //              right-click on the launcher, or Mod+B
 //   Wallpaper  the wallpaper picker and colour controls — opened by Mod+W or
 //              the tools pill's wallpaper button
+//   ASCII      the animated ASCII wallpaper and the bar's ASCII pill — opened
+//              by right-clicking the pill or `quickshell ipc call settings ascii`
 //
 // Closed with Esc or the window's own close button. Only the visible tab is
 // built, so the wallpaper grid does not decode thumbnails while you are looking
@@ -60,6 +62,12 @@ FloatingWindow {
                 selected: BarConfig.settingsTab === "wallpaper"
                 onClicked: BarConfig.settingsTab = "wallpaper"
             }
+
+            Chip {
+                text: "ASCII"
+                selected: BarConfig.settingsTab === "ascii"
+                onClicked: BarConfig.settingsTab = "ascii"
+            }
         }
 
         Loader {
@@ -81,6 +89,17 @@ FloatingWindow {
             active: BarConfig.settingsTab === "wallpaper"
             sourceComponent: Component {
                 WallpaperPage {}
+            }
+        }
+
+        Loader {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: tabs.bottom
+            anchors.bottom: parent.bottom
+            active: BarConfig.settingsTab === "ascii"
+            sourceComponent: Component {
+                AsciiPage {}
             }
         }
     }

@@ -174,6 +174,12 @@ PanelWindow {
             Network {}
         }
 
+        // A little ambient ASCII animation; click for the next piece, right-click for its settings.
+        Pill {
+            id: asciiPill
+            AsciiPill {}
+        }
+
         Pill {
             id: volumePill
             Volume {}
@@ -276,7 +282,7 @@ PanelWindow {
     readonly property var pills: ({
         launcher: launcherPill, workspaces: workspacesPill, title: titlePill, clock: clockPill,
         weather: weatherPill, media: mediaPill, poke: pokePill, updates: updatesPill,
-        resources: resourcesPill, network: networkPill, volume: volumePill, mic: micPill,
+        resources: resourcesPill, network: networkPill, ascii: asciiPill, volume: volumePill, mic: micPill,
         keyboard: keyboardPill, battery: batteryPill, tray: trayPill, tools: toolsPill,
         system: systemPill, tern: ternPill
     })
