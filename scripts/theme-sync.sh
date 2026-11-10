@@ -86,10 +86,11 @@ if preset is None:
     # Unknown id: fall back to the first preset rather than failing.
     preset = presets[0]
 
-# A preset has thirteen colours and matugen's scheme has fifty roles. The
-# thirteen go where they belong and the rest are mixed from them, following how
-# a dark Material scheme relates its tones. The lines below are the whole rule,
-# role by role. So a template may use any role matugen itself writes.
+# A preset has thirteen colours and matugen's scheme has fifty roles. Each
+# role gets one of the thirteen or a mix of two of them, following how a dark
+# Material scheme relates its tones; shadow and scrim are black. The lines
+# below are the whole rule, role by role. So a template may use any role
+# matugen itself writes.
 p = preset
 roles = {
     "background": p["surface"],
