@@ -56,6 +56,17 @@ Item {
         Qt.callLater(() => searchField.forceActiveFocus());
     }
 
+    // A screen that is unplugged loses its chip, and the grid must not go on
+    // picking for a screen that is not there.
+    Connections {
+        target: Wallpaper
+
+        function onScreensChanged() {
+            if (page.target !== "*" && Wallpaper.screens.indexOf(page.target) === -1)
+                page.target = "*";
+        }
+    }
+
     component SectionTitle: Text {
         textFormat: Text.PlainText
         color: Theme.t3
