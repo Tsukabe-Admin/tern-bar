@@ -420,14 +420,19 @@ Singleton {
     function runWallpaper(outputs, animate) {
         if (wpProcess.running) {
             const queued = root.pendingWallpaper;
-            let merged = [];
-            // A list only survives if *both* runs named screens: otherwise one
-            // of them meant "all screens", which wins.
-            if (queued && queued.outputs.length > 0 && outputs.length > 0) {
-                merged = queued.outputs.slice();
-                for (const name of outputs) {
-                    if (merged.indexOf(name) === -1)
-                        merged.push(name);
+            // The queued run covers what every request asked for. A list only
+            // survives while all of them named screens: an empty list means
+            // "all screens", which wins.
+            let merged = outputs.slice();
+            if (queued) {
+                if (queued.outputs.length === 0 || outputs.length === 0) {
+                    merged = [];
+                } else {
+                    merged = queued.outputs.slice();
+                    for (const name of outputs) {
+                        if (merged.indexOf(name) === -1)
+                            merged.push(name);
+                    }
                 }
             }
             root.pendingWallpaper = {
