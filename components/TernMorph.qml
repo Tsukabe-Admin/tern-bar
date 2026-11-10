@@ -37,7 +37,7 @@ PanelWindow {
 
     function ternIdsNow() {
         var out = [];
-        var list = Niri.windows;
+        var list = Compositor.windows;
         for (var i = 0; i < list.length; i++) {
             if (list[i].app_id === "so.stencil.tern")
                 out.push(list[i].id);
@@ -46,7 +46,7 @@ PanelWindow {
     }
 
     function newTernWindow() {
-        var list = Niri.windows;
+        var list = Compositor.windows;
         for (var i = 0; i < list.length; i++) {
             var w = list[i];
             if (w.app_id === "so.stencil.tern" && overlay.knownTernIds.indexOf(w.id) === -1)
@@ -75,7 +75,7 @@ PanelWindow {
         overlay.fading = false;
         overlay.running = true;
         overlay.visible = true;
-        Niri.focusMonitor(overlay.screenName);
+        Compositor.focusMonitor(overlay.screenName);
         launchTimer.restart();
         watchTimer.restart();
     }

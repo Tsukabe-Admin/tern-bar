@@ -6,10 +6,11 @@ import Quickshell.Io
 
 // The Tern app is optional: found once at start, on PATH first, then in
 // ~/.local/bin. Not found → `installed` stays false and the bar hides the Tern
-// pill. The count comes from niri's event stream, never from polling: one entry
-// per Tern window, so it changes the moment a window opens or closes, and it
-// counts windows rather than the daemon's blocks — one window can hold several
-// blocks (a plugin pane beside the shell), and sessions outlive their window.
+// pill. The count comes from the compositor's window list, never from polling:
+// one entry per Tern window, so it changes the moment a window opens or closes,
+// and it counts windows rather than the daemon's blocks — one window can hold
+// several blocks (a plugin pane beside the shell), and sessions outlive their
+// window.
 Singleton {
     id: root
 
@@ -17,10 +18,10 @@ Singleton {
     property string bin: ""
     readonly property bool installed: root.bin !== ""
 
-    // Tern windows niri currently has open.
+    // Tern windows the compositor currently has open.
     readonly property int windowCount: {
         var n = 0;
-        var list = Niri.windows;
+        var list = Compositor.windows;
         for (var i = 0; i < list.length; i++) {
             if (list[i].app_id === "so.stencil.tern")
                 n++;
@@ -39,13 +40,13 @@ Singleton {
         if (!root.installed)
             return;
         var id = -1;
-        for (var i = 0; i < Niri.windows.length; i++) {
-            var w = Niri.windows[i];
+        for (var i = 0; i < Compositor.windows.length; i++) {
+            var w = Compositor.windows[i];
             if (w.app_id === "so.stencil.tern" && (id < 0 || w.id < id))
                 id = w.id;
         }
         if (id >= 0)
-            Niri.focusWindow(id);
+            Compositor.focusWindow(id);
         Quickshell.execDetached([root.bin, root.home]);
     }
 

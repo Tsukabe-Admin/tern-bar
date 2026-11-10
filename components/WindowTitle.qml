@@ -8,7 +8,7 @@ BarItem {
 
     property string output: ""
 
-    readonly property var win: Niri.focusedWindowOn(root.output)
+    readonly property var win: Compositor.focusedWindowOn(root.output)
     readonly property string rawTitle: root.win ? (root.win.title || "") : ""
     readonly property bool hasWindow: root.win !== null
 

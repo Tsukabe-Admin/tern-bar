@@ -10,7 +10,7 @@ Row {
     spacing: 0
 
     Repeater {
-        model: Niri.workspacesFor(root.output)
+        model: Compositor.workspacesFor(root.output)
 
         delegate: BarItem {
             required property var modelData
@@ -23,7 +23,7 @@ Row {
                 : modelData.is_focused ? Theme.accent
                 : modelData.is_active ? Theme.t2
                 : Theme.t3
-            onClicked: Niri.focusWorkspace(modelData.id)
+            onClicked: Compositor.focusWorkspace(modelData.id)
         }
     }
 }

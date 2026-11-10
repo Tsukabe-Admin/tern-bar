@@ -67,9 +67,9 @@ Singleton {
         return list.length > 0 ? list[0] : null;
     }
 
-    // The output niri has focused, else the first screen's name.
+    // The output the compositor has focused, else the first screen's name.
     function focusedScreenName() {
-        const name = Niri.focusedOutput();
+        const name = Compositor.focusedOutput();
         if (name !== "")
             return name;
         const list = Quickshell.screens;

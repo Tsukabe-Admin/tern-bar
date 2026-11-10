@@ -136,7 +136,7 @@ PanelWindow {
             visible: Poke.available
             PokePill {
                 launch: () => {
-                    Niri.focusMonitor(bar.modelData.name);
+                    Compositor.focusMonitor(bar.modelData.name);
                     Poke.open("");
                 }
                 menuRequested: (item) => {
@@ -158,7 +158,7 @@ PanelWindow {
             UpdatesPill {
                 id: updatesItem
                 onClicked: {
-                    Niri.focusMonitor(bar.modelData.name);
+                    Compositor.focusMonitor(bar.modelData.name);
                     Updates.runUpdate();
                 }
             }
@@ -232,7 +232,7 @@ PanelWindow {
             IconButton {
                 text: "󰋖"
                 fg: Theme.t3
-                action: () => Niri.showHotkeyOverlay()
+                action: () => Compositor.showHotkeyOverlay()
             }
             IconButton {
                 text: "\uf013"
@@ -265,10 +265,10 @@ PanelWindow {
             visible: Tern.installed
             TernPill {
                 launch: () => {
-                    // Open on the screen whose pill was clicked: niri puts new
-                    // windows on the focused output, and hovering the bar does not
-                    // change that.
-                    Niri.focusMonitor(bar.modelData.name);
+                    // Open on the screen whose pill was clicked: the compositor
+                    // puts new windows on the focused output, and hovering the bar
+                    // does not change that.
+                    Compositor.focusMonitor(bar.modelData.name);
                     if (morphLoader.item)
                         morphLoader.item.launchFrom(ternPill);
                     else
@@ -334,11 +334,11 @@ PanelWindow {
         }
     }
 
-    // Open the settings page on the screen this bar is on (niri places a new
-    // window on the focused output, and hovering the bar does not change that),
-    // on `tab` — "layout" or "wallpaper".
+    // Open the settings page on the screen this bar is on (the compositor places
+    // a new window on the focused output, and hovering the bar does not change
+    // that), on `tab` — "layout" or "wallpaper".
     function openSettings(tab) {
-        Niri.focusMonitor(bar.modelData.name);
+        Compositor.focusMonitor(bar.modelData.name);
         BarConfig.openSettings(tab);
     }
 

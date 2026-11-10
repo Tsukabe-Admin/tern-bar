@@ -182,7 +182,7 @@ Singleton {
     }
 
     function windowRows(q) {
-        const wins = Niri.windows;
+        const wins = Compositor.windows;
         const scored = [];
         for (let i = 0; i < wins.length; i++) {
             const w = wins[i];
@@ -352,8 +352,8 @@ Singleton {
         if (!row)
             return;
         if (row.kind === "app") {
-            // niri opens new windows on the focused output.
-            Niri.focusMonitor(root.screenName);
+            // The compositor opens new windows on the focused output.
+            Compositor.focusMonitor(root.screenName);
             if (row.entry.runInTerminal && Programs.terminal !== "")
                 Quickshell.execDetached({
                     command: Programs.terminalCommand(row.entry.command),
@@ -364,7 +364,7 @@ Singleton {
             root.bump(row.entry.id);
             root.close();
         } else if (row.kind === "window") {
-            Niri.focusWindow(row.windowId);
+            Compositor.focusWindow(row.windowId);
             root.close();
         } else if (row.kind === "calc") {
             Quickshell.execDetached(["wl-copy", "--", row.value]);
@@ -396,7 +396,7 @@ Singleton {
         else if (key === "suspend")
             Quickshell.execDetached(["sh", "-c", "\"$@\" && systemctl suspend", "sh"].concat(lock));
         else if (key === "logout")
-            Niri.quit();
+            Compositor.quit();
         else if (key === "reboot")
             Quickshell.execDetached(["systemctl", "reboot"]);
         else if (key === "poweroff")

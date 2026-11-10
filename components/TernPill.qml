@@ -1,10 +1,10 @@
 import QtQuick
 import "../singletons"
 
-// Tern pill: how many Tern windows are open, read from niri's event stream so
-// the number changes the moment one opens or closes. "—" means niri's event
-// stream is not connected, so the count is unknown (a bar started without
-// NIRI_SOCKET shows no workspaces either).
+// Tern pill: how many Tern windows are open, read from the compositor's window
+// list so the number changes the moment one opens or closes. "—" means the bar
+// is not connected to the compositor, so the count is unknown (a bar started
+// outside its compositor shows no workspaces either).
 //   left click  — the capsule morphs out into a new terminal window
 //   right click — moves this pill to the end of the next group (saved in bar.json)
 Row {
@@ -34,8 +34,8 @@ Row {
     }
 
     BarItem {
-        text: "Tern " + (Niri.connected ? Tern.windowCount : "—")
-        fg: Niri.connected ? Theme.t1 : Theme.t3
+        text: "Tern " + (Compositor.connected ? Tern.windowCount : "—")
+        fg: Compositor.connected ? Theme.t1 : Theme.t3
         onClicked: {
             if (root.launch)
                 root.launch();

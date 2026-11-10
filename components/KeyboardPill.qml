@@ -1,22 +1,22 @@
 import QtQuick
 import "../singletons"
 
-// Active XKB keyboard layout from niri's event stream. Left-click or wheel-down
+// Active XKB keyboard layout, from the compositor. Left-click or wheel-down
 // switches to the next layout; right-click or wheel-up switches to the previous.
 BarItem {
     id: root
 
-    readonly property bool available: Niri.keyboardLayouts.length > 0 && Niri.shortKeyboardLayout !== ""
+    readonly property bool available: Compositor.keyboardLayouts.length > 0 && Compositor.shortKeyboardLayout !== ""
 
-    text: "󰌌 " + Niri.shortKeyboardLayout
+    text: "󰌌 " + Compositor.shortKeyboardLayout
     fg: Theme.t2
 
-    onClicked: Niri.switchLayoutNext()
-    onRightClicked: Niri.switchLayoutPrev()
+    onClicked: Compositor.switchLayoutNext()
+    onRightClicked: Compositor.switchLayoutPrev()
     onScrolled: (delta) => {
         if (delta > 0)
-            Niri.switchLayoutPrev();
+            Compositor.switchLayoutPrev();
         else
-            Niri.switchLayoutNext();
+            Compositor.switchLayoutNext();
     }
 }
