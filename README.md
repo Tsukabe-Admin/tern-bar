@@ -13,6 +13,8 @@ your wallpaper's colors.
   power actions, in a card that drops out of the launcher pill
 - Quick settings: Wi-Fi, Bluetooth (find, pair, connect and forget devices), Do Not Disturb, night light,
   microphone mute, screen brightness and microphone input volume sliders, and power profile
+- Notifications: pop-ups in the top-right corner, and every notification kept under the bell, with
+  Do Not Disturb — the bar is your notification daemon, so swaync, mako or dunst are not needed
 - A month calendar and a five-day weather forecast under the clock and weather pills
 - A small volume or brightness pop-up whenever the volume or screen brightness changes
 - Date, time and current weather (condition icon + temperature, no API key needed)
@@ -58,6 +60,9 @@ binds {
     Mod+Space repeat=false { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "launcher" "toggle"; }
     Mod+V repeat=false { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "launcher" "clipboard"; }
     Mod+Return repeat=false { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "tern" "open"; }
+    Mod+N repeat=false { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "bar" "notifications"; }
+    Mod+Shift+N repeat=false { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "notifications" "clear"; }
+    Mod+Shift+D repeat=false { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "notifications" "toggleDnd"; }
 }
 ```
 
@@ -65,8 +70,11 @@ Keep the `repeat=false`: niri repeats a bind for as long as its key is held, and
 opens and closes the window many times a second.
 
 (If you already have a `binds { }` block, put those lines inside it instead. Other things a key can call:
-`launcher power`, `launcher close`, `bar calendar`, `bar media`, `bar quickSettings`, `bar close`,
-`tern open`.)
+`launcher power`, `launcher close`, `bar calendar`, `bar media`, `bar quickSettings`, `bar notifications`,
+`bar close`, `notifications clear`, `notifications toggleDnd`, `tern open`.)
+
+The bar is also your notification daemon: take swaync, mako or dunst out of your autostart. While one
+of them runs, the bar logs two warnings about it and takes over the moment it exits.
 
 Edit any file and the bar updates on the spot. Your own settings are saved in
 `~/.config/tern-bar/`, never inside this folder, so `git pull` is always safe.
@@ -85,6 +93,9 @@ hl.bind("SUPER + W", hl.dsp.exec_cmd("quickshell ipc -c tern-bar call settings w
 hl.bind("SUPER + SPACE", hl.dsp.exec_cmd("quickshell ipc -c tern-bar call launcher toggle"))
 hl.bind("SUPER + V", hl.dsp.exec_cmd("quickshell ipc -c tern-bar call launcher clipboard"))
 hl.bind("SUPER + RETURN", hl.dsp.exec_cmd("quickshell ipc -c tern-bar call tern open"))
+hl.bind("SUPER + N", hl.dsp.exec_cmd("quickshell ipc -c tern-bar call bar notifications"))
+hl.bind("SUPER + SHIFT + N", hl.dsp.exec_cmd("quickshell ipc -c tern-bar call notifications clear"))
+hl.bind("SUPER + SHIFT + D", hl.dsp.exec_cmd("quickshell ipc -c tern-bar call notifications toggleDnd"))
 ```
 
 On Hyprland 0.55 or 0.56 with a `hyprland.conf`, write the same lines in that file's syntax
@@ -106,7 +117,6 @@ Each one is only needed for the part it powers; the rest of the bar works withou
 | `matugen` | colours taken from the wallpaper (the built-in themes don't need it) |
 | `jq`, `python3` | the wallpaper, colour and weather scripts |
 | `zenity` | the "Change folder…" picker |
-| `swaync` | the notification bell and Do Not Disturb (the bell hides itself without it) |
 | `cliphist`, `wl-clipboard` | clipboard history in the launcher (with `wl-paste --watch cliphist store` running); copying calculator answers |
 | `swaylock` | Lock and Suspend (without it `loginctl lock-session` is sent instead, which only locks if a screen locker is listening for it) |
 | `wlsunset` | night light |
@@ -211,6 +221,14 @@ which part of the bar, edit `matugen/palette.json`.
   opens the power actions; Log out, Reboot and Power off need a second Enter (or click) within 3
   seconds. Holding Enter down does not count, and moving the selection or typing cancels it.
 - **Quick settings:** the sliders button in the right-hand pill. **Calendar:** click the clock.
+- **Notifications:** new ones pop up in the top-right corner of the focused screen. One stays as long
+  as its app asks, else 6 seconds (3 for low-priority ones); critical ones stay until you close them,
+  and the pointer over one keeps it up. Click one for its app's default action, × to dismiss it. The
+  bell (or Mod+N) opens every notification still kept, the newest 50, with **Do not disturb** and
+  **Clear all**; a right-click on the bell toggles Do Not Disturb, which keeps everything but critical
+  notifications off the screen and is saved in `bar.json`. Text arrives as plain text: links and
+  pictures inside a message are not shown, and an app's picture is shown only when it is a local file
+  or icon.
 - **Bluetooth:** in quick settings, **Find devices** searches for a minute (or until you close the card
   or press **Stop**). Put the device in pairing mode and click it in the list: it is paired, trusted and
   connected. Click a paired device to connect or disconnect it; point at it for **Forget**, which asks

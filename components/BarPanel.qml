@@ -260,7 +260,9 @@ PanelWindow {
                 fg: Theme.warn
                 action: () => KeepAwake.toggle()
             }
-            Bell {}
+            Bell {
+                screenName: bar.modelData.name
+            }
             IconButton {
                 text: "⏻"
                 fg: Theme.bad
@@ -380,6 +382,7 @@ PanelWindow {
         anchorItem: (quickPopup.preferredAnchor && quickPopup.preferredAnchor.visible)
             ? quickPopup.preferredAnchor : systemPill
     }
+    NotificationCenter { barWindow: bar; screenInfo: bar.modelData; anchorItem: systemPill }
 
     Connections {
         target: BarConfig

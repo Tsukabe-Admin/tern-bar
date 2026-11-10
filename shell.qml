@@ -47,6 +47,9 @@ ShellRoot {
     BluetoothPrompt {}
     WifiPrompt {}
 
+    // New notifications, top right on the focused screen (see Notifications).
+    NotificationToasts {}
+
     IpcHandler {
         target: "settings"
 
@@ -105,7 +108,7 @@ ShellRoot {
         }
     }
 
-    // quickshell ipc -c tern-bar call bar <calendar|media|quickSettings|close>
+    // quickshell ipc -c tern-bar call bar <calendar|media|quickSettings|notifications|close>
     IpcHandler {
         target: "bar"
 
@@ -121,20 +124,39 @@ ShellRoot {
             Popups.toggle("quick", Popups.focusedScreenName());
         }
 
+        function notifications(): void {
+            Popups.toggle("notifications", Popups.focusedScreenName());
+        }
+
         function close(): void {
             Popups.close();
+        }
+    }
+
+    // quickshell ipc -c tern-bar call notifications <clear|toggleDnd>
+    IpcHandler {
+        target: "notifications"
+
+        function clear(): void {
+            Notifications.clear();
+        }
+
+        function toggleDnd(): void {
+            Notifications.toggleDnd();
         }
     }
 
     // Singletons are built the first time something uses them, so without this
     // the rotation timer and the screen hotplug handler would not exist until
     // the Wallpaper tab had been opened once. NightLight, Brightness, Weather
-    // and Updates likewise.
+    // and Updates likewise; the notification server has to own its bus name
+    // from the start, whatever the bar shows.
     Component.onCompleted: {
         Wallpaper.rescan();
         NightLight.available;
         Brightness.available;
         Weather.wanted;
         Updates.wanted;
+        Notifications.dnd;
     }
 }

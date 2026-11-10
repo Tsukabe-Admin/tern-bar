@@ -128,12 +128,11 @@ PopupWindow {
                 }
 
                 QsTile {
-                    enabled: Swaync.available
                     glyph: "\uf1f6"
                     title: "Do not disturb"
-                    subtitle: !Swaync.available ? "Install swaync" : Swaync.dnd ? "On" : "Off"
-                    on: Swaync.dnd
-                    onClicked: Swaync.toggleDnd()
+                    subtitle: Notifications.dnd ? "On" : "Off"
+                    on: Notifications.dnd
+                    onClicked: Notifications.toggleDnd()
                 }
 
                 QsTile {

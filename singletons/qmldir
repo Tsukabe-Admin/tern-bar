@@ -9,7 +9,7 @@ singleton Programs 1.0 Programs.qml
 singleton NetStatus 1.0 NetStatus.qml
 singleton SysStats 1.0 SysStats.qml
 singleton Popups 1.0 Popups.qml
-singleton Swaync 1.0 Swaync.qml
+singleton Notifications 1.0 Notifications.qml
 singleton NightLight 1.0 NightLight.qml
 singleton Launcher 1.0 Launcher.qml
 singleton Brightness 1.0 Brightness.qml

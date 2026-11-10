@@ -5,9 +5,9 @@ import Quickshell
 import Quickshell.Services.Mpris
 
 // Which of the bar's popups is open — "calendar", "quick" (quick settings),
-// "media" or "" — and on which screen. One at a time: opening one closes the
-// others and the launcher. Each bar shows a popup only when `screenName` is its
-// own screen.
+// "media", "notifications" (the notification centre) or "" — and on which
+// screen. One at a time: opening one closes the others and the launcher. Each
+// bar shows a popup only when `screenName` is its own screen.
 Singleton {
     id: root
 

@@ -1,16 +1,17 @@
 import QtQuick
 import "../singletons"
 
-// swaync bell, from the shared Swaync singleton. Click opens swaync's panel, right click toggles Do Not Disturb.
-// Hidden when swaync is not installed.
+// The notification bell: a badge while notifications wait, crossed out while
+// Do Not Disturb is on. Click opens the notification centre on this screen,
+// right click toggles Do Not Disturb.
 BarItem {
     id: root
 
-    visible: Swaync.available
+    property string screenName: ""
 
-    text: Swaync.hasNotifications ? "󱅫" : Swaync.dnd ? "󰂛" : "󰂚"
-    fg: Swaync.dnd ? Theme.warn : Swaync.hasNotifications ? Theme.t1 : Theme.t2
+    text: Notifications.count > 0 ? "󱅫" : Notifications.dnd ? "󰂛" : "󰂚"
+    fg: Notifications.dnd ? Theme.warn : Notifications.count > 0 ? Theme.t1 : Theme.t2
 
-    onClicked: Swaync.togglePanel()
-    onRightClicked: Swaync.toggleDnd()
+    onClicked: Popups.toggle("notifications", root.screenName)
+    onRightClicked: Notifications.toggleDnd()
 }

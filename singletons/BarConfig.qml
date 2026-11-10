@@ -51,6 +51,8 @@ Singleton {
     property bool nightLight: false
     // Weather in Fahrenheit instead of Celsius; toggled from the forecast popup.
     property bool weatherFahrenheit: false
+    // Do Not Disturb (singletons/Notifications.qml), kept across restarts.
+    property bool doNotDisturb: false
     // Whether the settings page is open, and which of its three tabs it shows.
     // Neither is persisted, so a reload closes the page on the Layout tab.
     property bool settingsOpen: false
@@ -205,12 +207,20 @@ Singleton {
         root.save();
     }
 
+    function setDoNotDisturb(on) {
+        if (root.doNotDisturb === !!on)
+            return;
+        root.doNotDisturb = !!on;
+        root.save();
+    }
+
     function save() {
         file.setText(JSON.stringify({
             layout: root.layout,
             hidden: root.hidden,
             nightLight: root.nightLight,
-            weatherFahrenheit: root.weatherFahrenheit
+            weatherFahrenheit: root.weatherFahrenheit,
+            doNotDisturb: root.doNotDisturb
         }, null, 2) + "\n");
     }
 
@@ -274,6 +284,7 @@ Singleton {
             root.layout = root.normalize(o.layout, o.ternPillSide);
             root.nightLight = o.nightLight === true;
             root.weatherFahrenheit = o.weatherFahrenheit === true;
+            root.doNotDisturb = o.doNotDisturb === true;
         } else if (String(rawText).trim() !== "") {
             rejected.setText(rawText);
         }

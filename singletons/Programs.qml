@@ -10,8 +10,8 @@ Singleton {
     id: root
 
     // program name → true, for: wlsunset blueman-manager cliphist wl-copy
-    // swaylock swaync-client brightnessctl checkupdates pacman paru yay
-    // python3 tern-bar-bt-agent hyprlock hyprshutdown, plus the pseudo-name
+    // swaylock brightnessctl checkupdates pacman paru yay python3
+    // tern-bar-bt-agent hyprlock hyprshutdown, plus the pseudo-name
     // "power-profiles" (the D-Bus service).
     property var found: ({})
     // The terminal for desktop entries with Terminal=true: $TERMINAL, else the
@@ -37,7 +37,7 @@ Singleton {
     Process {
         id: probe
         command: ["sh", "-c",
-            "for p in wlsunset blueman-manager cliphist wl-copy swaylock swaync-client brightnessctl checkupdates pacman paru yay python3 tern-bar-bt-agent hyprlock hyprshutdown; do "
+            "for p in wlsunset blueman-manager cliphist wl-copy swaylock brightnessctl checkupdates pacman paru yay python3 tern-bar-bt-agent hyprlock hyprshutdown; do "
             + "command -v \"$p\" >/dev/null 2>&1 && echo \"have $p\"; done; "
             + "for t in xdg-terminal-exec kitty foot alacritty ghostty wezterm; do "
             + "command -v \"$t\" >/dev/null 2>&1 && { echo \"term $t\"; break; }; done; "
