@@ -594,7 +594,9 @@ Singleton {
                 root.rescan();
             } else if (root.rotateAfterScan) {
                 root.rotateAfterScan = false;
-                root.rotateNow();
+                // Rotation may have been switched off while the scan ran.
+                if (root.settings.rotate)
+                    root.rotateNow();
             }
         }
     }
