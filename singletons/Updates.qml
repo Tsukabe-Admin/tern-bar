@@ -80,13 +80,25 @@ Singleton {
             + "      exit 1; "
             + "    fi; "
             + "  fi; "
-            + "  if command -v paru >/dev/null 2>&1; then "
-            + "    aur=$(paru -Qua 2>/dev/null | wc -l); "
-            + "  elif command -v yay >/dev/null 2>&1; then "
-            + "    aur=$(yay -Qua 2>/dev/null | wc -l); "
+            // paru and yay exit 1 both for "nothing to update" and for "the AUR
+            // did not answer"; only the second writes to stderr. When the query
+            // fails, the last known AUR count is kept (it is saved as "aur",
+            // beside the total) instead of being counted as zero.
+            + "  helper=''; "
+            + "  if command -v paru >/dev/null 2>&1; then helper=paru; "
+            + "  elif command -v yay >/dev/null 2>&1; then helper=yay; fi; "
+            + "  if [ -n \"$helper\" ]; then "
+            + "    rc=0; out=$(\"$helper\" -Qua 2>\"$state/aur.err\") || rc=$?; "
+            + "    if [ \"$rc\" -ne 0 ] && [ -s \"$state/aur.err\" ]; then "
+            + "      aur=$(sed -n 's/.*\"aur\": *\\([0-9][0-9]*\\).*/\\1/p' \"$state/updates.json\" 2>/dev/null); "
+            + "      aur=${aur:-0}; "
+            + "    else "
+            + "      aur=$(printf '%s\\n' \"$out\" | grep -c . || true); "
+            + "    fi; "
+            + "    rm -f \"$state/aur.err\"; "
             + "  fi; "
             + "  total=$(( repo + aur )); "
-            + "  printf '{\"count\": %d}\\n' \"$total\" > \"$state/updates.json.tmp\" "
+            + "  printf '{\"count\": %d, \"aur\": %d}\\n' \"$total\" \"$aur\" > \"$state/updates.json.tmp\" "
             + "  && mv \"$state/updates.json.tmp\" \"$state/updates.json\"; "
             + "fi; "
             + "printf '%d\\n' \"$total\""]
