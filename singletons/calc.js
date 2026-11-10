@@ -55,7 +55,12 @@ function evaluate(text) {
         const base = primary();
         if (peek() === "^") {
             pos++;
-            return step(Math.pow(base, unary()));   // right-associative: 2^3^2 = 2^9
+            const exponent = unary();   // right-associative: 2^3^2 = 2^9
+            // A negative power is a fraction, even one so small that a double
+            // holds it as 0, which would otherwise pass for a whole number.
+            if (exponent < 0)
+                exact = false;
+            return step(Math.pow(base, exponent));
         }
         return base;
     }

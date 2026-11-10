@@ -40,6 +40,17 @@ test("whole-number arithmetic past 2^53 is not passed off as exact", () => {
     assert.notEqual(shown("9007199254740991+2"), "9007199254740992");
 });
 
+test("each way an answer stops being exact is noticed", () => {
+    // A typed number with a decimal point that a double rounds to a whole number.
+    assert.equal(shown("17781783923801.9987+0"), "17781783920000");
+    // A typed whole number too long for a double.
+    assert.equal(shown("-12345678901234567"), "-12345678900000000");
+    // A power past 2^53.
+    assert.equal(shown("3^40"), "12157665460000000000");
+    // A negative power so small that it comes out as 0.
+    assert.equal(shown("9007199254740991+10^-400"), "9007199255000000");
+});
+
 test("float noise is hidden", () => {
     assert.equal(shown("0.1+0.2"), "0.3");
     assert.equal(shown("1.15*100"), "115");
