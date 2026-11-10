@@ -54,6 +54,17 @@ PanelWindow {
         target: Launcher
 
         function onResultsChanged() {
+            // A power action waiting for its second Enter keeps the selection.
+            // The list is rebuilt for many reasons (in a search, every time a
+            // window opens, closes or renames itself), and the confirming Enter
+            // must not land on whatever happens to be first by then.
+            const armed = Launcher.armed === "" ? -1 : Launcher.results.findIndex(
+                (row) => row.kind === "power" && row.action === Launcher.armed);
+            if (armed !== -1) {
+                win.selected = armed;
+                list.positionViewAtIndex(armed, ListView.Contain);
+                return;
+            }
             win.selected = 0;
             list.positionViewAtBeginning();
         }
