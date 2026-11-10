@@ -8,11 +8,12 @@ import "../singletons"
 
 // Quick settings: Wi-Fi, Bluetooth, Do Not Disturb, night light, keep awake and
 // microphone tiles, screen brightness and microphone input volume sliders, the
-// power profile, Bluetooth devices (find new ones, pair, connect/disconnect,
-// forget; see BluetoothDevices) and links to the full settings apps. Shown
-// while Popups.open is "quick" on this bar's screen. A tile or slider whose
-// hardware/service is missing is hidden; night light without wlsunset says
-// what to install.
+// sound output and input devices (when there is more than one to choose
+// from), the power profile, Bluetooth devices (find new ones, pair,
+// connect/disconnect, forget; see BluetoothDevices) and links to the full
+// settings apps. Shown while Popups.open is "quick" on this bar's screen. A
+// tile or slider whose hardware/service is missing is hidden; night light
+// without wlsunset says what to install.
 PopupWindow {
     id: pop
 
@@ -43,6 +44,17 @@ PopupWindow {
 
     PwObjectTracker {
         objects: pop.mic ? [pop.mic] : []
+    }
+
+    // Sound devices (not the apps' streams): where sound goes, and where it
+    // comes from.
+    readonly property var sinks: Pipewire.nodes.values.filter((n) =>
+        (n.type & PwNodeType.AudioSink) === PwNodeType.AudioSink && !(n.type & PwNodeType.Stream))
+    readonly property var sources: Pipewire.nodes.values.filter((n) =>
+        (n.type & PwNodeType.AudioSource) === PwNodeType.AudioSource && !(n.type & PwNodeType.Stream))
+
+    function nodeLabel(n) {
+        return n.description || n.nickname || n.name;
     }
 
     readonly property var adapter: Bluetooth.defaultAdapter
@@ -257,6 +269,63 @@ PopupWindow {
                         color: pop.micMuted ? Theme.t3 : Theme.t2
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSize - 1
+                    }
+                }
+            }
+
+            // A click makes the device the one in use: Pipewire moves the
+            // sound there, and the volume pill and sliders follow it.
+            Column {
+                visible: pop.sinks.length > 1 || pop.sources.length > 1
+                width: parent.width
+                spacing: 2
+
+                Text {
+                    textFormat: Text.PlainText
+                    visible: pop.sinks.length > 1
+                    bottomPadding: 4
+                    text: "Output"
+                    color: Theme.t3
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSize - 2
+                }
+
+                Repeater {
+                    model: pop.sinks.length > 1 ? pop.sinks : []
+
+                    DeviceRow {
+                        id: sinkRow
+                        required property var modelData
+
+                        label: pop.nodeLabel(sinkRow.modelData)
+                        status: sinkRow.modelData === Pipewire.defaultAudioSink ? "In use" : ""
+                        statusColor: Theme.accent
+                        onTapped: Pipewire.preferredDefaultAudioSink = sinkRow.modelData
+                    }
+                }
+
+                Text {
+                    textFormat: Text.PlainText
+                    visible: pop.sources.length > 1
+                    topPadding: pop.sinks.length > 1 ? 8 : 0
+                    bottomPadding: 4
+                    text: "Input"
+                    color: Theme.t3
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSize - 2
+                }
+
+                Repeater {
+                    model: pop.sources.length > 1 ? pop.sources : []
+
+                    DeviceRow {
+                        id: sourceRow
+                        required property var modelData
+
+                        label: pop.nodeLabel(sourceRow.modelData)
+                        status: sourceRow.modelData === Pipewire.defaultAudioSource ? "In use" : ""
+                        statusColor: Theme.accent
+                        onTapped: Pipewire.preferredDefaultAudioSource = sourceRow.modelData
                     }
                 }
             }
