@@ -84,14 +84,16 @@ Singleton {
             // did not answer", and both print warnings on stderr either way, so
             // neither the status nor "something was printed" tells them apart.
             // What does: a failed query names the AUR's address, which ends in
-            // /rpc. Then the last known AUR count is kept (it is saved as "aur",
-            // beside the total) instead of being counted as zero.
+            // /rpc (not followed by more of a name: a package's own address
+            // may hold "/rpcs3"), or says the reply could not be read. Then the
+            // last known AUR count is kept (it is saved as "aur", beside the
+            // total) instead of being counted as zero.
             + "  helper=''; "
             + "  if command -v paru >/dev/null 2>&1; then helper=paru; "
             + "  elif command -v yay >/dev/null 2>&1; then helper=yay; fi; "
             + "  if [ -n \"$helper\" ]; then "
             + "    rc=0; out=$(\"$helper\" -Qua 2>\"$state/aur.err\") || rc=$?; "
-            + "    if [ \"$rc\" -ne 0 ] && grep -q '/rpc' \"$state/aur.err\" 2>/dev/null; then "
+            + "    if [ \"$rc\" -ne 0 ] && grep -qE '/rpc([/?)\"]|$)|error decoding response body|response body error' \"$state/aur.err\" 2>/dev/null; then "
             + "      aur=$(sed -n 's/.*\"aur\": *\\([0-9][0-9]*\\).*/\\1/p' \"$state/updates.json\" 2>/dev/null); "
             + "      aur=${aur:-0}; "
             + "    else "
