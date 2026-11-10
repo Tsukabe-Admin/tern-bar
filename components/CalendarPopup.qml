@@ -15,6 +15,9 @@ PopupWindow {
     property var today: new Date()
     property int year: pop.today.getFullYear()
     property int month: pop.today.getMonth()
+    // The forecast columns, from today on. `today` is set afresh every time the
+    // card opens, so the days and their headings are right at that moment.
+    readonly property var days: Weather.daysFrom(pop.today)
 
     visible: Popups.open === "calendar" && pop.screenInfo !== null
         && Popups.screenName === pop.screenInfo.name
@@ -286,17 +289,17 @@ PopupWindow {
                 }
 
                 Row {
-                    visible: Weather.forecast.length > 0
+                    visible: pop.days.length > 0
                     width: parent.width
                     spacing: 4
 
                     Repeater {
-                        model: Weather.forecast.slice(0, 5)
+                        model: pop.days
 
                         Column {
                             id: dayCol
                             required property var modelData
-                            readonly property int count: Math.max(1, Math.min(5, Weather.forecast.length))
+                            readonly property int count: Math.max(1, pop.days.length)
                             width: (col.width - 4 * (dayCol.count - 1)) / dayCol.count
                             spacing: 2
 
@@ -304,7 +307,7 @@ PopupWindow {
                                 textFormat: Text.PlainText
                                 width: parent.width
                                 horizontalAlignment: Text.AlignHCenter
-                                text: String(dayCol.modelData.day || "")
+                                text: Weather.dayLabel(dayCol.modelData.date, pop.today)
                                 elide: Text.ElideRight
                                 maximumLineCount: 1
                                 color: Theme.t2

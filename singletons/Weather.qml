@@ -45,6 +45,27 @@ Singleton {
         return value + (BarConfig.weatherFahrenheit ? "°F" : "°C");
     }
 
+    // The forecast from `now`'s day on, at most five days. A forecast kept past
+    // midnight, or read back from the cache the next day, still begins with the
+    // day it was fetched on; that day is not shown.
+    function daysFrom(now) {
+        const today = Qt.formatDate(now, "yyyy-MM-dd");
+        return root.forecast.filter((d) => String(d.date || "") >= today).slice(0, 5);
+    }
+
+    // The heading of a forecast column: "Today", or the weekday of `isoDate`
+    // ("2026-11-10"), seen from `now`. It is worked out when the column is shown
+    // and not when the forecast was fetched, so it cannot be a day out.
+    function dayLabel(isoDate, now) {
+        const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(isoDate || ""));
+        if (!m)
+            return "";
+        if (m[0] === Qt.formatDate(now, "yyyy-MM-dd"))
+            return "Today";
+        const day = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+        return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][day.getDay()];
+    }
+
     function applyJson(line) {
         try {
             const o = JSON.parse(line);

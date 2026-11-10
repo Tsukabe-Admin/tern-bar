@@ -15,7 +15,6 @@ fi
 mkdir -p "$STATE_DIR"
 
 python3 - "$CACHE_FILE" <<'PY'
-import datetime
 import json
 import os
 import sys
@@ -106,15 +105,6 @@ WMO_ICONS = {
     99: ("󰙾", "Thunderstorm with hail"),
 }
 
-def day_label(date_str):
-    try:
-        dt = datetime.date.fromisoformat(date_str)
-        if dt == datetime.date.today():
-            return "Today"
-        return dt.strftime("%a")
-    except Exception:
-        return date_str[:3]
-
 def fetch_json(url, timeout=5):
     req = urllib.request.Request(url, headers={"User-Agent": "tern-bar/1.0"})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -157,7 +147,6 @@ def from_wttr():
         min_c = int(round(float(w.get("mintempC", temp_c))))
         forecast.append({
             "date": d_str,
-            "day": day_label(d_str),
             "icon": w_icon,
             "max": f"{max_c}°",
             "min": f"{min_c}°",
@@ -230,7 +219,6 @@ def from_open_meteo():
         lo = int(round(float(mins[i]))) if i < len(mins) else temp_c
         forecast.append({
             "date": times[i],
-            "day": day_label(times[i]),
             "icon": d_icon,
             "max": f"{hi}°",
             "min": f"{lo}°",
