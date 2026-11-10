@@ -8,11 +8,13 @@ your wallpaper's colors.
 
 ## What you get
 
-- Workspaces and the name of the window you're using
+- Workspaces (scroll over them to switch; on Hyprland an open scratchpad shows as one more chip) and the
+  name of the window you're using
 - An app launcher built into the bar: apps, open windows, a calculator, clipboard history and
   power actions, in a card that drops out of the launcher pill
-- Quick settings: Wi-Fi, Bluetooth (find, pair, connect and forget devices), Do Not Disturb, night light,
-  microphone mute, screen brightness and microphone input volume sliders, and power profile
+- Quick settings: Wi-Fi (pick a network, type its password), Bluetooth (find, pair, connect and forget
+  devices), Do Not Disturb, night light, keep awake, microphone mute, the sound output and input, screen
+  brightness and microphone input volume sliders, and power profile
 - Notifications: pop-ups in the top-right corner, and every notification kept under the bell, with
   Do Not Disturb — the bar is your notification daemon, so swaync, mako or dunst are not needed
 - A month calendar and a five-day weather forecast under the clock and weather pills
@@ -128,8 +130,8 @@ Each one is only needed for the part it powers; the rest of the bar works withou
 | BlueZ | the Bluetooth tile; finding, pairing, connecting and forgetting devices |
 | Rust (`cargo`), once, to build `tools/bt-agent` | pairing devices that ask for a PIN, a passkey or a number check (see **Bluetooth** below) |
 | `blueman` (optional) | the "Bluetooth settings" button |
-| NetworkManager | the Wi-Fi tile |
-| `pavucontrol`, PipeWire | right-click on volume or microphone; the volume and microphone pills and quick-settings controls |
+| NetworkManager | the Wi-Fi tile and the list of Wi-Fi networks; `nm-connection-editor` for networks that need more than a password |
+| `pavucontrol`, PipeWire | right-click on volume or microphone; the volume and microphone pills and quick-settings controls, choosing the sound output and input |
 | `ip` (iproute2), `nm-connection-editor`, `nmcli` or `iwgetid` | the network pill (it reads "Offline" without `ip`); right-click on network; the Wi-Fi name |
 | `notify-send` | the "IP hidden / shown" message |
 | `tern` | the Tern pill — it hides itself when `tern` isn't on your PATH or in `~/.local/bin` |
@@ -221,6 +223,17 @@ which part of the bar, edit `matugen/palette.json`.
   opens the power actions; Log out, Reboot and Power off need a second Enter (or click) within 3
   seconds. Holding Enter down does not count, and moving the selection or typing cancels it.
 - **Quick settings:** the sliders button in the right-hand pill. **Calendar:** click the clock.
+- **Wi-Fi:** in quick settings, the networks around are listed while the card is open (the radio only
+  scans then). Click one to connect; one that needs a password asks for it in a small window under the
+  bar (**Show** reveals what you typed), and asks again if it was wrong. Click the connected one to
+  disconnect; point at a saved one for **Forget**, which asks for a second click. A network that needs
+  more than a password (a company or school login) says "Needs settings" and opens
+  `nm-connection-editor`.
+- **Sound output and input:** with more than one speaker, headset or HDMI output (or microphone),
+  quick settings lists them; click one to make it the one in use.
+- **Keep awake:** the coffee tile in quick settings stops the screen from dimming, locking or sleeping
+  on its own. A coffee cup in the right-hand pill shows it is on (click it to turn it off), and it is
+  off again after a restart of the bar.
 - **Notifications:** new ones pop up in the top-right corner of the focused screen. One stays as long
   as its app asks, else 6 seconds (3 for low-priority ones); critical ones stay until you close them,
   and the pointer over one keeps it up. Click one for its app's default action, × to dismiss it. The
