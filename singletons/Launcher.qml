@@ -67,10 +67,12 @@ Singleton {
             return;
         }
         Popups.close();
+        // Before the mode changes: that rebuilds the list, and the window keeps
+        // an armed action selected through a rebuild.
+        root.unarm();
         root.screenName = screenName;
         root.anchorX = x;
         root.mode = mode;
-        root.armed = "";
         root.query = query;
         root.open = true;
     }
@@ -78,11 +80,13 @@ Singleton {
     function close() {
         root.open = false;
         root.query = "";
-        root.armed = "";
+        root.unarm();
         root.clipsLoaded = false;
     }
 
     onQueryChanged: {
+        // Typing withdraws a confirmation that was pending.
+        root.unarm();
         if (root.open && root.query.indexOf(";") === 0 && !root.clipsLoaded)
             root.loadClips();
     }
@@ -224,9 +228,8 @@ Singleton {
 
     // A row is the same whether or not its action is waiting for the second
     // Enter: LauncherRow adds "again to confirm" from `armed` itself. If the
-    // title were built from `armed` here, arming would rebuild `results`, and
-    // the window puts the selection back on the first row whenever that
-    // happens, so the confirming Enter would land on Lock instead.
+    // title were built from `armed` here, every arming and disarming would
+    // rebuild `results`, and a rebuilt list is where a selection gets lost.
     function powerRow(p) {
         return {
             kind: "power", key: "power:" + p.key, action: p.key,
@@ -336,6 +339,13 @@ Singleton {
         id: disarm
         interval: 3000
         onTriggered: root.armed = ""
+    }
+
+    // Withdraw a pending confirmation: the selection or the search moved on, or
+    // the launcher is being opened afresh or closed.
+    function unarm() {
+        root.armed = "";
+        disarm.stop();
     }
 
     function activate(row) {

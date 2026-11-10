@@ -50,30 +50,44 @@ PanelWindow {
         openAnim.restart();
     }
 
+    // The action waiting for its second Enter is always the selected row. It is
+    // selected when it is armed (a click arms too), it stays selected when the
+    // list is rebuilt under it (in a search that happens every time a window
+    // opens, closes or renames itself), and moving the selection or typing
+    // withdraws the confirmation. So Enter can only ever confirm the row that is
+    // shown in red.
     Connections {
         target: Launcher
 
+        function onArmedChanged() {
+            win.selectArmed();
+        }
+
         function onResultsChanged() {
-            // A power action waiting for its second Enter keeps the selection.
-            // The list is rebuilt for many reasons (in a search, every time a
-            // window opens, closes or renames itself), and the confirming Enter
-            // must not land on whatever happens to be first by then.
-            const armed = Launcher.armed === "" ? -1 : Launcher.results.findIndex(
-                (row) => row.kind === "power" && row.action === Launcher.armed);
-            if (armed !== -1) {
-                win.selected = armed;
-                list.positionViewAtIndex(armed, ListView.Contain);
+            if (win.selectArmed())
                 return;
-            }
             win.selected = 0;
             list.positionViewAtBeginning();
         }
+    }
+
+    // Selects the armed power action. False when nothing is armed or it is not listed.
+    function selectArmed() {
+        if (Launcher.armed === "")
+            return false;
+        const at = Launcher.results.findIndex((row) => row.kind === "power" && row.action === Launcher.armed);
+        if (at === -1)
+            return false;
+        win.selected = at;
+        list.positionViewAtIndex(at, ListView.Contain);
+        return true;
     }
 
     function move(step) {
         const n = Launcher.results.length;
         if (n === 0)
             return;
+        Launcher.unarm();
         win.selected = (win.selected + step + n) % n;
         list.positionViewAtIndex(win.selected, ListView.Contain);
     }
