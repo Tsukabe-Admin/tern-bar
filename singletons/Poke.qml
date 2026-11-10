@@ -23,6 +23,8 @@ Singleton {
     property var status: null
     property bool available: false
     property int generatedAt: 0
+    // Polls in a row that found no status.json.
+    property int misses: 0
 
     // Offline/stale: older than max(3 * refreshInterval, 900) seconds.
     readonly property bool stale: {
@@ -77,8 +79,17 @@ Singleton {
             onRead: (line) => root.buffer += line + "\n"
         }
         onExited: (exitCode, exitStatus) => {
-            if (exitCode === 0)
+            if (exitCode === 0) {
+                root.misses = 0;
                 root.load(root.buffer);
+            } else if (++root.misses === 3) {
+                // Three polls in a row without the file: it is gone (the plugin
+                // was removed, the data folder wiped), not being rewritten. Old
+                // numbers must not go on looking current.
+                root.status = null;
+                root.generatedAt = 0;
+                root.available = false;
+            }
             root.buffer = "";
         }
     }
