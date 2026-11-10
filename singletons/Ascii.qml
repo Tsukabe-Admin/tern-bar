@@ -201,7 +201,9 @@ Singleton {
     }
 
     // ── Rendering the wallpaper ────────────────────────────────────────────
-    property bool rendering: false
+    readonly property bool rendering: renderProcess.running
+    // True from render() until the process reports its exit.
+    property bool exitPending: false
     property string status: ""
     property string lastError: ""
     property string outputPath: ""
@@ -231,7 +233,7 @@ Singleton {
         if (w.palette === "custom")
             command = command.concat(["--color", w.custom]);
 
-        root.rendering = true;
+        root.exitPending = true;
         root.lastError = "";
         root.stderrTail = "";
         root.status = "Starting…";
@@ -259,8 +261,23 @@ Singleton {
             }
         }
 
+        // A script that cannot be started (not executable, gone) never sends
+        // `exited`: the process just stops running. The check waits one turn
+        // of the event loop, so an ordinary exit has been handled by then.
+        onRunningChanged: {
+            if (renderProcess.running)
+                return;
+            Qt.callLater(() => {
+                if (!root.exitPending)
+                    return;
+                root.exitPending = false;
+                root.status = "";
+                root.lastError = "Couldn't start scripts/ascii-render.sh";
+            });
+        }
+
         onExited: (exitCode, exitStatus) => {
-            root.rendering = false;
+            root.exitPending = false;
             if (exitCode === 0) {
                 Wallpaper.setWallpaper("*", root.outputPath);
                 Wallpaper.rescan();
