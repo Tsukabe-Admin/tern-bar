@@ -69,6 +69,16 @@ PanelWindow {
             win.selected = 0;
             list.positionViewAtBeginning();
         }
+
+        // The field shows the launcher's search. Typing sets the search from the
+        // field (onTextChanged below); the clipboard and power shortcuts set it
+        // from outside while the card is open, and then the field has to follow.
+        function onQueryChanged() {
+            if (search.text === Launcher.query)
+                return;
+            search.text = Launcher.query;
+            search.cursorPosition = search.text.length;
+        }
     }
 
     // Selects the armed power action. False when nothing is armed or it is not listed.
