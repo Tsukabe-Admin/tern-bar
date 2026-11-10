@@ -1,16 +1,30 @@
 .pragma library
 
 // Evaluates + - * / % ^ and parentheses on decimal numbers, with unary minus
-// binding looser than ^ (so -2^2 is -4). Returns a finite number, or null when
-// the text is not such an expression. No eval: typing can never run code.
+// binding looser than ^ (so -2^2 is -4). Returns { value, exact }, or null when
+// the text is not such an expression or its value is not finite. No eval:
+// typing can never run code.
+//
+// `exact` is true when every number typed and every step was a whole number a
+// double holds exactly (up to 2^53 - 1): the value is then the true answer,
+// digit for digit. One fraction, or one step past that range, and the value is
+// only as good as floating point, which format() takes into account.
 function evaluate(text) {
     const src = String(text).replace(/\s+/g, "");
     if (src === "" || !/^[0-9.+\-*/%^()]+$/.test(src))
         return null;
     let pos = 0;
+    let exact = true;
 
     function peek() {
         return src[pos];
+    }
+
+    // Every number and every result passes through here.
+    function step(value) {
+        if (!Number.isSafeInteger(value))
+            exact = false;
+        return value;
     }
 
     function number() {
@@ -18,7 +32,11 @@ function evaluate(text) {
         if (!m)
             throw new Error("number expected");
         pos += m[0].length;
-        return parseFloat(m[0]);
+        // A number written with a decimal point may already be rounded on the
+        // way in (17781783923801.9987 becomes a whole double), so it is never exact.
+        if (m[0].indexOf(".") !== -1)
+            exact = false;
+        return step(parseFloat(m[0]));
     }
 
     function primary() {
@@ -37,7 +55,7 @@ function evaluate(text) {
         const base = primary();
         if (peek() === "^") {
             pos++;
-            return Math.pow(base, unary());   // right-associative: 2^3^2 = 2^9
+            return step(Math.pow(base, unary()));   // right-associative: 2^3^2 = 2^9
         }
         return base;
     }
@@ -59,7 +77,7 @@ function evaluate(text) {
         while (peek() === "*" || peek() === "/" || peek() === "%") {
             const op = src[pos++];
             const r = unary();
-            v = (op === "*") ? v * r : (op === "/") ? v / r : v % r;
+            v = step((op === "*") ? v * r : (op === "/") ? v / r : v % r);
         }
         return v;
     }
@@ -69,28 +87,26 @@ function evaluate(text) {
         while (peek() === "+" || peek() === "-") {
             const op = src[pos++];
             const r = product();
-            v = (op === "+") ? v + r : v - r;
+            v = step((op === "+") ? v + r : v - r);
         }
         return v;
     }
 
     try {
         const v = sum();
-        return (pos === src.length && isFinite(v)) ? v : null;
+        return (pos === src.length && isFinite(v)) ? { value: v, exact: exact } : null;
     } catch (e) {
         return null;
     }
 }
 
-// The answer as the launcher shows and copies it, without trailing zeros.
-// A whole number up to 2^53 is printed digit for digit: a double holds every
-// one of those exactly. Anything else is rounded to significant digits: 10,
-// which hides float noise (0.1+0.2 shows 0.3), or more when the part in front
-// of the decimal point is long, up to the 15 a double is good for. Past 2^53
-// the last digits of a double are rounding, so they are not shown as exact.
-function format(v) {
-    if (Number.isInteger(v) && Math.abs(v) <= 9007199254740992)
-        return String(v);
-    const whole = String(Math.trunc(Math.abs(v))).length;
-    return String(parseFloat(v.toPrecision(Math.min(15, Math.max(10, whole + 2)))));
+// An answer from evaluate() as the launcher shows and copies it. An exact one
+// is printed digit for digit. Any other is only as good as floating point, so
+// it gets 10 significant digits without trailing zeros: enough to be useful,
+// few enough to hide the noise (0.1+0.2 shows 0.3, and a difference of two
+// close numbers does not grow a tail of 9s).
+function format(answer) {
+    if (answer.exact)
+        return String(answer.value);
+    return String(parseFloat(answer.value.toPrecision(10)));
 }

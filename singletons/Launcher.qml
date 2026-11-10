@@ -204,10 +204,10 @@ Singleton {
             expr = expr.slice(1);
         else if (!/[0-9]/.test(expr) || !/[+\-*/%^]/.test(expr))
             return null;
-        const v = Calc.evaluate(expr);
-        if (v === null)
+        const answer = Calc.evaluate(expr);
+        if (answer === null)
             return null;
-        const shown = Calc.format(v);
+        const shown = Calc.format(answer);
         return {
             kind: "calc", key: "calc", title: shown,
             subtitle: expr.trim() + "  ·  Enter copies", icon: "", glyph: "\uf1ec", value: shown

@@ -11,22 +11,33 @@ const { evaluate, format } = new Function(`${source}\nreturn { evaluate, format 
 
 // What the launcher row shows, and what Enter copies.
 function shown(text) {
-    const value = evaluate(text);
-    return value === null ? null : format(value);
+    const answer = evaluate(text);
+    return answer === null ? null : format(answer);
 }
 
-test("a whole number is shown digit for digit", () => {
+test("whole-number arithmetic is shown digit for digit", () => {
     assert.equal(shown("2^40"), "1099511627776");
     assert.equal(shown("123456*987654"), "121931812224");
     assert.equal(shown("12345678901+1"), "12345678902");
-    assert.equal(shown("2^53"), "9007199254740992");
+    assert.equal(shown("94906265*94906265"), "9007199136250225");
+    assert.equal(shown("9007199254740990+1"), "9007199254740991");
+    assert.equal(shown("1000000000000000/8"), "125000000000000");
     assert.equal(shown("0*-1"), "0");
 });
 
-test("past 2^53 a double's last digits are rounding and are not shown as exact", () => {
+test("an answer that floating point only approximates never shows the rounding as digits", () => {
     assert.equal(shown("6.022*10^23"), "6.022e+23");
     assert.equal(shown("16.458*10^18"), "16458000000000000000");
-    assert.equal(shown("0.1*3*10^16"), "3000000000000000");
+    assert.equal(shown("(0.1+0.2)*2*10^16"), "6000000000000000");
+    assert.equal(shown("(0.7+0.1)*9*10^15"), "7200000000000000");
+    assert.equal(shown("64.74*80.47*10^12"), "5209627800000000");
+    assert.equal(shown("(42.3-38.2)*10^12"), "4100000000000");
+});
+
+test("whole-number arithmetic past 2^53 is not passed off as exact", () => {
+    // 2^53 + 1 is not a number a double can hold; the double next to it is 2^53.
+    assert.notEqual(shown("2^53+1"), "9007199254740992");
+    assert.notEqual(shown("9007199254740991+2"), "9007199254740992");
 });
 
 test("float noise is hidden", () => {
@@ -34,12 +45,6 @@ test("float noise is hidden", () => {
     assert.equal(shown("1.15*100"), "115");
     assert.equal(shown("(0.1+0.2)*10^15"), "300000000000000");
     assert.equal(shown("1/3"), "0.3333333333");
-});
-
-test("a fraction keeps every digit in front of the decimal point", () => {
-    assert.equal(shown("99999999999/2"), "49999999999.5");
-    assert.equal(shown("123456789012.5+0"), "123456789012.5");
-    assert.equal(shown("99999999999.1+0.2"), "99999999999.3");
 });
 
 test("operators bind as in arithmetic", () => {
