@@ -114,6 +114,17 @@ Singleton {
         }
     }
 
+    // The scratchpad (Hyprland's special workspace) shown on `output`, without
+    // its "special:" prefix, or "". niri has none.
+    function specialWorkspaceOn(output) {
+        return root.isHyprland ? (root.hy ? root.hy.specialWorkspaceOn(output) : "") : "";
+    }
+
+    function toggleSpecialWorkspace(name) {
+        if (root.isHyprland && root.hy)
+            root.hy.toggleSpecialWorkspace(name);
+    }
+
     // niri's own "Important Hotkeys" overlay (the tools pill's ? button, niri only).
     function showHotkeyOverlay() {
         if (root.isNiri)

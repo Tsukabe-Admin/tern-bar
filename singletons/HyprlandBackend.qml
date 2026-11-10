@@ -83,6 +83,40 @@ Scope {
             root.dispatch("hl.dsp.exit()", "exit");
     }
 
+    // ── Scratchpads ──────────────────────────────────────────────────────────
+    // Monitor name → the special workspace shown on it ("special:magic"), or "".
+    // Quickshell does not follow special workspaces, so this reads
+    // `hyprctl -j monitors` once and then Hyprland's activespecial events.
+    property var specialByMonitor: ({})
+
+    function specialWorkspaceOn(output) {
+        const name = String(root.specialByMonitor[output] || "");
+        return name.startsWith("special:") ? name.slice(8) : name;
+    }
+
+    function toggleSpecialWorkspace(name) {
+        root.dispatch("hl.dsp.workspace.toggle_special(" + root.luaString(name) + ")",
+                      "togglespecialworkspace " + name);
+    }
+
+    Process {
+        id: monitors
+        command: ["hyprctl", "-j", "monitors"]
+        stdout: StdioCollector {
+            id: monitorsOut
+            onStreamFinished: {
+                const next = {};
+                try {
+                    for (const m of JSON.parse(monitorsOut.text))
+                        next[m.name] = (m.specialWorkspace && m.specialWorkspace.name) || "";
+                } catch (e) {
+                    return;
+                }
+                root.specialByMonitor = next;
+            }
+        }
+    }
+
     // ── Keyboard layouts ─────────────────────────────────────────────────────
     // Read from `hyprctl -j devices` (the main keyboard, else the first), again
     // whenever Hyprland says the layout or its config changed.
@@ -135,15 +169,27 @@ Scope {
             const name = event.name;
             // Quickshell's own openwindow handler leaves out the window class;
             // a refresh fills it in (lastIpcObject.class).
-            if (name === "openwindow")
+            if (name === "openwindow") {
                 Hyprland.refreshToplevels();
-            else if (name === "activelayout" || name === "configreloaded")
+            } else if (name === "activelayout" || name === "configreloaded") {
                 keyboardRefresh.restart();
+            } else if (name === "activespecial") {
+                // "NAME,MONITOR"; NAME is empty when the scratchpad was hidden.
+                // Split at the last comma: a monitor name has none.
+                const data = String(event.data);
+                const at = data.lastIndexOf(",");
+                if (at === -1)
+                    return;
+                const next = Object.assign({}, root.specialByMonitor);
+                next[data.slice(at + 1)] = data.slice(0, at);
+                root.specialByMonitor = next;
+            }
         }
     }
 
     Component.onCompleted: {
         Hyprland.refreshToplevels();
         devices.running = true;
+        monitors.running = true;
     }
 }
