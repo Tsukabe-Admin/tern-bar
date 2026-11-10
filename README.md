@@ -52,13 +52,16 @@ window-rule {
 }
 
 binds {
-    Mod+B { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "settings" "toggle"; }
-    Mod+W { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "settings" "wallpaper"; }
-    Mod+Space { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "launcher" "toggle"; }
-    Mod+V { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "launcher" "clipboard"; }
-    Mod+Return { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "tern" "open"; }
+    Mod+B repeat=false { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "settings" "toggle"; }
+    Mod+W repeat=false { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "settings" "wallpaper"; }
+    Mod+Space repeat=false { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "launcher" "toggle"; }
+    Mod+V repeat=false { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "launcher" "clipboard"; }
+    Mod+Return repeat=false { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "tern" "open"; }
 }
 ```
+
+Keep the `repeat=false`: niri repeats a bind for as long as its key is held, and a repeated toggle
+opens and closes the window many times a second.
 
 (If you already have a `binds { }` block, put those lines inside it instead. Other things a key can call:
 `launcher power`, `launcher close`, `bar calendar`, `bar media`, `bar quickSettings`, `bar close`,
@@ -79,16 +82,17 @@ Each one is only needed for the part it powers; the rest of the bar works withou
 | `zenity` | the "Change folder…" picker |
 | `swaync` | the notification bell and Do Not Disturb (the bell hides itself without it) |
 | `cliphist`, `wl-clipboard` | clipboard history in the launcher (with `wl-paste --watch cliphist store` running); copying calculator answers |
-| `swaylock` | Lock and Suspend (without it, `loginctl lock-session` is used) |
+| `swaylock` | Lock and Suspend (without it `loginctl lock-session` is sent instead, which only locks if a screen locker is listening for it) |
 | `wlsunset` | night light |
 | `brightnessctl`, `/sys/class/backlight` | the screen brightness slider in quick settings and the brightness OSD (hidden when no backlight device exists) |
-| `checkupdates` (`pacman-contrib`), `paru` or `yay` | the package updates pill (hidden when 0 updates are pending or `pacman` is absent) |
+| `checkupdates` (`pacman-contrib`), `paru` or `yay` | the package updates pill (hidden when 0 updates are pending or `pacman` is absent); a click runs the upgrade with `paru`, `yay` or `sudo pacman -Syu` |
+| a terminal: `$TERMINAL`, else the first of `xdg-terminal-exec`, `kitty`, `foot`, `alacritty`, `ghostty`, `wezterm` | the upgrade started from the updates pill (without one the click does nothing), and launcher entries that run in a terminal |
 | `systemd` (`systemctl`, `loginctl`, `busctl`, `udevadm`) | Suspend, Reboot and Power off; Lock when swaylock is missing; finding the power-profile service; backlight uevents |
 | `power-profiles-daemon`, UPower | the power profile switch; the system battery pill (hidden on desktops without a battery) |
 | BlueZ, `blueman` | the Bluetooth tile and device list; the "Bluetooth settings" button |
 | NetworkManager | the Wi-Fi tile |
 | `pavucontrol`, PipeWire | right-click on volume or microphone; the volume and microphone pills and quick-settings controls |
-| `nm-connection-editor`, `nmcli` or `iwgetid` | right-click on network; the Wi-Fi name |
+| `ip` (iproute2), `nm-connection-editor`, `nmcli` or `iwgetid` | the network pill (it reads "Offline" without `ip`); right-click on network; the Wi-Fi name |
 | `notify-send` | the "IP hidden / shown" message |
 | `tern` | the Tern pill — it hides itself when `tern` isn't on your PATH or in `~/.local/bin` |
 | tern-poke (a Tern plugin, not released yet) | the PokeToken pill and the desktop pet — both stay hidden without it |
@@ -187,6 +191,13 @@ which part of the bar, edit `matugen/palette.json`.
 - **Weather units:** open the forecast (click the weather or clock pill) and tap °C / °F. The
   choice is saved in `bar.json` (`weatherFahrenheit`); it re-formats the cached numbers, so no new
   fetch is needed.
+- **Environment variables:** settings and generated files follow `XDG_CONFIG_HOME` and
+  `XDG_STATE_HOME`; the folders named in this README are the defaults. `TERMINAL` chooses the
+  terminal. For trying things without the real hardware or network: `TERN_BAR_BATTERY_MOCK="85:charging"`,
+  `TERN_BAR_BACKLIGHT_DIR` (a folder to use instead of `/sys/class/backlight`),
+  `TERN_BAR_UPDATES_MOCK=<count>`, `TERN_BAR_CHECKUPDATES_CMD`, `TERN_BAR_WEATHER_MOCK=<json>`, and the
+  weather script's servers: `TERN_BAR_WEATHER_METEO_URL`, `TERN_BAR_WEATHER_WTTR_BASE`,
+  `TERN_BAR_WEATHER_GEO_URL`, `TERN_BAR_WEATHER_GEOCODE_URL`.
 - **Tray menus** close when you click anywhere else.
 - **ASCII animations:** the settings window's **ASCII** tab (right-click the ASCII pill, or
   `quickshell ipc -c tern-bar call settings ascii`) picks a look, colour, speed, size and brightness for
