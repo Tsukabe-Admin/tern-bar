@@ -110,7 +110,7 @@ Singleton {
             root.workspaces = next;
         } else if (obj.WorkspaceUrgencyChanged) {
             // A window on that workspace asked for attention, or stopped asking.
-            // niri sends only this for it, never a fresh WorkspacesChanged.
+            // niri reports it with this event alone: the list is not sent again.
             const change = obj.WorkspaceUrgencyChanged;
             const at = root.workspaces.findIndex((item) => item.id === change.id);
             if (at === -1 || root.workspaces[at].is_urgent === change.urgent)
