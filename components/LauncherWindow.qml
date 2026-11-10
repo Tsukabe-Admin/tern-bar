@@ -182,7 +182,11 @@ PanelWindow {
                             win.move(-1);
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                            Launcher.activate(Launcher.results[win.selected]);
+                            // A held key repeats, and a repeat is not a second
+                            // Enter: it must not confirm the power action that
+                            // the first one armed.
+                            if (!event.isAutoRepeat)
+                                Launcher.activate(Launcher.results[win.selected]);
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Escape) {
                             if (search.text !== "" && Launcher.mode !== "power")
