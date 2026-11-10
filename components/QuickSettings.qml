@@ -8,10 +8,11 @@ import "../singletons"
 
 // Quick settings: Wi-Fi, Bluetooth, Do Not Disturb, night light and microphone
 // tiles, screen brightness and microphone input volume sliders, the power
-// profile, paired Bluetooth devices (click to connect/disconnect) and links to
-// the full settings apps. Shown while Popups.open is "quick" on this bar's
-// screen. A tile or slider whose hardware/service is missing is hidden; night
-// light without wlsunset says what to install.
+// profile, Bluetooth devices (find new ones, pair, connect/disconnect, forget;
+// see BluetoothDevices) and links to the full settings apps. Shown while
+// Popups.open is "quick" on this bar's screen. A tile or slider whose
+// hardware/service is missing is hidden; night light without wlsunset says
+// what to install.
 PopupWindow {
     id: pop
 
@@ -63,16 +64,6 @@ PopupWindow {
         }
         return "";
     }
-    // Paired devices, connected first, then by name; at most six.
-    readonly property var btDevices: {
-        if (!pop.adapter)
-            return [];
-        const list = pop.adapter.devices.values.filter((d) => d.paired);
-        list.sort((a, b) => (Number(b.connected) - Number(a.connected))
-            || (a.deviceName || a.name).localeCompare(b.deviceName || b.name));
-        return list.slice(0, 6);
-    }
-    readonly property int btConnected: pop.btDevices.filter((d) => d.connected).length
 
     MouseArea {
         anchors.fill: parent
@@ -123,7 +114,7 @@ PopupWindow {
                     glyph: "\uf294"
                     title: "Bluetooth"
                     subtitle: !(pop.adapter && pop.adapter.enabled) ? "Off"
-                        : pop.btConnected > 0 ? pop.btConnected + " connected" : "On"
+                        : BluetoothDevices.connectedCount > 0 ? BluetoothDevices.connectedCount + " connected" : "On"
                     on: !!(pop.adapter && pop.adapter.enabled)
                     onClicked: pop.adapter.enabled = !pop.adapter.enabled
                 }
@@ -300,77 +291,170 @@ PopupWindow {
             }
 
             Column {
-                visible: !!(pop.adapter && pop.adapter.enabled) && pop.btDevices.length > 0
+                visible: BluetoothDevices.enabled
                 width: parent.width
                 spacing: 2
 
+                Item {
+                    width: parent.width
+                    height: findChip.height
+
+                    Text {
+                        textFormat: Text.PlainText
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "Bluetooth devices"
+                        color: Theme.t3
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSize - 2
+                    }
+
+                    Chip {
+                        id: findChip
+                        anchors.right: parent.right
+                        text: BluetoothDevices.searching ? "Stop" : "Find devices"
+                        selected: BluetoothDevices.searching
+                        onClicked: BluetoothDevices.search(!BluetoothDevices.searching)
+                    }
+                }
+
                 Text {
                     textFormat: Text.PlainText
-                    text: "Bluetooth devices"
+                    visible: BluetoothDevices.paired.length === 0
+                    width: parent.width
+                    height: 32
+                    leftPadding: 8
+                    verticalAlignment: Text.AlignVCenter
+                    text: "No devices paired yet"
+                    color: Theme.t3
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSize - 1
+                }
+
+                // Paired: a click connects or disconnects; Forget asks for a
+                // second click within three seconds.
+                Repeater {
+                    model: BluetoothDevices.paired
+
+                    DeviceRow {
+                        id: pairedRow
+                        required property var modelData
+                        property bool confirming: false
+
+                        label: BluetoothDevices.label(pairedRow.modelData)
+                        status: (pairedRow.modelData.batteryAvailable
+                                ? Math.round(pairedRow.modelData.battery * 100) + "%  " : "")
+                            + (pairedRow.modelData.connected ? "Connected"
+                                : pairedRow.modelData.state === BluetoothDeviceState.Connecting ? "Connecting…" : "")
+                        statusColor: pairedRow.modelData.connected ? Theme.accent : Theme.t3
+                        actionText: pairedRow.confirming ? "Forget?" : "Forget"
+                        actionArmed: pairedRow.confirming
+                        onTapped: BluetoothDevices.toggleConnection(pairedRow.modelData)
+                        onActionClicked: {
+                            if (pairedRow.confirming) {
+                                pairedRow.confirming = false;
+                                BluetoothDevices.forget(pairedRow.modelData);
+                            } else {
+                                pairedRow.confirming = true;
+                                confirmTimer.restart();
+                            }
+                        }
+
+                        Timer {
+                            id: confirmTimer
+                            interval: 3000
+                            onTriggered: pairedRow.confirming = false
+                        }
+                    }
+                }
+
+                Item {
+                    visible: BluetoothDevices.showNearby
+                    width: parent.width
+                    height: 28
+
+                    Text {
+                        textFormat: Text.PlainText
+                        anchors.left: parent.left
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: 4
+                        text: "Nearby"
+                        color: Theme.t3
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSize - 2
+                    }
+
+                    Text {
+                        textFormat: Text.PlainText
+                        anchors.right: parent.right
+                        anchors.rightMargin: 8
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: 4
+                        visible: BluetoothDevices.searching
+                        text: "Searching…"
+                        color: Theme.t3
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSize - 2
+                    }
+                }
+
+                Text {
+                    textFormat: Text.PlainText
+                    visible: BluetoothDevices.showNearby && BluetoothDevices.nearby.length === 0
+                    width: parent.width
+                    leftPadding: 8
+                    rightPadding: 8
+                    wrapMode: Text.WordWrap
+                    text: "Put the device in pairing mode and it will show up here."
+                    color: Theme.t3
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSize - 1
+                }
+
+                // Not paired yet: a click pairs, then the device is trusted and
+                // connected and moves up to the paired list. A click while it
+                // pairs cancels.
+                Repeater {
+                    model: BluetoothDevices.nearbyExpanded ? BluetoothDevices.nearby : BluetoothDevices.nearby.slice(0, 6)
+
+                    DeviceRow {
+                        id: nearbyRow
+                        required property var modelData
+                        readonly property string attempt: BluetoothDevices.stateOf(nearbyRow.modelData)
+
+                        label: BluetoothDevices.label(nearbyRow.modelData)
+                        status: nearbyRow.attempt === "pairing" ? (nearbyRow.hovered ? "Cancel" : "Pairing…")
+                            : nearbyRow.attempt === "failed" ? "Couldn't pair" : "Pair"
+                        statusColor: nearbyRow.attempt === "failed" ? Theme.bad
+                            : nearbyRow.attempt === "pairing" ? Theme.t3 : Theme.accent
+                        onTapped: {
+                            if (nearbyRow.attempt === "pairing")
+                                BluetoothDevices.cancelPair(nearbyRow.modelData);
+                            else
+                                BluetoothDevices.pair(nearbyRow.modelData);
+                        }
+                    }
+                }
+
+                DeviceRow {
+                    visible: !BluetoothDevices.nearbyExpanded && BluetoothDevices.nearby.length > 6
+                    label: "Show " + (BluetoothDevices.nearby.length - 6) + " more"
+                    labelColor: Theme.t2
+                    onTapped: BluetoothDevices.nearbyExpanded = true
+                }
+
+                Text {
+                    textFormat: Text.PlainText
+                    visible: BluetoothDevices.showNearby && BluetoothDevices.anyFailed
+                    width: parent.width
+                    topPadding: 4
+                    leftPadding: 8
+                    rightPadding: 8
+                    wrapMode: Text.WordWrap
+                    text: "Check that the device is still in pairing mode, then click it again. A device that asks for a PIN code has to be paired in blueman."
                     color: Theme.t3
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSize - 2
-                }
-
-                Repeater {
-                    model: pop.btDevices
-
-                    Item {
-                        id: devRow
-                        required property var modelData
-
-                        width: parent.width
-                        height: 32
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: Theme.itemRadius
-                            color: devHover.hovered ? Theme.hover : "transparent"
-                        }
-
-                        Text {
-                            textFormat: Text.PlainText
-                            anchors.left: parent.left
-                            anchors.leftMargin: 8
-                            anchors.right: devState.left
-                            anchors.rightMargin: 8
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: devRow.modelData.deviceName || devRow.modelData.name
-                            elide: Text.ElideRight
-                            maximumLineCount: 1
-                            color: Theme.t1
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSize
-                        }
-
-                        Text {
-                            textFormat: Text.PlainText
-                            id: devState
-                            anchors.right: parent.right
-                            anchors.rightMargin: 8
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: (devRow.modelData.batteryAvailable
-                                    ? Math.round(devRow.modelData.battery * 100) + "%  " : "")
-                                + (devRow.modelData.connected ? "Connected"
-                                    : devRow.modelData.state === BluetoothDeviceState.Connecting ? "Connecting…" : "")
-                            color: devRow.modelData.connected ? Theme.accent : Theme.t3
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSize - 2
-                        }
-
-                        HoverHandler {
-                            id: devHover
-                        }
-
-                        TapHandler {
-                            onTapped: {
-                                if (devRow.modelData.connected)
-                                    devRow.modelData.disconnect();
-                                else
-                                    devRow.modelData.connect();
-                            }
-                        }
-                    }
                 }
             }
 

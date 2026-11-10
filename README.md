@@ -10,7 +10,7 @@ small rounded "pills" that can follow your wallpaper's colors.
 - Workspaces and the name of the window you're using
 - An app launcher built into the bar: apps, open windows, a calculator, clipboard history and
   power actions, in a card that drops out of the launcher pill
-- Quick settings: Wi-Fi, Bluetooth (with your paired devices), Do Not Disturb, night light,
+- Quick settings: Wi-Fi, Bluetooth (find, pair, connect and forget devices), Do Not Disturb, night light,
   microphone mute, screen brightness and microphone input volume sliders, and power profile
 - A month calendar and a five-day weather forecast under the clock and weather pills
 - A small volume or brightness pop-up whenever the volume or screen brightness changes
@@ -89,7 +89,8 @@ Each one is only needed for the part it powers; the rest of the bar works withou
 | a terminal: `$TERMINAL`, else the first of `xdg-terminal-exec`, `kitty`, `foot`, `alacritty`, `ghostty`, `wezterm` | the upgrade started from the updates pill (without one the click does nothing), and launcher entries that run in a terminal |
 | `systemd` (`systemctl`, `loginctl`, `busctl`, `udevadm`) | Suspend, Reboot and Power off; Lock when swaylock is missing; finding the power-profile service; backlight uevents |
 | `power-profiles-daemon`, UPower | the power profile switch; the system battery pill (hidden on desktops without a battery) |
-| BlueZ, `blueman` | the Bluetooth tile and device list; the "Bluetooth settings" button |
+| BlueZ | the Bluetooth tile; finding, pairing, connecting and forgetting devices |
+| `blueman` (optional) | the "Bluetooth settings" button; pairing a device that asks for a PIN code |
 | NetworkManager | the Wi-Fi tile |
 | `pavucontrol`, PipeWire | right-click on volume or microphone; the volume and microphone pills and quick-settings controls |
 | `ip` (iproute2), `nm-connection-editor`, `nmcli` or `iwgetid` | the network pill (it reads "Offline" without `ip`); right-click on network; the Wi-Fi name |
@@ -182,6 +183,11 @@ which part of the bar, edit `matugen/palette.json`.
   opens the power actions; Log out, Reboot and Power off need a second Enter (or click) within 3
   seconds. Holding Enter down does not count, and moving the selection or typing cancels it.
 - **Quick settings:** the sliders button in the right-hand pill. **Calendar:** click the clock.
+- **Bluetooth:** in quick settings, **Find devices** searches for a minute (or until you close the card
+  or press **Stop**). Put the device in pairing mode and click it in the list: it is paired, trusted and
+  connected. Click a paired device to connect or disconnect it; point at it for **Forget**, which asks
+  for a second click. Pairing works for devices that need no code (headphones, speakers, mice, game
+  controllers, most phones); a device that asks you to type a PIN needs blueman.
 - **Your IP stays hidden:** the network pill shows only the Wi-Fi name until you click it; click
   again to hide the IP. The choice is the file `~/.local/state/tern-bar/show_ip`.
 - **Weather lookup:** the weather pill is on by default and asks a geolocation service

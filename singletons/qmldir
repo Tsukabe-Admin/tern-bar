@@ -15,3 +15,4 @@ singleton Brightness 1.0 Brightness.qml
 singleton Weather 1.0 Weather.qml
 singleton Updates 1.0 Updates.qml
 singleton Ascii 1.0 Ascii.qml
+singleton BluetoothDevices 1.0 BluetoothDevices.qml
