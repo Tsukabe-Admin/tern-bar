@@ -234,6 +234,7 @@ function scratchDir(kind) {
     }
     return mkdtempSync(join(tmpdir(), prefix));
 }
+
 async function wallpaper(id, values) {
     const [width, height] = values.screen.split("x").map(Number);
     if (![width, height].every((n) => Number.isInteger(n) && n > 0)) {
