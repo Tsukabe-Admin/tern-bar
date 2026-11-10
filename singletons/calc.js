@@ -83,14 +83,14 @@ function evaluate(text) {
 }
 
 // The answer as the launcher shows and copies it, without trailing zeros.
-// A whole number is printed digit for digit. A fraction gets 10 significant
-// digits, which hides float noise (0.1+0.2 shows 0.3); one with a long whole
-// part gets as many as that part needs, up to the 15 a double is good for, so
-// the digits in front of the decimal point are never rounded away.
+// A whole number up to 2^53 is printed digit for digit: a double holds every
+// one of those exactly. Anything else is rounded to significant digits: 10,
+// which hides float noise (0.1+0.2 shows 0.3), or more when the part in front
+// of the decimal point is long, up to the 15 a double is good for. Past 2^53
+// the last digits of a double are rounding, so they are not shown as exact.
 function format(v) {
-    if (Number.isInteger(v))
-        return v.toFixed(0);
+    if (Number.isInteger(v) && Math.abs(v) <= 9007199254740992)
+        return String(v);
     const whole = String(Math.trunc(Math.abs(v))).length;
-    const digits = Math.max(whole, Math.min(15, Math.max(10, whole + 2)));
-    return String(parseFloat(v.toPrecision(digits)));
+    return String(parseFloat(v.toPrecision(Math.min(15, Math.max(10, whole + 2)))));
 }

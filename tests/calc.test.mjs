@@ -19,8 +19,14 @@ test("a whole number is shown digit for digit", () => {
     assert.equal(shown("2^40"), "1099511627776");
     assert.equal(shown("123456*987654"), "121931812224");
     assert.equal(shown("12345678901+1"), "12345678902");
-    assert.equal(shown("2^60"), "1152921504606846976");
+    assert.equal(shown("2^53"), "9007199254740992");
     assert.equal(shown("0*-1"), "0");
+});
+
+test("past 2^53 a double's last digits are rounding and are not shown as exact", () => {
+    assert.equal(shown("6.022*10^23"), "6.022e+23");
+    assert.equal(shown("16.458*10^18"), "16458000000000000000");
+    assert.equal(shown("0.1*3*10^16"), "3000000000000000");
 });
 
 test("float noise is hidden", () => {
