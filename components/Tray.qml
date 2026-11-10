@@ -2,9 +2,9 @@ import QtQuick
 import Quickshell.Services.SystemTray
 import "../singletons"
 
-// StatusNotifier icons. Left click activates, right click opens the item's
-// DBusMenu in TrayMenu.qml (a QML popup — Qt platform menus cannot attach to
-// layer-shell panels on Wayland).
+// StatusNotifier icons. Left click activates (for an item that is only a menu,
+// it opens the menu), right click opens the item's DBusMenu in TrayMenu.qml (a
+// QML popup — Qt platform menus cannot attach to layer-shell panels on Wayland).
 Row {
     id: root
     spacing: 4
@@ -48,11 +48,14 @@ Row {
             TapHandler {
                 acceptedButtons: Qt.LeftButton | Qt.RightButton
                 onTapped: (eventPoint, button) => {
-                    if (button === Qt.RightButton) {
-                        if (delegate.modelData.hasMenu)
-                            rootMenu.openFor(delegate.modelData.menu, delegate);
-                    } else if (!delegate.modelData.onlyMenu) {
-                        delegate.modelData.activate();
+                    const item = delegate.modelData;
+                    // An item that is only a menu has nothing to activate, so
+                    // its menu is what the main click is for.
+                    if (button === Qt.RightButton || item.onlyMenu) {
+                        if (item.hasMenu)
+                            rootMenu.openFor(item.menu, delegate);
+                    } else {
+                        item.activate();
                     }
                 }
             }
