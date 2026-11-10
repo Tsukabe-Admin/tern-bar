@@ -397,7 +397,10 @@ Item {
                                     if (/^#[0-9a-fA-F]{6}$/.test(text))
                                         Wallpaper.setFillColor(text);
                                     else
-                                        text = Wallpaper.settings.fillColor;
+                                        // Put the binding back, not just the value: a
+                                        // plain assignment would stop the field
+                                        // following the setting from here on.
+                                        text = Qt.binding(() => Wallpaper.settings.fillColor);
                                 }
                             }
                         }
