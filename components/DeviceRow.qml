@@ -1,9 +1,9 @@
 import QtQuick
 import "../singletons"
 
-// One row of the quick-settings card's lists (Bluetooth devices, sound
-// devices): the name, a short status on the right, and, while the pointer is
-// over the row, an optional small button after it (Forget).
+// One row of the quick-settings card's lists (Wi-Fi networks, sound devices,
+// Bluetooth devices): the name, a short status on the right, and, while the
+// pointer is over the row, an optional small button after it (Forget).
 Item {
     id: row
 

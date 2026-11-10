@@ -9,10 +9,11 @@ import "../singletons"
 // Quick settings: Wi-Fi, Bluetooth, Do Not Disturb, night light, keep awake and
 // microphone tiles, screen brightness and microphone input volume sliders, the
 // sound output and input devices (when there is more than one to choose
-// from), the power profile, Bluetooth devices (find new ones, pair,
-// connect/disconnect, forget; see BluetoothDevices) and links to the full
-// settings apps. Shown while Popups.open is "quick" on this bar's screen. A
-// tile or slider whose hardware/service is missing is hidden; night light
+// from), the power profile, Wi-Fi networks (connect, with a password when one
+// is needed; forget; see WifiNetworks), Bluetooth devices (find new ones,
+// pair, connect/disconnect, forget; see BluetoothDevices) and links to the
+// full settings apps. Shown while Popups.open is "quick" on this bar's screen.
+// A tile or slider whose hardware/service is missing is hidden; night light
 // without wlsunset says what to install.
 PopupWindow {
     id: pop
@@ -58,23 +59,18 @@ PopupWindow {
     }
 
     readonly property var adapter: Bluetooth.defaultAdapter
-    readonly property var wifiDevice: {
-        const list = Networking.devices.values;
-        for (let i = 0; i < list.length; i++) {
-            if (list[i].type === DeviceType.Wifi)
-                return list[i];
-        }
-        return null;
-    }
     readonly property string wifiName: {
-        if (!pop.wifiDevice)
-            return "";
-        const list = pop.wifiDevice.networks.values;
-        for (let i = 0; i < list.length; i++) {
-            if (list[i].connected)
-                return list[i].name;
-        }
-        return "";
+        const list = WifiNetworks.list;
+        return (list.length > 0 && list[0].connected) ? list[0].name : "";
+    }
+
+    // A network's row label: its signal (with a lock when it needs a key), then its name.
+    function wifiLabel(n) {
+        const level = Math.min(3, Math.floor(n.signalStrength * 4));
+        const glyphs = WifiNetworks.secured(n)
+            ? ["󰤠", "󰤣", "󰤦", "󰤩"]
+            : ["󰤟", "󰤢", "󰤥", "󰤨"];
+        return glyphs[Math.max(0, level)] + "  " + n.name;
     }
 
     MouseArea {
@@ -112,7 +108,7 @@ PopupWindow {
                 spacing: 8
 
                 QsTile {
-                    visible: pop.wifiDevice !== null
+                    visible: WifiNetworks.device !== null
                     enabled: Networking.wifiHardwareEnabled
                     glyph: "\uf1eb"
                     title: "Wi-Fi"
@@ -364,6 +360,81 @@ PopupWindow {
                         selected: PowerProfiles.profile === PowerProfile.Performance
                         onClicked: PowerProfiles.profile = PowerProfile.Performance
                     }
+                }
+            }
+
+            // A click connects (asking for the password when one is needed),
+            // or disconnects the connected network. Forget, on a known network,
+            // asks for a second click within three seconds.
+            Column {
+                visible: WifiNetworks.enabled
+                width: parent.width
+                spacing: 2
+
+                Text {
+                    textFormat: Text.PlainText
+                    bottomPadding: 4
+                    text: "Wi-Fi networks"
+                    color: Theme.t3
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSize - 2
+                }
+
+                Text {
+                    textFormat: Text.PlainText
+                    visible: WifiNetworks.list.length === 0
+                    width: parent.width
+                    height: 32
+                    leftPadding: 8
+                    verticalAlignment: Text.AlignVCenter
+                    text: "Looking for networks…"
+                    color: Theme.t3
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSize - 1
+                }
+
+                Repeater {
+                    model: WifiNetworks.expanded ? WifiNetworks.list : WifiNetworks.list.slice(0, 6)
+
+                    DeviceRow {
+                        id: wifiRow
+                        required property var modelData
+                        property bool confirming: false
+                        readonly property string failure: WifiNetworks.failures[wifiRow.modelData.name] || ""
+
+                        label: pop.wifiLabel(wifiRow.modelData)
+                        status: wifiRow.modelData.connected ? "Connected"
+                            : wifiRow.modelData.stateChanging ? "Connecting…"
+                            : wifiRow.failure !== "" ? wifiRow.failure
+                            : !WifiNetworks.supported(wifiRow.modelData) ? "Needs settings" : ""
+                        statusColor: wifiRow.modelData.connected ? Theme.accent
+                            : (wifiRow.failure !== "" && !wifiRow.modelData.stateChanging) ? Theme.bad : Theme.t3
+                        actionText: !wifiRow.modelData.known ? "" : wifiRow.confirming ? "Forget?" : "Forget"
+                        actionArmed: wifiRow.confirming
+                        onTapped: WifiNetworks.activate(wifiRow.modelData, pop.screenInfo ? pop.screenInfo.name : "")
+                        onActionClicked: {
+                            if (wifiRow.confirming) {
+                                wifiRow.confirming = false;
+                                WifiNetworks.forget(wifiRow.modelData);
+                            } else {
+                                wifiRow.confirming = true;
+                                wifiConfirmTimer.restart();
+                            }
+                        }
+
+                        Timer {
+                            id: wifiConfirmTimer
+                            interval: 3000
+                            onTriggered: wifiRow.confirming = false
+                        }
+                    }
+                }
+
+                DeviceRow {
+                    visible: !WifiNetworks.expanded && WifiNetworks.list.length > 6
+                    label: "Show " + (WifiNetworks.list.length - 6) + " more"
+                    labelColor: Theme.t2
+                    onTapped: WifiNetworks.expanded = true
                 }
             }
 
