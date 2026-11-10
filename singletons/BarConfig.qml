@@ -298,10 +298,10 @@ Singleton {
         path: root.configPath + ".bad"
         preload: false
         printErrors: false
-        onSaved: console.warn("tern-bar: " + root.configPath + " is not valid JSON, so the default layout"
-            + " is used. Your text was kept in " + root.configPath + ".bad")
-        onSaveFailed: (error) => console.warn("tern-bar: " + root.configPath + " is not valid JSON, so the"
-            + " default layout is used. A copy could not be written to " + root.configPath + ".bad: "
+        onSaved: console.warn("tern-bar: " + root.configPath + " does not hold a JSON object, so the default"
+            + " layout is used. Your text was kept in " + root.configPath + ".bad")
+        onSaveFailed: (error) => console.warn("tern-bar: " + root.configPath + " does not hold a JSON object,"
+            + " so the default layout is used. A copy could not be written to " + root.configPath + ".bad: "
             + FileViewError.toString(error))
     }
 
