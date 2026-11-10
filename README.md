@@ -124,7 +124,8 @@ Turn "Colours from wallpaper" off and the bar is painted from one of ten presets
 Mocha, Tokyo Night, Nord, Gruvbox Dark, Dracula, Rosé Pine, Everforest Dark, Kanagawa Wave, One
 Dark, Solarized Dark — listed in `themes/presets.json`. They don't need matugen. Changing the
 wallpaper then leaves the colours alone. If matugen is installed, your matugen templates follow
-the preset too.
+the preset too: a preset has thirteen colours, and the other Material roles a template may ask
+for are mixed from them.
 
 ### Recolour your other apps
 

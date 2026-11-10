@@ -86,27 +86,50 @@ if preset is None:
     # Unknown id: fall back to the first preset rather than failing.
     preset = presets[0]
 
+# A preset has thirteen colours and matugen's scheme has fifty roles. The
+# thirteen go where they belong. The rest are mixed from them the way a dark
+# Material scheme relates its tones: a container is the colour sunk into the
+# surface, an "on" colour is the darkest surface, a "fixed" colour is the colour
+# lifted towards the text. So a template may use any role matugen itself writes.
+p = preset
 roles = {
-    "surface_container_lowest": preset["lowest"],
-    "surface": preset["surface"],
-    "surface_container": preset["container"],
-    "surface_container_high": preset["high"],
-    "surface_container_highest": preset["highest"],
-    "on_surface": preset["fg"],
-    "on_surface_variant": preset["fgDim"],
-    "outline": preset["outline"],
-    "outline_variant": preset["outlineVariant"],
-    "primary": preset["primary"],
-    "secondary": preset["secondary"],
-    "tertiary": preset["tertiary"],
-    "error": preset["error"],
-    "on_primary": preset["lowest"],
-    "on_secondary": preset["lowest"],
-    "on_tertiary": preset["lowest"],
-    "primary_container": mix(preset["surface"], preset["primary"], 0.30),
-    "secondary_container": mix(preset["surface"], preset["secondary"], 0.30),
-    "primary_fixed": mix(preset["primary"], preset["fg"], 0.5),
+    "background": p["surface"],
+    "on_background": p["fg"],
+    "surface_dim": p["surface"],
+    "surface": p["surface"],
+    "surface_bright": p["highest"],
+    "surface_container_lowest": p["lowest"],
+    "surface_container_low": mix(p["surface"], p["container"], 0.5),
+    "surface_container": p["container"],
+    "surface_container_high": p["high"],
+    "surface_container_highest": p["highest"],
+    "surface_variant": p["outlineVariant"],
+    "surface_tint": p["primary"],
+    "on_surface": p["fg"],
+    "on_surface_variant": p["fgDim"],
+    "inverse_surface": p["fg"],
+    "inverse_on_surface": p["high"],
+    "inverse_primary": mix(p["surface"], p["primary"], 0.5),
+    "outline": p["outline"],
+    "outline_variant": p["outlineVariant"],
+    "shadow": "#000000",
+    "scrim": "#000000",
+    "source_color": p["primary"],
+    "error": p["error"],
+    "on_error": p["lowest"],
+    "error_container": mix(p["surface"], p["error"], 0.30),
+    "on_error_container": mix(p["error"], p["fg"], 0.5),
 }
+for name in ("primary", "secondary", "tertiary"):
+    colour = p[name]
+    roles[name] = colour
+    roles["on_" + name] = p["lowest"]
+    roles[name + "_container"] = mix(p["surface"], colour, 0.30)
+    roles["on_" + name + "_container"] = mix(colour, p["fg"], 0.5)
+    roles[name + "_fixed"] = mix(colour, p["fg"], 0.5)
+    roles[name + "_fixed_dim"] = colour
+    roles["on_" + name + "_fixed"] = p["lowest"]
+    roles["on_" + name + "_fixed_variant"] = mix(p["surface"], colour, 0.30)
 
 out = {"colors": {role: {"default": {"color": c}, "dark": {"color": c}, "light": {"color": c}}
                   for role, c in roles.items()}}
@@ -123,7 +146,7 @@ PYEOF
 
     if command -v matugen >/dev/null 2>&1; then
         matugen json "$COLORS_TMP" >/dev/null \
-            || echo "theme-sync.sh: matugen json failed; only tern-bar was recoloured" >&2
+            || echo "theme-sync.sh: matugen could not render every template; tern-bar itself was recoloured" >&2
     fi
 else
     # ── Colours from the wallpaper ──
