@@ -34,7 +34,9 @@ IP=$(ip -4 addr show "$IFACE" 2>/dev/null | awk '/inet /{split($2, a, "/"); prin
 # Wireless vs wired
 if [ -d "/sys/class/net/$IFACE/wireless" ]; then
     SSID=$(iwgetid -r 2>/dev/null || true)
-    [ -z "$SSID" ] && SSID=$(nmcli -t -f active,ssid dev wifi 2>/dev/null | awk -F: '/^yes:/{print $2; exit}')
+    # `--rescan no`: without it nmcli starts a Wi-Fi scan whenever its list is
+    # older than 30 s and waits for it, and this script runs every few seconds.
+    [ -z "$SSID" ] && SSID=$(nmcli -t -f active,ssid dev wifi list --rescan no 2>/dev/null | awk -F: '/^yes:/{print $2; exit}')
     [ -z "$SSID" ] && SSID="$IFACE"
 
     if [ -f "$STATE_FILE" ]; then
