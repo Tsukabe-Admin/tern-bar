@@ -63,6 +63,10 @@ Singleton {
     property string wallpaperError: ""
     property string themeError: ""
     readonly property string lastError: root.wallpaperError !== "" ? root.wallpaperError : root.themeError
+    // The one message both scripts give. Each checks for jq before anything
+    // else, so either one ending any other way proves jq is installed and
+    // clears the other's copy as well.
+    readonly property string jqMissing: "Install jq to use the Wallpaper tab"
 
     readonly property var screens: {
         const out = [];
@@ -455,8 +459,10 @@ Singleton {
         onExited: (exitCode, exitStatus) => {
             root.wallpaperError = (exitCode === 0) ? ""
                 : (exitCode === 3) ? "Install awww to set wallpapers"
-                : (exitCode === 5) ? "Install jq to use the Wallpaper tab"
+                : (exitCode === 5) ? root.jqMissing
                 : "Couldn't set the wallpaper (wallpaper.sh exited " + exitCode + ")";
+            if (exitCode !== 5 && root.themeError === root.jqMissing)
+                root.themeError = "";
 
             const queued = root.pendingWallpaper;
             root.pendingWallpaper = null;
@@ -472,9 +478,11 @@ Singleton {
             root.themeError = (exitCode === 0) ? ""
                 : (exitCode === 3) ? "Install matugen to take colours from the wallpaper, or pick a theme"
                 : (exitCode === 4) ? "Choose an All screens wallpaper first, or pick a theme"
-                : (exitCode === 5) ? "Install jq to use the Wallpaper tab"
+                : (exitCode === 5) ? root.jqMissing
                 : (exitCode === 6) ? "Install python3 to use the built-in themes"
                 : "Couldn't recolour (theme-sync.sh exited " + exitCode + ")";
+            if (exitCode !== 5 && root.wallpaperError === root.jqMissing)
+                root.wallpaperError = "";
             if (exitCode === 0)
                 Theme.reloadPalette();
 
