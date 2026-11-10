@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Weather helper for tern-bar: fetches current conditions and multi-day forecast
-# without requiring an API key (wttr.in with Open-Meteo fallback) and caches the
-# normalized JSON in $XDG_STATE_HOME/tern-bar/weather.json.
+# without requiring an API key (Open-Meteo, with wttr.in as the fallback) and
+# caches the normalized JSON in $XDG_STATE_HOME/tern-bar/weather.json.
 
 set -eu
 
@@ -121,9 +121,17 @@ def fetch_json(url, timeout=5):
         return json.loads(resp.read().decode("utf-8", errors="replace"))
 
 def from_wttr():
-    loc = urllib.parse.quote(os.environ.get("TERN_BAR_WEATHER_LOCATION", "").strip())
+    # The same order as from_open_meteo: coordinates, then a place name. With
+    # neither, the path is empty and wttr.in works the place out from the
+    # request's IP address, so coordinates must never be dropped here.
+    coords = os.environ.get("TERN_BAR_WEATHER_COORDS", "").strip()
+    if "," in coords:
+        parts = coords.split(",", 1)
+        target = f"{float(parts[0])},{float(parts[1])}"    # wttr.in reads "lat,lon" as GPS coordinates
+    else:
+        target = urllib.parse.quote(os.environ.get("TERN_BAR_WEATHER_LOCATION", "").strip())
     base = os.environ.get("TERN_BAR_WEATHER_WTTR_BASE", "https://wttr.in").rstrip("/")
-    url = f"{base}/{loc}?format=j1"
+    url = f"{base}/{target}?format=j1"
     data = fetch_json(url, timeout=5)
     cur = (data.get("current_condition") or [{}])[0]
     code = str(cur.get("weatherCode", "113"))
