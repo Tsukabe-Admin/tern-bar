@@ -201,9 +201,11 @@ Singleton {
     }
 
     // ── Rendering the wallpaper ────────────────────────────────────────────
-    readonly property bool rendering: renderProcess.running
-    // True from render() until the process reports its exit.
+    // True from render() until the process reports its exit. It is part of
+    // `rendering` because the process only counts as running once it has
+    // started, a moment after render() asked for it.
     property bool exitPending: false
+    readonly property bool rendering: renderProcess.running || root.exitPending
     property string status: ""
     property string lastError: ""
     property string outputPath: ""
