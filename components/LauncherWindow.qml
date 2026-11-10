@@ -13,8 +13,19 @@ PanelWindow {
     id: win
 
     property int selected: 0
+    // How a rebuilt list finds the selection again: the selected row's key, and
+    // the search (mode and text) the list was last built for.
+    property string selectedKey: ""
+    property string builtFor: ""
     readonly property int rowHeight: 44
     readonly property int maxRows: 8
+
+    onSelectedChanged: win.rememberSelection()
+
+    function rememberSelection() {
+        const row = Launcher.results[win.selected];
+        win.selectedKey = row ? row.key : "";
+    }
 
     screen: Popups.screenNamed(Launcher.screenName)
     visible: Launcher.open
@@ -63,11 +74,25 @@ PanelWindow {
             win.selectArmed();
         }
 
+        // The list is rebuilt for a new search, and also under an unchanged one:
+        // a window opens, closes or renames itself, the clipboard history
+        // arrives. A new search starts at the top. The same search keeps the
+        // selection on its row, wherever that row is now, so Enter opens what
+        // was selected and not whatever moved into its place.
         function onResultsChanged() {
-            if (win.selectArmed())
-                return;
-            win.selected = 0;
-            list.positionViewAtBeginning();
+            const builtNow = Launcher.mode + "\n" + Launcher.query;
+            const sameSearch = builtNow === win.builtFor;
+            win.builtFor = builtNow;
+            if (!win.selectArmed()) {
+                const at = sameSearch
+                    ? Launcher.results.findIndex((row) => row.key === win.selectedKey) : -1;
+                win.selected = Math.max(0, at);
+                if (at > 0)
+                    list.positionViewAtIndex(at, ListView.Contain);
+                else
+                    list.positionViewAtBeginning();
+            }
+            win.rememberSelection();
         }
 
         // The field shows the launcher's search. Typing sets the search from the
