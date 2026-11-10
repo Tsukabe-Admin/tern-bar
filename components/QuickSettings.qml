@@ -141,8 +141,9 @@ PopupWindow {
                     enabled: NightLight.available
                     glyph: "\uf186"
                     title: "Night light"
-                    subtitle: !NightLight.available ? "Install wlsunset" : NightLight.on ? "4000 K" : "Off"
-                    on: NightLight.on
+                    subtitle: !NightLight.available ? "Install wlsunset"
+                        : NightLight.active ? "4000 K" : NightLight.problem !== "" ? NightLight.problem : "Off"
+                    on: NightLight.active
                     onClicked: NightLight.toggle()
                 }
 
