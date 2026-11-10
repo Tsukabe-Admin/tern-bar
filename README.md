@@ -1,7 +1,8 @@
 # tern-bar
 
-A clean, floating top bar for the [niri](https://github.com/YaLTeR/niri) desktop. Everything sits in
-small rounded "pills" that can follow your wallpaper's colors.
+A clean, floating top bar for the [niri](https://github.com/YaLTeR/niri) and
+[Hyprland](https://hypr.land) desktops. Everything sits in small rounded "pills" that can follow
+your wallpaper's colors.
 
 ![tern-bar](screenshots/bar.png)
 
@@ -18,7 +19,7 @@ small rounded "pills" that can follow your wallpaper's colors.
 - What's playing, with an expanded media player card (album art, track progress/seek bar, previous /
   play-pause / next, and a player switcher) on left-click, or quick play/pause on right/middle-click
 - Pending Arch/Pacman/AUR package updates (`󰏗 <count>`), with a click to update in your terminal
-- Active XKB keyboard layout indicator (`󰌌 US`, `JP`, …) from niri, with a click or scroll to switch
+- Active XKB keyboard layout indicator (`󰌌 US`, `JP`, …) from niri or Hyprland, with a click or scroll to switch
 - System battery status with charging state and low-battery warnings (hidden on desktops without a battery)
 - Microphone input status and mute pill (`󰍬` / `󰍭`) alongside output volume
 - CPU and memory at a glance
@@ -31,8 +32,8 @@ small rounded "pills" that can follow your wallpaper's colors.
 
 ## Set it up
 
-You'll need [Quickshell](https://quickshell.org) 0.3 or newer, [niri](https://github.com/YaLTeR/niri),
-and the JetBrainsMono Nerd Font.
+You'll need [Quickshell](https://quickshell.org) 0.3 or newer, [niri](https://github.com/YaLTeR/niri) or
+[Hyprland](https://hypr.land) (tested on 0.57 with a Lua config), and the JetBrainsMono Nerd Font.
 
 ```bash
 git clone https://github.com/Tsukabe-Admin/tern-bar ~/.config/quickshell/tern-bar
@@ -69,6 +70,31 @@ opens and closes the window many times a second.
 
 Edit any file and the bar updates on the spot. Your own settings are saved in
 `~/.config/tern-bar/`, never inside this folder, so `git pull` is always safe.
+
+### On Hyprland
+
+Add this to your Hyprland config (`~/.config/hypr/hyprland.lua`; Hyprland 0.57 reads only Lua
+configs):
+
+```lua
+hl.on("hyprland.start", function() hl.exec_cmd("quickshell -c tern-bar") end)
+hl.window_rule({ match = { title = "^tern-bar settings$" }, float = true })
+hl.window_rule({ match = { title = "^Wallpaper folder$" }, float = true })
+hl.bind("SUPER + B", hl.dsp.exec_cmd("quickshell ipc -c tern-bar call settings toggle"))
+hl.bind("SUPER + W", hl.dsp.exec_cmd("quickshell ipc -c tern-bar call settings wallpaper"))
+hl.bind("SUPER + SPACE", hl.dsp.exec_cmd("quickshell ipc -c tern-bar call launcher toggle"))
+hl.bind("SUPER + V", hl.dsp.exec_cmd("quickshell ipc -c tern-bar call launcher clipboard"))
+hl.bind("SUPER + RETURN", hl.dsp.exec_cmd("quickshell ipc -c tern-bar call tern open"))
+```
+
+On Hyprland 0.55 or 0.56 with a `hyprland.conf`, write the same lines in that file's syntax
+(`exec-once`, `windowrule`, `bind`); the bar sends Hyprland its old-style commands there. That
+combination was not tested.
+
+Hyprland does not repeat a bind while its key is held unless you ask it to, so nothing like niri's
+`repeat=false` is needed. The launcher card asks for its own blur (ext-background-effect), so no
+layer rule is needed either. On Hyprland, Lock uses `hyprlock` and Log out uses `hyprshutdown` when
+they are installed. The `?` button and the launch animation are niri only.
 
 ### Other programs it uses
 
@@ -175,7 +201,8 @@ which part of the bar, edit `matugen/palette.json`.
   to allow it.
 - **Launch animation:** there's a fancy "grow into a new window" effect. It's off by default. Turn it
   on with `morphEnabled` in `singletons/BarConfig.qml`, but don't run it in a loop.
-- **Keybinding cheat sheet:** the `?` button in the tools pill shows niri's built-in hotkey overlay.
+- **Keybinding cheat sheet:** the `?` button in the tools pill shows niri's built-in hotkey overlay
+  (niri only).
 - **Launcher:** click the launcher pill (or Mod+Space). Type to search apps and open windows; type
   a sum like `2*(3+4)` to see the answer (Enter copies it; whole numbers are exact up to
   9,007,199,254,740,991, anything larger or with a fraction is shown to 10 significant digits); start
@@ -233,7 +260,7 @@ which part of the bar, edit `matugen/palette.json`.
 ```
 shell.qml        starts the bar on every screen
 components/      the bar and each of its pills
-singletons/      shared pieces: theme, settings, wallpaper, niri connection
+singletons/      shared pieces: theme, settings, wallpaper, compositor connection (niri, Hyprland)
 scripts/         helpers: wallpaper, colours, network status, IP hiding
 themes/          the ten built-in colour themes
 matugen/         an optional template, for driving the colours from your own matugen setup
@@ -245,14 +272,18 @@ tools/bt-agent/  the Bluetooth pairing helper, in Rust (see Bluetooth above)
 
 ## If it misbehaves
 
-To restart it by hand:
+To restart it by hand on niri:
 
 ```bash
 quickshell kill -c tern-bar
 NIRI_SOCKET=$(ls /run/user/$UID/niri.wayland-1.*.sock) quickshell -c tern-bar --daemonize
 ```
 
-Without `NIRI_SOCKET` the bar still starts, but workspaces and the window name stay empty.
+On Hyprland, run `quickshell kill -c tern-bar` and then `quickshell -c tern-bar --daemonize` from a
+terminal inside Hyprland, which already has `HYPRLAND_INSTANCE_SIGNATURE`.
+
+Without `NIRI_SOCKET` (niri) or `HYPRLAND_INSTANCE_SIGNATURE` (Hyprland) the bar still starts, but
+workspaces and the window name stay empty.
 
 ## An experiment in vibecoding
 
@@ -262,8 +293,9 @@ and OMP while I described the behaviour, tested it on the live desktop and decid
 It is a new way to work, and I wanted to see how far it can go: not a toy demo, but a daily-driver
 bar with a launcher, settings, wallpaper tools, weather, media controls and the rest.
 
-It runs every day on my machine (Arch, niri, Quickshell 0.3.2). It has not been tested on every
-distro, GPU or Quickshell version, so treat it as a working experiment rather than a finished
+It runs every day on my machine (Arch, niri, Quickshell 0.3.2). Hyprland support was checked in a
+nested Hyprland 0.57 with a Lua config, but is not used day to day yet. It has not been tested on
+every distro, GPU or Quickshell version, so treat it as a working experiment rather than a finished
 product. The parts that matter were checked on the live desktop, not only compiled.
 
 Bug reports, ideas, pull requests and questions are welcome — especially from people who know QML
