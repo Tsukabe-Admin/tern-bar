@@ -4,7 +4,7 @@ import "../singletons"
 
 // One launcher result: icon (or glyph), title, subtitle. The keyboard-selected
 // row is tinted with the accent; hover only brightens. A power action waiting
-// for its second Enter turns red.
+// for its second Enter turns red and says "again to confirm".
 Item {
     id: row
 
@@ -68,7 +68,7 @@ Item {
         Text {
             textFormat: Text.PlainText
             width: parent.width
-            text: row.modelData.title
+            text: row.armed ? row.modelData.title + " — again to confirm" : row.modelData.title
             elide: Text.ElideRight
             maximumLineCount: 1
             color: row.armed ? Theme.bad : Theme.t1

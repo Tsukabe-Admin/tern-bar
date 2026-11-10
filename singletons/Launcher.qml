@@ -222,11 +222,15 @@ Singleton {
         { key: "poweroff", title: "Power off", glyph: 0xF011, confirm: true }
     ]
 
+    // A row is the same whether or not its action is waiting for the second
+    // Enter: LauncherRow adds "again to confirm" from `armed` itself. If the
+    // title were built from `armed` here, arming would rebuild `results`, and
+    // the window puts the selection back on the first row whenever that
+    // happens, so the confirming Enter would land on Lock instead.
     function powerRow(p) {
-        const armed = root.armed === p.key;
         return {
             kind: "power", key: "power:" + p.key, action: p.key,
-            title: armed ? p.title + " — again to confirm" : p.title,
+            title: p.title,
             subtitle: ((p.key === "lock" || p.key === "suspend") && !Programs.has("swaylock"))
                 ? "swaylock not found: uses loginctl lock-session" : "",
             icon: "", glyph: String.fromCodePoint(p.glyph)
