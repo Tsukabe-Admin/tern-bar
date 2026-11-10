@@ -78,6 +78,11 @@ Item {
             root.committed(root.liveValue);
         }
 
+        // A Flickable around the slider can take the drag over, and a popup can
+        // close under the pointer: then `released` never comes. Drop the
+        // half-finished drag, so the knob goes back to the value that is set.
+        onCanceled: root.dragging = false
+
         function apply(px) {
             const span = root.to - root.from;
             if (span <= 0 || root.width <= 0)
