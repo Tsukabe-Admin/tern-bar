@@ -256,17 +256,26 @@ Singleton {
     // The PokeToken plugin's data, where the Tern app keeps it.
     readonly property string pokeDataDir: root.home + "/.local/state/tern/plugin-data/poke"
 
+    // bar.json's text into the settings above. Text that is not a JSON object
+    // (a stray comma after a hand edit, say) is not the same as no file at all:
+    // the bar starts on the defaults, says so in the log, and keeps the text in
+    // bar.json.bad, because the next change on the settings page writes
+    // bar.json again.
     function loadFromText(rawText) {
+        let o = null;
         try {
-            const o = JSON.parse(rawText);
-            if (o && typeof o === "object") {
-                root.hidden = (Array.isArray(o.hidden) ? o.hidden : [])
-                    .filter((id, i, a) => root.pillIds.indexOf(id) !== -1 && a.indexOf(id) === i);
-                root.layout = root.normalize(o.layout, o.ternPillSide);
-                root.nightLight = o.nightLight === true;
-                root.weatherFahrenheit = o.weatherFahrenheit === true;
-            }
+            o = JSON.parse(rawText);
         } catch (e) {
+            o = null;
+        }
+        if (o && typeof o === "object" && !Array.isArray(o)) {
+            root.hidden = (Array.isArray(o.hidden) ? o.hidden : [])
+                .filter((id, i, a) => root.pillIds.indexOf(id) !== -1 && a.indexOf(id) === i);
+            root.layout = root.normalize(o.layout, o.ternPillSide);
+            root.nightLight = o.nightLight === true;
+            root.weatherFahrenheit = o.weatherFahrenheit === true;
+        } else if (String(rawText).trim() !== "") {
+            rejected.setText(rawText);
         }
         root.configLoaded = true;
     }
@@ -275,7 +284,25 @@ Singleton {
         id: file
         path: root.configPath
         blockLoading: true
+        // Quiet about reads: a missing bar.json is the normal first start.
         printErrors: false
+        onSaveFailed: (error) => console.warn("tern-bar: could not save " + root.configPath
+            + ": " + FileViewError.toString(error))
+    }
+
+    // Where the text of an unreadable bar.json is kept. Only loadFromText
+    // writes it, so these two handlers carry the message: it says the text was
+    // kept only once it has been.
+    FileView {
+        id: rejected
+        path: root.configPath + ".bad"
+        preload: false
+        printErrors: false
+        onSaved: console.warn("tern-bar: " + root.configPath + " is not valid JSON, so the default layout"
+            + " is used. Your text was kept in " + root.configPath + ".bad")
+        onSaveFailed: (error) => console.warn("tern-bar: " + root.configPath + " is not valid JSON, so the"
+            + " default layout is used. A copy could not be written to " + root.configPath + ".bad: "
+            + FileViewError.toString(error))
     }
 
     Component.onCompleted: root.loadFromText(file.text())

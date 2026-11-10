@@ -157,7 +157,9 @@ which part of the bar, edit `matugen/palette.json`.
   launcher, or Mod+B — then drag a pill to another group or click it to show/hide it. Every change
   lands in `~/.config/tern-bar/bar.json`, and the page applies to all screens at once. Right-clicking the Tern pill
   still hops it straight to the next group. Any other key can call the same thing:
-  `quickshell ipc -c tern-bar call settings toggle` (also `open` / `close`).
+  `quickshell ipc -c tern-bar call settings toggle` (also `open` / `close`). You can edit `bar.json` by
+  hand too (restart the bar afterwards). If the edit leaves it invalid, the bar starts with the default
+  layout, says so in its log, and keeps your text in `bar.json.bad` instead of losing it.
 - **Wallpaper:** Mod+W, or the wallpaper button in the tools pill, opens the settings page straight
   on its Wallpaper tab — `quickshell ipc -c tern-bar call settings wallpaper` does the same, and
   pressing it again closes the page.
