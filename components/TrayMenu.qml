@@ -34,7 +34,10 @@ PopupWindow {
 
     readonly property var currentHandle: menu.stack.length > 0 ? menu.stack[menu.stack.length - 1] : null
 
-    readonly property point anchorPos: menu.anchorItem
+    // Read again at every opening, like the other popups: mapToItem() is a plain
+    // call, so without `visible` in the binding the card would keep the place
+    // the icon had the first time, however far the icon has moved since.
+    readonly property point anchorPos: (menu.visible && menu.anchorItem)
         ? menu.anchorItem.mapToItem(null, 0, 0) : Qt.point(0, 0)
 
     function openFor(handle, item) {
