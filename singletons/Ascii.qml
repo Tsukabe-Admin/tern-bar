@@ -108,6 +108,11 @@ Singleton {
     }
 
     function save() {
+        // Without the manifest every choice looks unknown and was replaced by its
+        // default when the file was read. Writing that back would wipe the
+        // choices in ascii.json, which are still good once the manifest returns.
+        if (root.manifest.looks.length === 0)
+            return;
         file.setText(JSON.stringify(root.settings, null, 2) + "\n");
     }
 
