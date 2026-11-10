@@ -22,7 +22,7 @@
 // `encoding` before the GIF is assembled; the ASCII tab reads those lines.
 
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -76,9 +76,13 @@ const GRAY_PALETTE = ["#000000", "#111111", "#222222", "#333333"];
 const FONT_FAMILY = "JetBrainsMono Nerd Font";
 const FONT_ADVANCE = 0.6; // a JetBrains Mono cell is 0.6 em wide
 
+// What a command stops with: one line for the user. It is thrown rather than
+// printed and followed by process.exit(), because exit() skips the `finally`
+// blocks that remove a render's scratch frames. The end of this file catches it.
+class Failure extends Error {}
+
 function fail(message) {
-    console.error(`gen.mjs: ${message}`);
-    process.exit(1);
+    throw new Failure(message);
 }
 
 function expand(path) {
@@ -196,6 +200,22 @@ function run(command, args) {
     if (result.status !== 0) fail(`${command} failed: ${result.stderr || result.error}`);
 }
 
+// A folder for one render's frames. A render that is killed cannot remove its
+// own (the bar reloading in the middle of one does that), so each new render
+// first removes what such runs left: same name, untouched for an hour.
+function scratchDir(kind) {
+    const prefix = `ascii-${kind}-`;
+    for (const name of readdirSync(tmpdir())) {
+        if (!name.startsWith(prefix)) continue;
+        const stale = join(tmpdir(), name);
+        try {
+            if (Date.now() - statSync(stale).mtimeMs > 3600000) rmSync(stale, { recursive: true, force: true });
+        } catch {
+            // someone else's, or gone already
+        }
+    }
+    return mkdtempSync(join(tmpdir(), prefix));
+}
 async function wallpaper(id, values) {
     const [width, height] = values.screen.split("x").map(Number);
     if (![width, height].every((n) => Number.isInteger(n) && n > 0)) {
@@ -232,7 +252,7 @@ async function wallpaper(id, values) {
     mkdirSync(dirname(out), { recursive: true });
     // A leading dot keeps a half-written file out of the wallpaper picker.
     const partial = join(dirname(out), "." + basename(out, ".gif") + ".partial.gif");
-    const scratch = mkdtempSync(join(tmpdir(), "ascii-wallpaper-"));
+    const scratch = scratchDir("wallpaper");
     try {
         for (let n = 0; n < frames.length; n++) {
             ctx.fillStyle = background;
@@ -316,29 +336,41 @@ function assets() {
 
 // ── Main ────────────────────────────────────────────────────────────────────
 
-const { positionals, values } = parseArgs({
-    allowPositionals: true,
-    options: {
-        screen: { type: "string", default: "3440x1440" },
-        palette: { type: "string", default: "theme" },
-        color: { type: "string" },
-        speed: { type: "string", default: "normal" },
-        size: { type: "string", default: "medium" },
-        brightness: { type: "string", default: "0.6" },
-        out: { type: "string" },
-    },
-});
+async function main() {
+    const { positionals, values } = parseArgs({
+        allowPositionals: true,
+        options: {
+            screen: { type: "string", default: "3440x1440" },
+            palette: { type: "string", default: "theme" },
+            color: { type: "string" },
+            speed: { type: "string", default: "normal" },
+            size: { type: "string", default: "medium" },
+            brightness: { type: "string", default: "0.6" },
+            out: { type: "string" },
+        },
+    });
 
-const [command, name] = positionals;
-GlobalFonts.families; // loads the system fonts before the first draw
+    const [command, name] = positionals;
+    GlobalFonts.families; // loads the system fonts before the first draw
 
-if (command === "list") {
-    console.log(Object.keys(LOOKS).join("\n"));
-} else if (command === "assets") {
-    assets();
-} else if (command === "wallpaper" && name) {
-    if (!values.out) fail("--out is required");
-    await wallpaper(name, values);
-} else {
-    fail("usage: gen.mjs list | assets | wallpaper <look> --out FILE.gif [--palette P --color #rrggbb --speed S --size Z --brightness B --screen WxH]");
+    if (command === "list") {
+        console.log(Object.keys(LOOKS).join("\n"));
+    } else if (command === "assets") {
+        assets();
+    } else if (command === "wallpaper" && name) {
+        if (!values.out) fail("--out is required");
+        await wallpaper(name, values);
+    } else {
+        fail("usage: gen.mjs list | assets | wallpaper <look> --out FILE.gif [--palette P --color #rrggbb --speed S --size Z --brightness B --screen WxH]");
+    }
+}
+
+try {
+    await main();
+} catch (error) {
+    // The ASCII tab shows the last line of stderr, so the reason is one line and
+    // comes last. Anything that was not expected gets its stack too, above it.
+    if (!(error instanceof Failure)) console.error(error?.stack ?? error);
+    console.error(`gen.mjs: ${error?.message ?? error}`);
+    process.exit(1);
 }
