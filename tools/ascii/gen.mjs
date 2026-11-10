@@ -27,8 +27,13 @@ import { homedir, tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
-import * as kit from "ascii.rest/kit";
-import { createCanvas, GlobalFonts } from "@napi-rs/canvas";
+
+// The two packages this needs are loaded by load(), from main(), and not by
+// `import` lines here. An `import` that throws (the canvas package without its
+// native part, say) does so before any code in this file runs, so nothing could
+// report it the way every other failure is reported.
+let kit;
+let createCanvas, GlobalFonts;
 
 // id -> [function name in the kit, name shown in the UI]. The one list every
 // other table refers to.
@@ -138,16 +143,23 @@ function loadTheme() {
 
 // ── Palettes ────────────────────────────────────────────────────────────────
 
-const palettes = PALETTES.map(([id, name]) => {
-    const colors = kit.palette(id).dark;
-    return {
-        id,
-        name,
-        background: mix("#000000", colors[0], 0.3),
-        colors,
-        accent: colors[Math.floor(colors.length * 0.6)],
-    };
-});
+// The kit's palettes as the manifest and resolvePalette() want them. Filled by load().
+let palettes = [];
+
+async function load() {
+    kit = await import("ascii.rest/kit");
+    ({ createCanvas, GlobalFonts } = await import("@napi-rs/canvas"));
+    palettes = PALETTES.map(([id, name]) => {
+        const colors = kit.palette(id).dark;
+        return {
+            id,
+            name,
+            background: mix("#000000", colors[0], 0.3),
+            colors,
+            accent: colors[Math.floor(colors.length * 0.6)],
+        };
+    });
+}
 
 // { background, colors } with colors faint to strong.
 function resolvePalette({ palette, color }) {
@@ -202,17 +214,23 @@ function run(command, args) {
 
 // A folder for one render's frames. A render that is killed cannot remove its
 // own (the bar reloading in the middle of one does that), so each new render
-// first removes what such runs left: same name, untouched for an hour.
+// first removes what such runs left: same name, untouched for an hour. That
+// tidying is a courtesy: if the temp folder cannot even be listed, the render
+// still gets its folder.
 function scratchDir(kind) {
     const prefix = `ascii-${kind}-`;
-    for (const name of readdirSync(tmpdir())) {
-        if (!name.startsWith(prefix)) continue;
-        const stale = join(tmpdir(), name);
-        try {
-            if (Date.now() - statSync(stale).mtimeMs > 3600000) rmSync(stale, { recursive: true, force: true });
-        } catch {
-            // someone else's, or gone already
+    try {
+        for (const name of readdirSync(tmpdir())) {
+            if (!name.startsWith(prefix)) continue;
+            const stale = join(tmpdir(), name);
+            try {
+                if (Date.now() - statSync(stale).mtimeMs > 3600000) rmSync(stale, { recursive: true, force: true });
+            } catch {
+                // someone else's, or gone already
+            }
         }
+    } catch {
+        // nothing to tidy that we can see
     }
     return mkdtempSync(join(tmpdir(), prefix));
 }
@@ -351,6 +369,7 @@ async function main() {
     });
 
     const [command, name] = positionals;
+    await load();
     GlobalFonts.families; // loads the system fonts before the first draw
 
     if (command === "list") {
