@@ -18,3 +18,4 @@ singleton Updates 1.0 Updates.qml
 singleton Ascii 1.0 Ascii.qml
 singleton BluetoothDevices 1.0 BluetoothDevices.qml
 singleton BluetoothAgent 1.0 BluetoothAgent.qml
+singleton KeepAwake 1.0 KeepAwake.qml

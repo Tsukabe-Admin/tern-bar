@@ -253,6 +253,13 @@ PanelWindow {
                     Popups.toggle("quick", bar.modelData.name);
                 }
             }
+            // Keep awake is on: shown so it cannot be forgotten; a click ends it.
+            IconButton {
+                visible: KeepAwake.on
+                text: "󰅶"
+                fg: Theme.warn
+                action: () => KeepAwake.toggle()
+            }
             Bell {}
             IconButton {
                 text: "⏻"

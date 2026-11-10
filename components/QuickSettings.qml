@@ -6,11 +6,11 @@ import Quickshell.Services.UPower
 import Quickshell.Services.Pipewire
 import "../singletons"
 
-// Quick settings: Wi-Fi, Bluetooth, Do Not Disturb, night light and microphone
-// tiles, screen brightness and microphone input volume sliders, the power
-// profile, Bluetooth devices (find new ones, pair, connect/disconnect, forget;
-// see BluetoothDevices) and links to the full settings apps. Shown while
-// Popups.open is "quick" on this bar's screen. A tile or slider whose
+// Quick settings: Wi-Fi, Bluetooth, Do Not Disturb, night light, keep awake and
+// microphone tiles, screen brightness and microphone input volume sliders, the
+// power profile, Bluetooth devices (find new ones, pair, connect/disconnect,
+// forget; see BluetoothDevices) and links to the full settings apps. Shown
+// while Popups.open is "quick" on this bar's screen. A tile or slider whose
 // hardware/service is missing is hidden; night light without wlsunset says
 // what to install.
 PopupWindow {
@@ -136,6 +136,14 @@ PopupWindow {
                         : NightLight.active ? "4000 K" : NightLight.problem !== "" ? NightLight.problem : "Off"
                     on: NightLight.active
                     onClicked: NightLight.toggle()
+                }
+
+                QsTile {
+                    glyph: "󰅶"
+                    title: "Keep awake"
+                    subtitle: KeepAwake.on ? "Screen stays on" : "Off"
+                    on: KeepAwake.on
+                    onClicked: KeepAwake.toggle()
                 }
 
                 QsTile {
