@@ -532,7 +532,8 @@ Singleton {
 
     function addScanLine(line) {
         // "mtime\tpath" from find's -printf, so a path with spaces or tabs in it
-        // still splits correctly at the first tab.
+        // still splits correctly at the first tab. One file per NUL, not per
+        // line: a file name can hold a newline, never a NUL.
         const tab = line.indexOf("\t");
         if (tab < 0)
             return;
@@ -555,10 +556,11 @@ Singleton {
         command: ["find", "-L", root.settings.folder, "-type", "f",
             "(", "-iname", "*.jpg", "-o", "-iname", "*.jpeg", "-o", "-iname", "*.png",
             "-o", "-iname", "*.webp", "-o", "-iname", "*.gif", ")", "-not", "-name", ".*",
-            "-printf", "%T@\\t%p\\n"]
+            "-printf", "%T@\\t%p\\0"]
 
         stdout: SplitParser {
-            onRead: (line) => root.addScanLine(line)
+            splitMarker: "\u0000"
+            onRead: (entry) => root.addScanLine(entry)
         }
 
         onExited: (exitCode, exitStatus) => {
