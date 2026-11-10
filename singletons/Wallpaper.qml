@@ -57,7 +57,12 @@ Singleton {
 
     // Every image in settings.folder: { path, name, mtime }.
     property var files: []
-    property string lastError: ""
+    // What the page shows when a script failed. One slot per script: an "All
+    // screens" pick runs both, and with a single slot whichever finished last
+    // (usually a success) wiped the other one's message.
+    property string wallpaperError: ""
+    property string themeError: ""
+    readonly property string lastError: root.wallpaperError !== "" ? root.wallpaperError : root.themeError
 
     readonly property var screens: {
         const out = [];
@@ -448,7 +453,7 @@ Singleton {
         id: wpProcess
 
         onExited: (exitCode, exitStatus) => {
-            root.lastError = (exitCode === 0) ? ""
+            root.wallpaperError = (exitCode === 0) ? ""
                 : (exitCode === 3) ? "Install awww to set wallpapers"
                 : (exitCode === 5) ? "Install jq to use the Wallpaper tab"
                 : "Couldn't set the wallpaper (wallpaper.sh exited " + exitCode + ")";
@@ -464,7 +469,7 @@ Singleton {
         id: themeProcess
 
         onExited: (exitCode, exitStatus) => {
-            root.lastError = (exitCode === 0) ? ""
+            root.themeError = (exitCode === 0) ? ""
                 : (exitCode === 3) ? "Install matugen to take colours from the wallpaper, or pick a theme"
                 : (exitCode === 4) ? "Choose an All screens wallpaper first, or pick a theme"
                 : (exitCode === 5) ? "Install jq to use the Wallpaper tab"
