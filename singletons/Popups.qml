@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import Quickshell.Services.Mpris
 
 // Which of the bar's popups is open — "calendar", "quick" (quick settings),
 // "media" or "" — and on which screen. One at a time: opening one closes the
@@ -40,6 +41,12 @@ Singleton {
             root.open = "";
             return;
         }
+        // The media card only shows while there is a player. Asked for without
+        // one (over IPC; the pill is hidden then), "media" would be open with
+        // nothing to see, and the card would appear by itself whenever a player
+        // started.
+        if (name === "media" && root.pickPlayer(Mpris.players.values || []) === null)
+            return;
         if (Launcher.open)
             Launcher.close();
         root.screenName = screenName;
