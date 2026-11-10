@@ -357,8 +357,8 @@ Singleton {
         root.setWallpaper(target, pool[Math.floor(Math.random() * pool.length)]);
     }
 
-    // The timer's tick. Only the "All screens" image rotates: a screen with an
-    // image of its own keeps it.
+    // The pick of the timer's tick. Only the "All screens" image rotates: a
+    // screen with an image of its own keeps it.
     function rotateNow() {
         const all = root.files.map(function (f) { return f.path; });
         let candidates = all;
@@ -391,11 +391,20 @@ Singleton {
             root.runThemeSync();
     }
 
+    // The tick looks at the folder again before it picks: the list the grid was
+    // built from can be hours old, and an image deleted since then must not be
+    // chosen. find.onExited does the picking. The timer runs however few images
+    // the last scan found, because its own scan is what notices new ones.
+    property bool rotateAfterScan: false
+
     Timer {
         interval: root.settings.rotateMinutes * 60000
         repeat: true
-        running: root.settings.rotate && root.files.length > 1
-        onTriggered: root.rotateNow()
+        running: root.settings.rotate
+        onTriggered: {
+            root.rotateAfterScan = true;
+            root.rescan();
+        }
     }
 
     // awww does not reliably repaint a screen that was unplugged and plugged
@@ -465,9 +474,13 @@ Singleton {
             root.wallpaperError = (exitCode === 0) ? ""
                 : (exitCode === 3) ? "Install awww to set wallpapers"
                 : (exitCode === 5) ? root.jqMissing
+                : (exitCode === 7) ? "A chosen image is no longer there: pick another"
                 : "Couldn't set the wallpaper (wallpaper.sh exited " + exitCode + ")";
             if (exitCode !== 5 && root.themeError === root.jqMissing)
                 root.themeError = "";
+            // The grid may still be showing the image that has gone.
+            if (exitCode === 7)
+                root.rescan();
 
             const queued = root.pendingWallpaper;
             root.pendingWallpaper = null;
@@ -565,13 +578,24 @@ Singleton {
 
         onExited: (exitCode, exitStatus) => {
             // An unreadable folder exits non-zero having printed nothing, which
-            // is what an empty grid should show anyway.
-            root.files = root.scanBuffer;
+            // is what an empty grid should show anyway. An unchanged listing is
+            // left alone, so a scan with nothing new does not rebuild the grid
+            // under whoever is scrolling it.
+            const found = root.scanBuffer;
             root.scanBuffer = [];
+            const same = found.length === root.files.length && found.every(function (f, i) {
+                return f.path === root.files[i].path && f.mtime === root.files[i].mtime;
+            });
+            if (!same)
+                root.files = found;
             const again = root.scanPending;
             root.scanPending = false;
-            if (again)
+            if (again) {
                 root.rescan();
+            } else if (root.rotateAfterScan) {
+                root.rotateAfterScan = false;
+                root.rotateNow();
+            }
         }
     }
 

@@ -11,7 +11,8 @@
 # with no image of its own and no "All screens" image is left alone.
 #
 # Exit codes: 0 done (or nothing to do), 3 awww is not installed, 5 jq is not
-# installed, 1 anything else.
+# installed, 7 a chosen image is no longer there (after showing what it can),
+# 1 anything else.
 
 set -uo pipefail
 
@@ -90,6 +91,16 @@ image_for() {
     fi
 }
 
+# True when the image chosen for $1 (a screen, or "*") names a file that is no
+# longer there. The screen then falls back as above; GONE makes the script say
+# so at the end instead of looking as if nothing had been asked for.
+chosen_is_gone() {
+    local image
+    image=$(jq -r --arg o "$1" '.wallpapers[$o] // empty' "$STATE" 2>/dev/null || true)
+    [ -n "$image" ] && [ "${image#/}" != "$image" ] && [ ! -f "$image" ]
+}
+GONE=0
+
 # ── Screens ─────────────────────────────────────────────────────────────────
 
 SCREENS=("${OUTPUTS[@]}")
@@ -105,18 +116,29 @@ if [ ${#SCREENS[@]} -eq 0 ]; then
     # No usable screen list (niri did not answer): the "All screens" image goes
     # on everything awww knows about.
     FALLBACK=$(star_image)
-    [ -n "$FALLBACK" ] || exit 0
+    if [ -z "$FALLBACK" ]; then
+        chosen_is_gone "*" && exit 7
+        exit 0
+    fi
 else
     for output in "${SCREENS[@]}"; do
+        chosen_is_gone "$output" && GONE=1
         image=$(image_for "$output")
-        [ -n "$image" ] || continue
+        if [ -z "$image" ]; then
+            # Nothing of its own that exists: it wanted the "All screens" image.
+            chosen_is_gone "*" && GONE=1
+            continue
+        fi
         if [ -n "${IMAGE_SCREENS[$image]:-}" ]; then
             IMAGE_SCREENS[$image]="${IMAGE_SCREENS[$image]},$output"
         else
             IMAGE_SCREENS[$image]="$output"
         fi
     done
-    [ ${#IMAGE_SCREENS[@]} -gt 0 ] || exit 0
+    if [ ${#IMAGE_SCREENS[@]} -eq 0 ]; then
+        [ "$GONE" -eq 1 ] && exit 7
+        exit 0
+    fi
 fi
 
 # ── Daemon ──────────────────────────────────────────────────────────────────
@@ -156,4 +178,5 @@ for image in "${!IMAGE_SCREENS[@]}"; do
         -t "$TRANSITION" --transition-duration "$DURATION" --transition-fps 60 "$image" || status=1
 done
 
+[ "$status" -eq 0 ] && [ "$GONE" -eq 1 ] && status=7
 exit $status
