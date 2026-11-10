@@ -29,6 +29,8 @@ edit, it keeps running the old code — restart it with
 - Test it on a real bar, not only by reading the diff. Most problems here (blur, layout,
   visibility) only show up on screen.
 - Mention what you tested and on which Quickshell version.
+- `node --test tests/` checks the launcher's calculator (plain Node, nothing to install). Run it if
+  you touch `singletons/calc.js`.
 - Match the existing style: plain QML, comments that explain *why*, and no hardcoded home paths.
 - New text labels need `textFormat: Text.PlainText` — window titles, clipboard entries, SSIDs and
   media metadata are untrusted, and Qt would otherwise parse them as rich text.

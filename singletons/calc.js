@@ -82,7 +82,15 @@ function evaluate(text) {
     }
 }
 
-// 10 significant digits without trailing zeros: 0.1+0.2 shows 0.3.
+// The answer as the launcher shows and copies it, without trailing zeros.
+// A whole number is printed digit for digit. A fraction gets 10 significant
+// digits, which hides float noise (0.1+0.2 shows 0.3); one with a long whole
+// part gets as many as that part needs, up to the 15 a double is good for, so
+// the digits in front of the decimal point are never rounded away.
 function format(v) {
-    return String(parseFloat(v.toPrecision(10)));
+    if (Number.isInteger(v))
+        return v.toFixed(0);
+    const whole = String(Math.trunc(Math.abs(v))).length;
+    const digits = Math.max(whole, Math.min(15, Math.max(10, whole + 2)));
+    return String(parseFloat(v.toPrecision(digits)));
 }
