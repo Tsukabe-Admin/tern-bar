@@ -108,6 +108,16 @@ Singleton {
                     next.push(Object.assign({}, ws, { is_active: active, is_focused: focused }));
             }
             root.workspaces = next;
+        } else if (obj.WorkspaceUrgencyChanged) {
+            // A window on that workspace asked for attention, or stopped asking.
+            // niri sends only this for it, never a fresh WorkspacesChanged.
+            const change = obj.WorkspaceUrgencyChanged;
+            const at = root.workspaces.findIndex((item) => item.id === change.id);
+            if (at === -1 || root.workspaces[at].is_urgent === change.urgent)
+                return;
+            const marked = root.workspaces.slice();
+            marked[at] = Object.assign({}, marked[at], { is_urgent: change.urgent });
+            root.workspaces = marked;
         } else if (obj.WindowsChanged) {
             // The initial stream has no WindowFocusChanged: the focused window
             // is only marked by is_focused in this full snapshot.
