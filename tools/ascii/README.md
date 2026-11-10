@@ -25,7 +25,7 @@ node gen.mjs wallpaper sea --palette custom --color "#7aa2f7" --out sea-blue.gif
 | --- | --- | --- |
 | `--out FILE.gif` | required | written atomically: a `.<name>.partial.gif` next to it until it is done |
 | `--screen WxH` | `3440x1440` | pixel size of the GIF; a larger screen crops it, a smaller one scales it |
-| `--palette` | `theme` | `theme` (the bar's colours, `~/.local/state/tern-bar/palette.json`), `custom`, or one of the 15 palettes in `assets/ascii/manifest.json` (`ocean`, `fire`, `neon`, …) |
+| `--palette` | `theme` | `theme` (the bar's colours: `palette.json` in `$XDG_STATE_HOME/tern-bar`, normally `~/.local/state/tern-bar`, or the bar's built-in colours until you have applied a theme), `custom`, or one of the 15 palettes in `assets/ascii/manifest.json` (`ocean`, `fire`, `neon`, …) |
 | `--color #rrggbb` | | the colour for `--palette custom` |
 | `--speed` | `normal` | `calm`, `slow`, `normal`, `fast`: the loop length (20, 12, 8, 5 s), so longer is slower |
 | `--size` | `medium` | `small`..`huge`: how coarse the look's pattern is |

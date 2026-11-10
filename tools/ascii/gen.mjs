@@ -13,8 +13,10 @@
 //   node gen.mjs wallpaper sea --palette custom --color "#7aa2f7" --out sea.gif
 //   node gen.mjs assets
 //
-// `--palette theme` (the default) draws in ~/.local/state/tern-bar/palette.json,
-// the bar's current colours. Any other palette id is listed in the manifest.
+// `--palette theme` (the default) draws in the bar's current colours:
+// palette.json in $XDG_STATE_HOME/tern-bar (~/.local/state/tern-bar), or the
+// bar's built-in colours while that file does not exist yet. Any other palette
+// id is listed in the manifest.
 //
 // While rendering a wallpaper it prints `progress <n> <total>` per frame and
 // `encoding` before the GIF is assembled; the ASCII tab reads those lines.
@@ -102,10 +104,25 @@ function mix(a, b, amount) {
     return hex(from.map((c, i) => c + (to[i] - c) * amount));
 }
 
-function loadTheme(file) {
+// The bar's colours, for `--palette theme`. scripts/theme-sync.sh writes them to
+// palette.json in the state folder, the same one singletons/BarConfig.qml and
+// the scripts work out. Until a theme has been applied that file does not exist
+// and the bar shows the fallbacks in singletons/Theme.qml, so they are used here
+// too: keep the four in step with that file.
+const THEME_FALLBACK = { card: "#050F16", faint: "#263238", accent: "#2979FF", live: "#00E5FF" };
+
+function loadTheme() {
+    const file = join(process.env.XDG_STATE_HOME || join(homedir(), ".local/state"), "tern-bar/palette.json");
+    let text;
+    try {
+        text = readFileSync(file, "utf8");
+    } catch (error) {
+        if (error.code === "ENOENT") return THEME_FALLBACK;
+        fail(`cannot read the theme ${file}: ${error.message}`);
+    }
     let json;
     try {
-        json = JSON.parse(readFileSync(file, "utf8"));
+        json = JSON.parse(text);
     } catch (error) {
         fail(`cannot read the theme ${file}: ${error.message}`);
     }
@@ -131,7 +148,7 @@ const palettes = PALETTES.map(([id, name]) => {
 // { background, colors } with colors faint to strong.
 function resolvePalette({ palette, color }) {
     if (palette === "theme") {
-        const theme = loadTheme(expand("~/.local/state/tern-bar/palette.json"));
+        const theme = loadTheme();
         return { background: theme.card, colors: [theme.faint, theme.accent, theme.live] };
     }
     const entry = palettes.find((p) => p.id === palette);
