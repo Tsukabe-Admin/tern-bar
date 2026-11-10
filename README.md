@@ -175,12 +175,12 @@ which part of the bar, edit `matugen/palette.json`.
   on with `morphEnabled` in `singletons/BarConfig.qml`, but don't run it in a loop.
 - **Keybinding cheat sheet:** the `?` button in the tools pill shows niri's built-in hotkey overlay.
 - **Launcher:** click the launcher pill (or Mod+Space). Type to search apps and open windows; type
-  a sum like `2*(3+4)` to see the answer (Enter copies it; whole numbers are exact up to 16 digits,
-  anything larger or with a fraction is shown to 10 significant digits); start with `;` to search
-  clipboard history. Up/Down pick, Enter opens, Esc clears and then closes. Apps you open often
-  move to the top (counts in `~/.local/state/tern-bar/launcher.json`). The ⏻ button opens the power
-  actions; Log out, Reboot and Power off need a second Enter (or click) within 3 seconds. Holding
-  Enter down does not count, and moving the selection or typing cancels it.
+  a sum like `2*(3+4)` to see the answer (Enter copies it; whole numbers are exact up to
+  9,007,199,254,740,991, anything larger or with a fraction is shown to 10 significant digits); start
+  with `;` to search clipboard history. Up/Down pick, Enter opens, Esc clears and then closes. Apps
+  you open often move to the top (counts in `~/.local/state/tern-bar/launcher.json`). The ⏻ button
+  opens the power actions; Log out, Reboot and Power off need a second Enter (or click) within 3
+  seconds. Holding Enter down does not count, and moving the selection or typing cancels it.
 - **Quick settings:** the sliders button in the right-hand pill. **Calendar:** click the clock.
 - **Your IP stays hidden:** the network pill shows only the Wi-Fi name until you click it; click
   again to hide the IP. The choice is the file `~/.local/state/tern-bar/show_ip`.
