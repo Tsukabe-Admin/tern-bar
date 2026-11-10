@@ -36,7 +36,11 @@ if [ -d "/sys/class/net/$IFACE/wireless" ]; then
     SSID=$(iwgetid -r 2>/dev/null || true)
     # `--rescan no`: without it nmcli starts a Wi-Fi scan whenever its list is
     # older than 30 s and waits for it, and this script runs every few seconds.
-    [ -z "$SSID" ] && SSID=$(nmcli -t -f active,ssid dev wifi list --rescan no 2>/dev/null | awk -F: '/^yes:/{print $2; exit}')
+    # In this terse output nmcli writes a ":" or "\" inside a name as "\:" or
+    # "\\", so the name is everything after "yes:" with those escapes undone;
+    # splitting on ":" would cut "Cafe: Guest" short.
+    [ -z "$SSID" ] && SSID=$(nmcli -t -f active,ssid dev wifi list --rescan no 2>/dev/null \
+        | sed -n -e '/^yes:/{s/^yes://;s/\\\(.\)/\1/g;p;q;}')
     [ -z "$SSID" ] && SSID="$IFACE"
 
     if [ -f "$STATE_FILE" ]; then
