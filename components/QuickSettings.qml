@@ -451,7 +451,9 @@ PopupWindow {
                     leftPadding: 8
                     rightPadding: 8
                     wrapMode: Text.WordWrap
-                    text: "Check that the device is still in pairing mode, then click it again. A device that asks for a PIN code has to be paired in blueman."
+                    text: BluetoothAgent.active
+                        ? "Check that the device is still in pairing mode, then click it again."
+                        : "Check that the device is still in pairing mode, then click it again. A device that asks for a PIN code needs tern-bar's pairing helper; the README says how to install it."
                     color: Theme.t3
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSize - 2

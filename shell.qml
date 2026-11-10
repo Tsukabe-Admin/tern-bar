@@ -41,6 +41,10 @@ ShellRoot {
     VolumeOsd {}
     BrightnessOsd {}
 
+    // Questions BlueZ asks during a pairing (a PIN, a number to compare), when
+    // the pairing helper is installed: one window for the whole shell.
+    BluetoothPrompt {}
+
     IpcHandler {
         target: "settings"
 

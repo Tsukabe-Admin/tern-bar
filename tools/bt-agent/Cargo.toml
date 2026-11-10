@@ -1,0 +1,18 @@
+[package]
+name = "tern-bar-bt-agent"
+version = "0.1.0"
+edition = "2021"
+description = "Answers BlueZ's pairing questions (PIN, passkey, number check) for tern-bar"
+license = "MIT"
+publish = false
+
+[dependencies]
+async-io = "2"
+futures-channel = "0.3"
+futures-lite = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+zbus = "5"
+
+[profile.release]
+strip = true

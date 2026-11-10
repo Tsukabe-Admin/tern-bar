@@ -7,10 +7,11 @@ import Quickshell.Bluetooth
 // The Bluetooth devices the quick-settings card lists, and what can be done
 // with them there: search for new ones, pair, connect, forget.
 //
-// Pairing goes through BlueZ with no pairing agent, so it works for devices
-// that pair without a code ("just works": headphones, speakers, mice, game
-// controllers, most phones). A device that wants a PIN typed in fails, and
-// the card says so; blueman can pair those.
+// Devices that pair without a code ("just works": headphones, speakers, mice,
+// game controllers) need nothing more. A pairing that needs a person (a PIN,
+// a passkey, "does the device show this number?") is asked of BlueZ's pairing
+// agent: tern-bar's helper when it is installed (BluetoothAgent shows the
+// question). Without it such a pairing fails, and the card says so.
 Singleton {
     id: root
 

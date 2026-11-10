@@ -90,7 +90,8 @@ Each one is only needed for the part it powers; the rest of the bar works withou
 | `systemd` (`systemctl`, `loginctl`, `busctl`, `udevadm`) | Suspend, Reboot and Power off; Lock when swaylock is missing; finding the power-profile service; backlight uevents |
 | `power-profiles-daemon`, UPower | the power profile switch; the system battery pill (hidden on desktops without a battery) |
 | BlueZ | the Bluetooth tile; finding, pairing, connecting and forgetting devices |
-| `blueman` (optional) | the "Bluetooth settings" button; pairing a device that asks for a PIN code |
+| Rust (`cargo`), once, to build `tools/bt-agent` | pairing devices that ask for a PIN, a passkey or a number check (see **Bluetooth** below) |
+| `blueman` (optional) | the "Bluetooth settings" button |
 | NetworkManager | the Wi-Fi tile |
 | `pavucontrol`, PipeWire | right-click on volume or microphone; the volume and microphone pills and quick-settings controls |
 | `ip` (iproute2), `nm-connection-editor`, `nmcli` or `iwgetid` | the network pill (it reads "Offline" without `ip`); right-click on network; the Wi-Fi name |
@@ -186,8 +187,19 @@ which part of the bar, edit `matugen/palette.json`.
 - **Bluetooth:** in quick settings, **Find devices** searches for a minute (or until you close the card
   or press **Stop**). Put the device in pairing mode and click it in the list: it is paired, trusted and
   connected. Click a paired device to connect or disconnect it; point at it for **Forget**, which asks
-  for a second click. Pairing works for devices that need no code (headphones, speakers, mice, game
-  controllers, most phones); a device that asks you to type a PIN needs blueman.
+  for a second click. Devices that need no code (headphones, speakers, mice, game controllers) pair
+  as they are. For the ones that ask for a PIN, a passkey or "does the device show this number?",
+  install the pairing helper once and restart the bar:
+
+  ```bash
+  cargo install --path tools/bt-agent --root ~/.local    # puts tern-bar-bt-agent in ~/.local/bin
+  ```
+
+  The bar then shows each question in a small window under the bar (on its own, too, when a device
+  asks to pair or connect while the card is closed). Nothing is accepted without your click or the
+  code you type. While the bar runs, the helper is your computer's Bluetooth pairing agent, and BlueZ
+  keeps the adapter pairable; it is never made discoverable. `~/.local/bin` has to be on the `PATH`
+  the bar starts with. See `tools/bt-agent/README.md`.
 - **Your IP stays hidden:** the network pill shows only the Wi-Fi name until you click it; click
   again to hide the IP. The choice is the file `~/.local/state/tern-bar/show_ip`.
 - **Weather lookup:** the weather pill is on by default and asks a geolocation service
@@ -228,6 +240,7 @@ matugen/         an optional template, for driving the colours from your own mat
 screenshots/     pictures for this page
 assets/ascii/    text frames for the ASCII pill and the launcher's empty state
 tools/ascii/     generator for those frames and for animated ASCII wallpapers (needs node)
+tools/bt-agent/  the Bluetooth pairing helper, in Rust (see Bluetooth above)
 ```
 
 ## If it misbehaves
