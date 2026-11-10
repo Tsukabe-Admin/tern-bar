@@ -45,7 +45,7 @@ Item {
     function dropTarget(scenePos) {
         for (const col of page.columns) {
             const p = col.mapFromItem(null, scenePos.x, scenePos.y);
-            if (p.x >= 0 && p.x <= col.width)
+            if (p.x >= 0 && p.x <= col.width && p.y >= 0 && p.y <= col.dropBottom)
                 return { side: col.side, index: col.indexAt(scenePos) };
         }
         return null;

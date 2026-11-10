@@ -31,6 +31,10 @@ Item {
         return Math.max(0, Math.min(root.count, Math.floor((p.y + root.pitch / 2) / root.pitch)));
     }
 
+    // How far down a drop still belongs to this group: the group's own height,
+    // or the end of its rows when there are more of them than fit.
+    readonly property real dropBottom: Math.max(root.height, list.y + list.height)
+
     Text {
         textFormat: Text.PlainText
         id: titleLabel
