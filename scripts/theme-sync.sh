@@ -87,11 +87,9 @@ if preset is None:
     preset = presets[0]
 
 # A preset has thirteen colours and matugen's scheme has fifty roles. The
-# thirteen go where they belong. The rest are mixed from them the way a dark
-# Material scheme relates its tones: a container is the colour sunk into the
-# surface, what is written on a colour is the darkest surface, what is written
-# on a container is the colour lifted towards the text, and so is a "fixed"
-# colour. So a template may use any role matugen itself writes.
+# thirteen go where they belong and the rest are mixed from them, following how
+# a dark Material scheme relates its tones. The lines below are the whole rule,
+# role by role. So a template may use any role matugen itself writes.
 p = preset
 roles = {
     "background": p["surface"],
