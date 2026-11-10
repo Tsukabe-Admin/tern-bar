@@ -138,7 +138,10 @@ def from_wttr():
     icon, default_desc = WWO_ICONS.get(code, ("󰖕", "Clear"))
     desc_list = cur.get("weatherDesc") or []
     desc = (desc_list[0].get("value") if desc_list else "") or default_desc
-    temp_c = int(round(float(cur.get("temp_C", 0))))
+    # No default here: a reply without a temperature is not weather, and a
+    # made-up 0° would be shown, and cached, as if it were. The KeyError sends
+    # the caller on to the next source and then to the cached copy.
+    temp_c = int(round(float(cur["temp_C"])))
     feels_c = int(round(float(cur.get("FeelsLikeC", temp_c))))
 
     forecast = []
@@ -210,7 +213,7 @@ def from_open_meteo():
     cur = data.get("current") or {}
     wmo = int(cur.get("weather_code", 0))
     icon, desc = WMO_ICONS.get(wmo, ("󰖕", "Clear"))
-    temp_c = int(round(float(cur.get("temperature_2m", 0))))
+    temp_c = int(round(float(cur["temperature_2m"])))    # required, as in from_wttr
     feels_c = int(round(float(cur.get("apparent_temperature", temp_c))))
 
     daily = data.get("daily") or {}
