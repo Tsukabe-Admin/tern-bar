@@ -25,7 +25,14 @@ Singleton {
     }
     readonly property bool isNiri: root.kind === "niri"
     readonly property bool isHyprland: root.kind === "hyprland"
-    readonly property var hy: null
+    // The Hyprland side (singletons/HyprlandBackend.qml), loaded only on Hyprland.
+    readonly property var hy: hyprLoader.item
+
+    LazyLoader {
+        id: hyprLoader
+        active: root.isHyprland
+        source: Qt.resolvedUrl("HyprlandBackend.qml")
+    }
 
     // True once the compositor's state is coming in; false before that, or when
     // the bar was started outside a compositor it knows.

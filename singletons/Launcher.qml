@@ -231,13 +231,19 @@ Singleton {
     // title were built from `armed` here, every arming and disarming would
     // rebuild `results`, and a rebuilt list is where a selection gets lost.
     function powerRow(p) {
+        const viaSwaylock = p.key === "suspend" || (p.key === "lock" && !root.hyprlock());
         return {
             kind: "power", key: "power:" + p.key, action: p.key,
             title: p.title,
-            subtitle: ((p.key === "lock" || p.key === "suspend") && !Programs.has("swaylock"))
+            subtitle: (viaSwaylock && !Programs.has("swaylock"))
                 ? "swaylock not found: uses loginctl lock-session" : "",
             icon: "", glyph: String.fromCodePoint(p.glyph)
         };
+    }
+
+    // Lock uses hyprlock on Hyprland when it is installed.
+    function hyprlock() {
+        return Compositor.isHyprland && Programs.has("hyprlock");
     }
 
     // In "all" mode a power action only appears once 3+ letters start its name,
@@ -391,8 +397,10 @@ Singleton {
         const color = Theme.card.toString().slice(1, 7);
         const lock = Programs.has("swaylock")
             ? ["swaylock", "-f", "-c", color] : ["loginctl", "lock-session"];
+        // hyprlock stays in the foreground until unlocked, so it locks but is
+        // never the lock in front of a suspend.
         if (key === "lock")
-            Quickshell.execDetached(lock);
+            Quickshell.execDetached(root.hyprlock() ? ["hyprlock"] : lock);
         else if (key === "suspend")
             Quickshell.execDetached(["sh", "-c", "\"$@\" && systemctl suspend", "sh"].concat(lock));
         else if (key === "logout")

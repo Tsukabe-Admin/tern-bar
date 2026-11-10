@@ -24,8 +24,8 @@ FloatingWindow {
     minimumSize: Qt.size(860, 560)
     color: Theme.card
 
-    // Closing through niri (Mod+Q, the close button) is not routed through this
-    // side, so both paths have to switch the settings page off.
+    // Closing through the compositor (Mod+Q, the close button) is not routed
+    // through this side, so both paths have to switch the settings page off.
     onClosed: BarConfig.settingsOpen = false
     onVisibleChanged: {
         if (!win.visible)

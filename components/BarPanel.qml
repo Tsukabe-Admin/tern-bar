@@ -229,7 +229,9 @@ PanelWindow {
                 fg: Theme.t2
                 action: () => bar.openSettings("wallpaper")
             }
+            // niri's own hotkey overlay; Hyprland has none.
             IconButton {
+                visible: Compositor.isNiri
                 text: "󰋖"
                 fg: Theme.t3
                 action: () => Compositor.showHotkeyOverlay()
@@ -385,10 +387,11 @@ PanelWindow {
     }
 
     // The morph overlay exists only while it is explicitly enabled, so the
-    // bar normally never creates a second, fullscreen layer surface.
+    // bar normally never creates a second, fullscreen layer surface. It aims at
+    // niri's half-width column, so it is niri only.
     Loader {
         id: morphLoader
-        active: BarConfig.morphEnabled
+        active: BarConfig.morphEnabled && Compositor.isNiri
         sourceComponent: Component {
             TernMorph {
                 screenInfo: bar.modelData

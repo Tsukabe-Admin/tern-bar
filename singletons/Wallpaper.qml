@@ -454,7 +454,11 @@ Singleton {
         let command = [BarConfig.scriptsDir + "/wallpaper.sh"];
         if (animate)
             command.push("--animate");
-        wpProcess.command = command.concat(outputs);
+        // "All screens" (no names): on niri the script asks niri which screens
+        // exist. On Hyprland the bar names them, so the script never asks a niri
+        // that may be running outside a nested Hyprland.
+        wpProcess.command = command.concat((outputs.length === 0 && Compositor.isHyprland)
+            ? Quickshell.screens.map((s) => s.name) : outputs);
         wpProcess.running = true;
     }
 
