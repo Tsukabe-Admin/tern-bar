@@ -27,9 +27,9 @@ Singleton {
     readonly property var history: server.trackedNotifications.values.filter((n) => !n.transient).reverse()
     readonly property int count: root.history.length
 
-    // The notifications shown as toasts, newest first, at most three.
+    // The notifications shown as toasts, newest first, at most three. A
+    // notification leaves this list the moment it closes (see onClosed below).
     property var toasts: []
-    readonly property var toastsShown: root.toasts.filter((n) => n && n.tracked)
 
     // Arrival times by notification id; kept across hot reloads with the
     // notifications themselves. Kept as text: a JavaScript object cannot move
@@ -95,7 +95,7 @@ Singleton {
     function show(n) {
         if (!n || !n.tracked || (root.dnd && n.urgency !== NotificationUrgency.Critical))
             return;
-        root.toasts = [n].concat(root.toasts.filter((t) => t && t.tracked && t !== n)).slice(0, 3);
+        root.toasts = [n].concat(root.toasts.filter((t) => t !== n)).slice(0, 3);
     }
 
     // How long a toast stays: what the app asked for (milliseconds), else 3 s
@@ -111,13 +111,13 @@ Singleton {
     // The toast goes; the notification stays in the history (a transient one
     // is gone for good).
     function hideToast(n) {
-        root.toasts = root.toasts.filter((t) => t && t !== n && t.tracked);
+        root.toasts = root.toasts.filter((t) => t !== n);
         if (n && n.tracked && n.transient)
             n.expire();
     }
 
     function dismiss(n) {
-        root.toasts = root.toasts.filter((t) => t && t !== n && t.tracked);
+        root.toasts = root.toasts.filter((t) => t !== n);
         if (n && n.tracked)
             n.dismiss();
     }
@@ -131,7 +131,7 @@ Singleton {
     // An action button. Unless the app marked it resident, the notification
     // closes with it.
     function invoke(n, action) {
-        root.toasts = root.toasts.filter((t) => t && t !== n && t.tracked);
+        root.toasts = root.toasts.filter((t) => t !== n);
         action.invoke();
     }
 
@@ -189,6 +189,13 @@ Singleton {
     }
 
     // A replaced notification keeps its object and only changes its text.
+    //
+    // A closed one leaves the toasts at once. Quickshell never emits
+    // trackedChanged, and a notification its app withdraws (CloseNotification)
+    // keeps `tracked` true until it is deleted, so a filter on `tracked` never
+    // updates: the toast stayed as an empty card over a deleted object, and a
+    // click on it threw. `closed` comes for every way a notification ends,
+    // before the object goes.
     Instantiator {
         model: server.trackedNotifications
 
@@ -202,6 +209,11 @@ Singleton {
 
             function onBodyChanged() {
                 root.show(modelData);
+            }
+
+            function onClosed() {
+                if (root.toasts.includes(modelData))
+                    root.toasts = root.toasts.filter((t) => t !== modelData);
             }
         }
     }

@@ -13,7 +13,7 @@ PanelWindow {
     id: win
 
     screen: Popups.screenNamed(Popups.focusedScreenName())
-    visible: Notifications.toastsShown.length > 0 && Popups.open !== "notifications"
+    visible: Notifications.toasts.length > 0 && Popups.open !== "notifications"
     anchors.top: true
     anchors.right: true
     margins.top: Theme.barMarginTop + Theme.barHeight + 8
@@ -32,7 +32,7 @@ PanelWindow {
         spacing: 8
 
         Repeater {
-            model: Notifications.toastsShown
+            model: Notifications.toasts
 
             NotificationCard {
                 id: toast
