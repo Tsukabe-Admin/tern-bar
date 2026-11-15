@@ -15,7 +15,7 @@ Rectangle {
 
     width: 154
     height: 56
-    radius: 14
+    radius: Theme.isFramed ? Theme.radiusCard : 14
     color: tile.on ? Qt.alpha(Theme.accent, 0.18) : Qt.alpha(Theme.t1, 0.04)
     border.width: 1
     border.color: tile.on ? Theme.accent : Theme.rim

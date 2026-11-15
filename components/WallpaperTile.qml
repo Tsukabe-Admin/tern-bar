@@ -39,7 +39,7 @@ Item {
         ClippingRectangle {
             id: thumb
             anchors.fill: parent
-            radius: 10
+            radius: Theme.itemRadius
             color: Theme.hover
 
             Image {
@@ -68,7 +68,7 @@ Item {
 
         Rectangle {
             anchors.fill: parent
-            radius: 10
+            radius: Theme.itemRadius
             color: Theme.hover
             opacity: (root.hovered && !root.isCurrent) ? 1 : 0
 
@@ -109,7 +109,7 @@ Item {
         // The one this target is showing.
         Rectangle {
             anchors.fill: parent
-            radius: 10
+            radius: Theme.itemRadius
             color: "transparent"
             border.width: 2
             border.color: Theme.accent

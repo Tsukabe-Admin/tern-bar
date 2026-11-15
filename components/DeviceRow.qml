@@ -76,7 +76,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: actionLabel.implicitWidth + 16
         height: 24
-        radius: height / 2
+        radius: Theme.isFramed ? Theme.itemRadius : height / 2
         color: actionHover.hovered ? Theme.hover : "transparent"
         border.width: 1
         border.color: row.actionArmed ? Theme.bad : Theme.rim

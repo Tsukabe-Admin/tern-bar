@@ -135,7 +135,7 @@ Item {
         visible: page.dragId !== ""
         width: leftCol.width
         height: 32
-        radius: 16
+        radius: Theme.isFramed ? Theme.itemRadius : Theme.pillRadius
         color: Theme.popBg
         border.width: 1
         border.color: Theme.accent

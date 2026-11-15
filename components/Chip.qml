@@ -15,7 +15,7 @@ Rectangle {
     implicitHeight: 30
     width: implicitWidth
     height: implicitHeight
-    radius: height / 2
+    radius: Theme.isFramed ? Math.min(Math.round(height / 2), Theme.itemRadius) : height / 2
     color: root.selected ? Qt.alpha(Theme.accent, 0.18) : Theme.popBg
     border.width: 1
     border.color: root.selected ? Theme.accent : Theme.rim

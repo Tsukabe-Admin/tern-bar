@@ -165,7 +165,7 @@ PanelWindow {
                 Rectangle {
                     width: parent.width - (revealChip.visible ? revealChip.width + parent.spacing : 0)
                     height: 34
-                    radius: height / 2
+                    radius: Theme.isFramed ? Theme.itemRadius : height / 2
                     color: Theme.popBg
                     border.width: 1
                     border.color: field.activeFocus ? Theme.accent : Theme.rim

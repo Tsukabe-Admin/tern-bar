@@ -72,7 +72,7 @@ Item {
             visible: root.count === 0
             width: list.width
             height: root.rowHeight
-            radius: root.rowHeight / 2
+            radius: Theme.isFramed ? Theme.itemRadius : root.rowHeight / 2
             color: "transparent"
             border.width: 1
             border.color: Theme.rim

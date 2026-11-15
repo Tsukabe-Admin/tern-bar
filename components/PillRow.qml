@@ -9,7 +9,7 @@ Row {
     id: rowRoot
 
     property int visiblePills: 0
-    readonly property bool merged: visiblePills >= Theme.pillMergeThreshold
+    readonly property bool merged: !Theme.isFramed && visiblePills >= Theme.pillMergeThreshold
 
     function recount() {
         let n = 0;
@@ -22,6 +22,7 @@ Row {
 
     spacing: merged ? 0 : Theme.pillSpacing
     Behavior on spacing {
+        enabled: !Looks.restyling
         NumberAnimation { duration: Theme.motionSlow; easing.type: Easing.OutCubic }
     }
 

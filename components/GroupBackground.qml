@@ -16,9 +16,11 @@ Rectangle {
     color: Theme.popBg
     border.width: 1
     border.color: Theme.rim
-    opacity: row.merged ? 1 : 0
+    opacity: (!Theme.isFramed && row.merged) ? 1 : 0
+    visible: !Theme.isFramed && opacity > 0
 
     Behavior on opacity {
+        enabled: !Looks.restyling
         NumberAnimation { duration: Theme.motionSlow; easing.type: Easing.OutCubic }
     }
 }

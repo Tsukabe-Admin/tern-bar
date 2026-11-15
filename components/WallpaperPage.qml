@@ -146,7 +146,7 @@ Item {
                 id: searchBox
                 width: 240
                 height: 32
-                radius: height / 2
+                radius: Theme.isFramed ? Theme.itemRadius : height / 2
                 color: Theme.popBg
                 border.width: 1
                 border.color: Theme.rim
@@ -363,7 +363,7 @@ Item {
                                 required property string modelData
                                 width: 22
                                 height: 22
-                                radius: 6
+                                radius: Theme.isFramed ? Math.max(4, Theme.itemRadius - 4) : 6
                                 color: modelData
                                 border.width: 1
                                 border.color: Theme.rim
@@ -378,7 +378,7 @@ Item {
                         Rectangle {
                             width: 140
                             height: 22
-                            radius: height / 2
+                            radius: Theme.isFramed ? Math.max(6, Theme.itemRadius - 2) : height / 2
                             color: Theme.popBg
                             border.width: 1
                             border.color: Theme.rim
@@ -542,7 +542,7 @@ Item {
 
                             width: side.width
                             height: 40
-                            radius: 12
+                            radius: Theme.radiusCard
                             color: modelData.surface
                             border.width: Wallpaper.settings.preset === modelData.id ? 2 : 1
                             border.color: Wallpaper.settings.preset === modelData.id

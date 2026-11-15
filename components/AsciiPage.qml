@@ -45,7 +45,7 @@ Item {
         implicitHeight: 30
         width: implicitWidth
         height: implicitHeight
-        radius: height / 2
+        radius: Theme.isFramed ? Math.min(Math.round(height / 2), Theme.itemRadius) : height / 2
         color: swatch.selected ? Qt.alpha(Theme.accent, 0.18) : Theme.popBg
         border.width: 1
         border.color: swatch.selected ? Theme.accent : Theme.rim
@@ -158,7 +158,7 @@ Item {
             visible: picker.current === "custom"
             width: 140
             height: 26
-            radius: height / 2
+            radius: Theme.isFramed ? Math.min(Math.round(height / 2), Theme.itemRadius) : height / 2
             color: Theme.popBg
             border.width: 1
             border.color: Theme.rim
@@ -229,7 +229,7 @@ Item {
 
                 width: 184
                 height: 112
-                radius: 12
+                radius: Theme.radiusCard
                 color: Ascii.wallpaperBackground
                 border.width: tile.chosen ? 2 : 1
                 border.color: tile.chosen ? Theme.accent : Theme.rim
@@ -425,7 +425,7 @@ Item {
                 Rectangle {
                     width: pillArt.implicitWidth + 32
                     height: 32
-                    radius: 16
+                    radius: Theme.pillRadius
                     color: Theme.popBg
                     border.width: 1
                     border.color: Theme.rim

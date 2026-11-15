@@ -15,7 +15,7 @@ Rectangle {
     readonly property bool shown: !BarConfig.isHidden(root.pillId)
 
     height: 32
-    radius: height / 2
+    radius: Theme.isFramed ? Theme.itemRadius : height / 2
     color: Theme.popBg
     border.width: 1
     border.color: Theme.rim
