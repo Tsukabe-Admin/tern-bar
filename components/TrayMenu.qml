@@ -105,6 +105,13 @@ PopupWindow {
             menu.closeLevels();
     }
 
+    Connections {
+        target: BarConfig
+        function onLookChanged() {
+            menu.visible = false;
+        }
+    }
+
     // Click-outside dismissal. Stays under the card; clicks on the card's empty
     // padding are deliberately not treated as "outside".
     MouseArea {
@@ -115,12 +122,48 @@ PopupWindow {
 
     Rectangle {
         id: card
-        x: Math.max(0, Math.min(menu.anchorPos.x, menu.width - width))
-        y: Theme.barHeight + 4
+
+        property real slideOffset: 0
+        property real revealOpacity: 1
+
+        Connections {
+            target: menu
+            function onVisibleChanged() {
+                if (menu.visible)
+                    menuReveal.restart();
+            }
+        }
+
+        ParallelAnimation {
+            id: menuReveal
+            NumberAnimation {
+                target: card
+                property: "revealOpacity"
+                from: 0
+                to: 1
+                duration: Theme.motionFast
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Theme.curveEffects
+            }
+            NumberAnimation {
+                target: card
+                property: "slideOffset"
+                from: -6
+                to: 0
+                duration: Theme.motionFast
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Theme.curveEffects
+            }
+        }
+
+        readonly property int edgePad: Theme.isFramed ? (Theme.frameThickness + 6) : 0
+        x: Math.max(edgePad, Math.min(menu.anchorPos.x, menu.width - width - edgePad))
+        y: (Theme.isFramed ? (Theme.barHeight + 6) : (Theme.barHeight + 4)) + card.slideOffset
         width: menu.cardWidth
         height: menu.cardHeight
+        opacity: card.revealOpacity
         color: Theme.popBg
-        radius: Theme.itemRadius
+        radius: Theme.isFramed ? Theme.radiusCard : Theme.itemRadius
         border.width: 1
         border.color: Theme.rim
 
@@ -149,7 +192,7 @@ PopupWindow {
                 Rectangle {
                     anchors.fill: parent
                     anchors.margins: 4
-                    radius: 6
+                    radius: Theme.isFramed ? Math.max(4, Theme.itemRadius - 4) : 6
                     color: backHover.hovered ? Theme.hover : "transparent"
                 }
 
@@ -188,7 +231,7 @@ PopupWindow {
                         visible: !entryRow.modelData.isSeparator
                         anchors.fill: parent
                         anchors.margins: 4
-                        radius: 6
+                        radius: Theme.isFramed ? Math.max(4, Theme.itemRadius - 4) : 6
                         color: (rowHover.hovered && entryRow.modelData.enabled) ? Theme.hover : "transparent"
                     }
 

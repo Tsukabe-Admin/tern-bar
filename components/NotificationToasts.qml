@@ -16,8 +16,12 @@ PanelWindow {
     visible: Notifications.toasts.length > 0 && Popups.open !== "notifications"
     anchors.top: true
     anchors.right: true
-    margins.top: Theme.barMarginTop + Theme.barHeight + 8
-    margins.right: Theme.barMarginSide
+    margins.top: Theme.isFramed
+        ? (Theme.barHeight + Math.max(3, Math.round(Theme.frameThickness / 2)))
+        : (Theme.barMarginTop + Theme.barHeight + 8)
+    margins.right: Theme.isFramed
+        ? (Theme.frameThickness + 4)
+        : Theme.barMarginSide
     exclusionMode: ExclusionMode.Ignore
     implicitWidth: 360
     implicitHeight: Math.max(1, column.implicitHeight)
@@ -32,21 +36,63 @@ PanelWindow {
         spacing: 8
 
         Repeater {
-            model: Notifications.toasts
+            // A ScriptModel, not the array itself: every arrival, timeout and
+            // dismissal replaces the array, and a Repeater given a new array
+            // rebuilds every card. The toasts still on screen would play their
+            // entrance again and start their timeouts over.
+            model: ScriptModel {
+                values: Notifications.toasts
+            }
 
-            NotificationCard {
-                id: toast
+            Item {
+                id: toastSlot
                 required property var modelData
-                notification: toast.modelData
-                compact: true
-                onActivated: Notifications.invokeDefault(toast.modelData)
-                onCloseClicked: Notifications.dismiss(toast.modelData)
-                onActionClicked: (action) => Notifications.invoke(toast.modelData, action)
+                width: column.width
+                height: toast.height
+                clip: Theme.isFramed
 
-                Timer {
-                    interval: Notifications.timeoutFor(toast.modelData)
-                    running: interval > 0 && !toast.hovered
-                    onTriggered: Notifications.hideToast(toast.modelData)
+                property real slideX: Theme.isFramed ? 28 : 0
+                property real fadeVal: 0
+
+                Component.onCompleted: enterAnim.restart()
+
+                ParallelAnimation {
+                    id: enterAnim
+                    NumberAnimation {
+                        target: toastSlot
+                        property: "slideX"
+                        to: 0
+                        duration: Theme.motionBase
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Theme.curveSpatial
+                    }
+                    NumberAnimation {
+                        target: toastSlot
+                        property: "fadeVal"
+                        from: 0
+                        to: 1
+                        duration: Theme.motionFast
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Theme.curveEffects
+                    }
+                }
+
+                NotificationCard {
+                    id: toast
+                    x: toastSlot.slideX
+                    width: toastSlot.width
+                    opacity: toastSlot.fadeVal
+                    notification: toastSlot.modelData
+                    compact: true
+                    onActivated: Notifications.invokeDefault(toastSlot.modelData)
+                    onCloseClicked: Notifications.dismiss(toastSlot.modelData)
+                    onActionClicked: (action) => Notifications.invoke(toastSlot.modelData, action)
+
+                    Timer {
+                        interval: Notifications.timeoutFor(toastSlot.modelData)
+                        running: interval > 0 && !toast.hovered
+                        onTriggered: Notifications.hideToast(toastSlot.modelData)
+                    }
                 }
             }
         }
