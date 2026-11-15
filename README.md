@@ -20,8 +20,9 @@ The pills up close:
 
 ![the three groups of pills: launcher, workspaces and window title; clock, weather and music; updates, CPU and memory, the ASCII animation, volume, tools and the system buttons](screenshots/bar.png)
 
-(The pictures were taken from a fresh copy with an empty config, on a 1600x900 screen; the weather,
-the update count and the music are stand-ins.)
+(The pictures were taken from a fresh copy on a 1600x900 screen, with the network, microphone,
+keyboard-layout and battery pills hidden to save room; the weather, the update count and the music
+are stand-ins.)
 
 ## What you get
 
