@@ -78,6 +78,19 @@ Singleton {
             const marked = root.workspaces.slice();
             marked[at] = Object.assign({}, marked[at], { is_urgent: change.urgent });
             root.workspaces = marked;
+        } else if (obj.WorkspaceActiveWindowChanged) {
+            // Which window is in front on a workspace, or none (its last
+            // window closed). niri reports it with this event alone. The
+            // fullscreen check asks which window is in front, and the chips
+            // tell an occupied workspace by it.
+            const front = obj.WorkspaceActiveWindowChanged;
+            const frontId = (front.active_window_id === undefined) ? null : front.active_window_id;
+            const wsAt = root.workspaces.findIndex((item) => item.id === front.workspace_id);
+            if (wsAt === -1 || root.workspaces[wsAt].active_window_id === frontId)
+                return;
+            const refreshed = root.workspaces.slice();
+            refreshed[wsAt] = Object.assign({}, refreshed[wsAt], { active_window_id: frontId });
+            root.workspaces = refreshed;
         } else if (obj.WindowsChanged) {
             // The initial stream has no WindowFocusChanged: the focused window
             // is only marked by is_focused in this full snapshot.
