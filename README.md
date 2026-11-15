@@ -1,10 +1,18 @@
 # tern-bar
 
-A clean, floating top bar for the [niri](https://github.com/YaLTeR/niri) and
-[Hyprland](https://hypr.land) desktops. Everything sits in small rounded "pills" that can follow
-your wallpaper's colors.
+A clean top bar for the [niri](https://github.com/YaLTeR/niri) and [Hyprland](https://hypr.land)
+desktops, in two looks you can switch between while it runs. **Classic Tern** puts everything in
+small floating rounded "pills". **Tern Frame** draws a border around the whole screen, with the bar
+as its top edge and the popups as drawers that grow out of it. Both can follow your wallpaper's
+colors.
 
-![tern-bar](screenshots/bar.png)
+![Classic Tern: floating pills](screenshots/classic.png)
+
+![Tern Frame: a border around the screen, with the calendar drawer open](screenshots/frame.png)
+
+The pills up close:
+
+![the three groups of pills](screenshots/bar.png)
 
 ## What you get
 
@@ -32,6 +40,8 @@ your wallpaper's colors.
 - A Tern pill that shows how many Tern windows are open, and opens a terminal tab in one — or a new
   window when none is open (only if you use Tern)
 - A wallpaper picker and colour controls, in the same window as the layout editor
+- Two looks, Classic Tern and Tern Frame, switched from the same window or with a key (see
+  [Looks](#looks))
 - An optional little desktop pet — needs the tern-poke plugin for Tern (not released yet)
 
 ## Set it up
@@ -73,7 +83,8 @@ opens and closes the window many times a second.
 
 (If you already have a `binds { }` block, put those lines inside it instead. Other things a key can call:
 `launcher power`, `launcher close`, `bar calendar`, `bar media`, `bar quickSettings`, `bar notifications`,
-`bar close`, `notifications clear`, `notifications toggleDnd`, `tern open`.)
+`bar close`, `bar cycleLook`, `settings look`, `settings ascii`, `notifications clear`,
+`notifications toggleDnd`, `tern open`.)
 
 The bar is also your notification daemon: take swaync, mako or dunst out of your autostart. While one
 of them runs, the bar logs two warnings about it and takes over the moment it exits.
@@ -137,9 +148,52 @@ Each one is only needed for the part it powers; the rest of the bar works withou
 | `tern` | the Tern pill — it hides itself when `tern` isn't on your PATH or in `~/.local/bin` |
 | tern-poke (a Tern plugin, not released yet) | the PokeToken pill and the desktop pet — both stay hidden without it |
 
+## Looks
+
+A look is how the bar sits on the screen; the colours are a separate choice (see the next section).
+Pick one in the settings window's **Look** tab (`quickshell ipc -c tern-bar call settings look` opens
+it), or switch to the other one with `quickshell ipc -c tern-bar call bar cycleLook`, which you can
+bind to a key. The change applies at once, on every screen, and is saved in
+`~/.config/tern-bar/bar.json`.
+
+- **Classic Tern** (the default): floating pills under an 8 px gap, with each popup as a card under
+  its pill.
+- **Tern Frame**: a border around the whole screen. The bar is its top edge. The calendar, media,
+  quick settings and notification popups, and the launcher, become drawers that grow out of that
+  edge under their pill and retract into it; Esc or a click outside closes one. The volume and
+  brightness pop-up is a tab in the bottom edge. New notifications appear inside the top-right
+  corner. Tray menus and the password and pairing questions are still floating cards.
+
+The Look tab has five settings for Tern Frame, and **Reset Frame** puts them back:
+
+| Setting | Choices | `lookOptions` key in `bar.json` |
+|---|---|---|
+| Border thickness | 4 to 14 px (8) on the left, right and bottom; the top edge is the bar | `frameThickness` |
+| Corner rounding | 8 to 28 px (18) for the screen's inner corners; drawers follow it up to 20 px | `innerRounding` |
+| Surface finish | Translucent 92% or Solid Ink | `surfaceFinish`: `"translucent"` or `"solid"` |
+| Motion feel | Expressive (a slight bounce on things that slide) or Calm | `motionProfile`: `"expressive"` or `"calm"` |
+| Frame depth | Off, Subtle or Medium: a soft shadow the frame casts inwards | `frameDepth`: `"off"`, `"subtle"` or `"medium"` |
+
+```json
+"look": "frame",
+"lookOptions": { "frameThickness": 8, "innerRounding": 18, "surfaceFinish": "translucent",
+                 "motionProfile": "expressive", "frameDepth": "subtle" }
+```
+
+Things to know:
+
+- The frame takes its thickness from every edge, so windows get that much smaller.
+- A fullscreen window covers the bar in both looks. An open popup or the launcher closes when a
+  window goes fullscreen, and popups stay shut until it leaves. The launcher and the volume pop-up
+  still work over it, as floating cards.
+- Tern Frame draws one see-through surface over the whole screen, so anything that moves in the
+  bar (the ASCII pill) redraws more than it does in Classic Tern. Measured idle on two monitors:
+  about 1.3% of one CPU core against 1.0%.
+
 ## Wallpaper and colors
 
-The settings page has two tabs: **Layout** (see [Make it yours](#make-it-yours)) and **Wallpaper**.
+The settings page has four tabs: **Layout** (see [Make it yours](#make-it-yours)), **Look** (see
+[Looks](#looks)), **Wallpaper** and **ASCII**.
 The Wallpaper tab is a thumbnail grid of your wallpaper folder (`~/Pictures/Wallpapers` until you
 pick another) — search, favourites, shuffle and automatic rotation — plus a per-screen choice (one
 image everywhere, or a single screen with its own), fill mode and edge colour, animated
@@ -195,9 +249,10 @@ which part of the bar, edit `matugen/palette.json`.
 
 ## Make it yours
 
-- **Sizes and the fallback colors:** `singletons/Theme.qml`
-- **Crowded rows:** a row with four or more visible pills merges into one continuous island
-  (`pillMergeThreshold` in `singletons/Theme.qml`). Set it to 5 to keep more capsules separate.
+- **Sizes and the fallback colors:** the colours are in `singletons/Theme.qml`; the sizes of each look
+  (bar height, margins, radii, spacing) are in `singletons/Looks.qml`.
+- **Crowded rows:** in Classic Tern a row with four or more visible pills merges into one continuous
+  island (`pillMergeThreshold` in `singletons/Looks.qml`). Set it to 5 to keep more capsules separate.
 - **Rearrange the bar:** open the settings page — the gear in the tools pill, a right-click on the
   launcher, or Mod+B — then drag a pill to another group or click it to show/hide it. Every change
   lands in `~/.config/tern-bar/bar.json`, and the page applies to all screens at once. Right-clicking the Tern pill
@@ -274,7 +329,7 @@ which part of the bar, edit `matugen/palette.json`.
   `TERN_BAR_UPDATES_MOCK=<count>`, `TERN_BAR_CHECKUPDATES_CMD`, `TERN_BAR_WEATHER_MOCK=<json>`, and the
   weather script's servers: `TERN_BAR_WEATHER_METEO_URL`, `TERN_BAR_WEATHER_WTTR_BASE`,
   `TERN_BAR_WEATHER_GEO_URL`, `TERN_BAR_WEATHER_GEOCODE_URL`.
-- **Tray menus** close when you click anywhere else.
+- **Tray menus** close when you click anywhere else. A submenu opens in place, with a **Back** row.
 - **ASCII animations:** the settings window's **ASCII** tab (right-click the ASCII pill, or
   `quickshell ipc -c tern-bar call settings ascii`) picks a look, colour, speed, size and brightness for
   an animated ASCII wallpaper and renders it to a GIF that `awww` plays (about 15–45 s; saved in
@@ -290,15 +345,19 @@ which part of the bar, edit `matugen/palette.json`.
 
 ```
 shell.qml        starts the bar on every screen
-components/      the bar and each of its pills
-singletons/      shared pieces: theme, settings, wallpaper, compositor connection (niri, Hyprland)
+components/      the bar and each of its pills, and the two looks' hosts (PillsHost, FrameHost)
+components/views/  what is inside each popup, shared by the Classic cards and the Frame drawers
+singletons/      shared pieces: theme, looks, settings, wallpaper, compositor connection (niri, Hyprland)
+shaders/         the Tern Frame shadows: GLSL sources and the compiled .qsb files the bar loads
 scripts/         helpers: wallpaper, colours, network status, IP hiding
 themes/          the ten built-in colour themes
 matugen/         an optional template, for driving the colours from your own matugen setup
 screenshots/     pictures for this page
 assets/ascii/    text frames for the ASCII pill and the launcher's empty state
+tests/           unit tests for the script libraries (node --test tests/)
 tools/ascii/     generator for those frames and for animated ASCII wallpapers (needs node)
 tools/bt-agent/  the Bluetooth pairing helper, in Rust (see Bluetooth above)
+tools/build-shaders.sh  rebuilds the compiled shaders after a change to their sources
 ```
 
 ## If it misbehaves
@@ -324,10 +383,12 @@ and OMP while I described the behaviour, tested it on the live desktop and decid
 It is a new way to work, and I wanted to see how far it can go: not a toy demo, but a daily-driver
 bar with a launcher, settings, wallpaper tools, weather, media controls and the rest.
 
-It runs every day on my machine (Arch, niri, Quickshell 0.3.2). Hyprland support was checked in a
-nested Hyprland 0.57 with a Lua config, but is not used day to day yet. It has not been tested on
-every distro, GPU or Quickshell version, so treat it as a working experiment rather than a finished
-product. The parts that matter were checked on the live desktop, not only compiled.
+It runs every day on my machine (Arch, niri, Quickshell 0.3.2, two monitors), in the Tern Frame look.
+Hyprland support, in both looks, was checked in a nested Hyprland 0.57 with a Lua config, but is
+not used day to day yet. The brightness pop-up was checked against a stand-in backlight folder: the
+machine has no backlight. It has not been tested on every distro, GPU or Quickshell version, so
+treat it as a working experiment rather than a finished product. The parts that matter were checked
+on the live desktop, not only compiled.
 
 Bug reports, ideas, pull requests and questions are welcome — especially from people who know QML
 or Quickshell better than I do. Screenshots of odd behaviour are just as useful as patches. I am
