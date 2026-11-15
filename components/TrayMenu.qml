@@ -20,11 +20,16 @@ import "../singletons"
 // icon, with its top just below the bar (`Theme.barHeight`) — instead of being
 // anchored at the icon's top-left, which used to cover the bar's right end.
 //
-// Submenus drill down in place (stack), with a Back row.
+// Submenus drill down in place, with a Back row. Every level keeps its own
+// QsMenuOpener: Quickshell frees a menu, and every entry in it, as soon as
+// its last opener lets go, so a single opener moved from a menu to one of its
+// submenus freed that submenu's own entry on the way and showed it empty.
 PopupWindow {
     id: menu
 
-    property var stack: []
+    // The openers, the tray item's menu first, then each submenu on the way down.
+    property var levels: []
+    readonly property var current: menu.levels.length > 0 ? menu.levels[menu.levels.length - 1] : null
     // The bar panel this menu belongs to, and the screen it lives on (set by
     // Tray.qml). The window anchor is what keeps the popup on the right output.
     property var barWindow: null
@@ -32,7 +37,11 @@ PopupWindow {
     // The clicked tray icon; the card is positioned relative to it.
     property Item anchorItem: null
 
-    readonly property var currentHandle: menu.stack.length > 0 ? menu.stack[menu.stack.length - 1] : null
+    Component {
+        id: openerComponent
+
+        QsMenuOpener {}
+    }
 
     // Read again at every opening, like the other popups: mapToItem() is a plain
     // call, so without `visible` in the binding the card would keep the place
@@ -41,7 +50,8 @@ PopupWindow {
         ? menu.anchorItem.mapToItem(null, 0, 0) : Qt.point(0, 0)
 
     function openFor(handle, item) {
-        menu.stack = [handle];
+        menu.closeLevels();
+        menu.push(handle);
         menu.anchorItem = item;
         // Anchor the popup to the bar's top-left corner: window coordinates are
         // then the only coordinate space involved, and one surface covers the
@@ -57,16 +67,25 @@ PopupWindow {
     }
 
     function push(handle) {
-        var s = menu.stack.slice();
-        s.push(handle);
-        menu.stack = s;
+        menu.levels = menu.levels.concat([openerComponent.createObject(menu, { menu: handle })]);
     }
 
     function pop() {
-        if (menu.stack.length > 1)
-            menu.stack = menu.stack.slice(0, menu.stack.length - 1);
-        else
+        if (menu.levels.length < 2) {
             menu.visible = false;
+            return;
+        }
+        const left = menu.levels[menu.levels.length - 1];
+        menu.levels = menu.levels.slice(0, -1);
+        left.destroy();
+    }
+
+    // Deepest first: a submenu is let go before the menu that owns it.
+    function closeLevels() {
+        const old = menu.levels;
+        menu.levels = [];
+        for (let i = old.length - 1; i >= 0; i--)
+            old[i].destroy();
     }
 
     visible: false
@@ -83,12 +102,7 @@ PopupWindow {
 
     onVisibleChanged: {
         if (!menu.visible)
-            menu.stack = [];
-    }
-
-    QsMenuOpener {
-        id: opener
-        menu: menu.currentHandle
+            menu.closeLevels();
     }
 
     // Click-outside dismissal. Stays under the card; clicks on the card's empty
@@ -128,7 +142,7 @@ PopupWindow {
 
             Item {
                 id: backRow
-                visible: menu.stack.length > 1
+                visible: menu.levels.length > 1
                 width: parent.width
                 height: visible ? 28 : 0
 
@@ -161,7 +175,7 @@ PopupWindow {
             }
 
             Repeater {
-                model: opener.children
+                model: menu.current ? menu.current.children : null
 
                 delegate: Item {
                     id: entryRow
