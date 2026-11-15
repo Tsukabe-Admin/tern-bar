@@ -178,6 +178,9 @@ Item {
                 color: Theme.rim
             }
 
+            // The condition gets the whole line ("Thunderstorm with hail" is the
+            // longest one Open-Meteo gives); "Feels" goes on the units line below,
+            // whose left half was empty.
             Item {
                 width: parent.width
                 height: 24
@@ -185,8 +188,7 @@ Item {
                 Text {
                     textFormat: Text.PlainText
                     anchors.left: parent.left
-                    anchors.right: feelsLabel.visible ? feelsLabel.left : parent.right
-                    anchors.rightMargin: feelsLabel.visible ? 8 : 0
+                    anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     text: Weather.icon + "  " + Weather.temp
                         + (Weather.desc !== "" ? " · " + Weather.desc : "")
@@ -197,11 +199,15 @@ Item {
                     font.pixelSize: Theme.fontSize
                     font.bold: true
                 }
+            }
+
+            Item {
+                width: parent.width
+                height: 16
 
                 Text {
                     textFormat: Text.PlainText
-                    id: feelsLabel
-                    anchors.right: parent.right
+                    anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     visible: Weather.feelsLike !== ""
                     text: "Feels " + Weather.feelsLike
@@ -209,11 +215,6 @@ Item {
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSize - 2
                 }
-            }
-
-            Item {
-                width: parent.width
-                height: 16
 
                 Row {
                     anchors.right: parent.right
