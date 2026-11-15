@@ -1,11 +1,19 @@
 import QtQuick
+import QtQuick.Shapes
+import QtQuick.Window
 import Quickshell
 import Quickshell.Wayland
 import "../singletons"
+import "../singletons/looks.js" as LooksLib
 
 // The launcher card. Drops down under the pill it was opened from, on that
 // pill's screen. One full-screen transparent overlay surface: it holds the
 // keyboard while open, and a click outside the card closes it.
+//
+// In Tern Frame the card is attached to the frame's top lip: it grows out of
+// it and, after closing, retracts into it (the window stays mapped for that
+// moment, without keyboard or pointer). Over a fullscreen window the frame is
+// hidden under that window, so there the card floats as in Classic Tern.
 //
 // Keys: type to search · Up/Down, Tab/Shift+Tab, Ctrl+N/Ctrl+P move ·
 // Enter opens · Esc clears the search, then closes.
@@ -27,8 +35,13 @@ PanelWindow {
         win.selectedKey = row ? row.key : "";
     }
 
+    // Mapped: while the launcher is open, and in Tern Frame for the moment
+    // its card takes to retract afterwards.
+    property bool shown: false
+    readonly property bool attached: Theme.isFramed && !Compositor.isOutputFullscreen(Launcher.screenName)
+
     screen: Popups.screenNamed(Launcher.screenName)
-    visible: Launcher.open
+    visible: win.shown
     color: "transparent"
     anchors {
         top: true
@@ -39,26 +52,131 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "tern-bar-launcher"
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+    WlrLayershell.keyboardFocus: Launcher.open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+
+    Region {
+        id: noInput
+    }
+    mask: Launcher.open ? null : noInput
+
+    property real openReveal: 1.0
+    property bool mappedReady: false
+    // The card's full height while the launcher was last open. Closing empties
+    // the list, and the card must not shrink to that while it retracts.
+    property real openHeight: 0
+
+    Component.onCompleted: if (Launcher.open) win.shown = true
 
     // Explicit geometry, not `item: card` — a Region keeps the geometry it
-    // last saw (see PillRegion.qml), and the card's height follows the results.
-    BackgroundEffect.blurRegion: Region {
+    // last saw (see PillRegion.qml). Disabled in Frame Look so curved wings
+    // never show rectangular Wayland blur slabs.
+    Region {
+        id: classicBlur
         x: card.x
         y: card.y
         width: card.width
         height: card.height
-        radius: card.radius
+        radius: Theme.radiusCard
+    }
+    BackgroundEffect.blurRegion: Theme.isFramed ? null : classicBlur
+
+    function syncLauncherCut() {
+        if (win.attached && win.visible && win.mappedReady && card.height >= 2) {
+            const wing = card.wingR >= 2 ? card.wingR : 0;
+            Launcher.activeCutLeft = card.x - wing;
+            Launcher.activeCutRight = card.x + card.width + wing;
+            Launcher.activeCutX = card.x;
+            Launcher.activeCutWidth = card.width;
+            Launcher.activeCutHeight = card.height;
+            Launcher.activeCutRadius = card.effR;
+            Launcher.activeCutWing = wing;
+        } else {
+            Launcher.activeCutLeft = 0;
+            Launcher.activeCutRight = 0;
+            Launcher.activeCutX = 0;
+            Launcher.activeCutWidth = 0;
+            Launcher.activeCutHeight = 0;
+            Launcher.activeCutRadius = 0;
+            Launcher.activeCutWing = 0;
+        }
     }
 
-    onVisibleChanged: {
-        if (!win.visible)
+    function startReveal() {
+        revealFallback.stop();
+        if (!win.visible || win.mappedReady)
             return;
+        win.mappedReady = true;
+        win.reveal();
+    }
+
+    function reveal() {
+        openAnim.stop();
+        frameOpenAnim.stop();
+        frameCloseAnim.stop();
+        if (win.attached)
+            frameOpenAnim.restart();
+        else
+            openAnim.restart();
+    }
+
+    // A fresh opening: the field, the selection, and the card as it is before
+    // its reveal.
+    function prepare() {
         search.text = Launcher.query;
         search.cursorPosition = search.text.length;
         search.forceActiveFocus();
         win.selected = 0;
-        openAnim.restart();
+        openAnim.stop();
+        frameOpenAnim.stop();
+        frameCloseAnim.stop();
+        if (win.attached) {
+            win.openReveal = 0;
+            card.opacity = 1;
+            card.scale = 1.0;
+            column.opacity = 0;
+        } else {
+            win.openReveal = 1.0;
+            card.opacity = 0;
+            column.opacity = 1;
+        }
+    }
+
+    Timer {
+        id: revealFallback
+        interval: 80
+        repeat: false
+        onTriggered: win.startReveal()
+    }
+
+    Connections {
+        target: backdrop.Window.window
+        function onFrameSwapped() {
+            win.startReveal();
+        }
+    }
+
+    onVisibleChanged: {
+        win.mappedReady = false;
+        win.syncLauncherCut();
+        if (!win.visible) {
+            revealFallback.stop();
+            openAnim.stop();
+            frameOpenAnim.stop();
+            frameCloseAnim.stop();
+            return;
+        }
+        win.prepare();
+        revealFallback.restart();
+    }
+
+    // A popup that opens while the card retracts takes the lip at once: the
+    // frame has one cut-out at the top.
+    Connections {
+        target: Popups
+        function onOpenChanged() {
+            if (Popups.open !== "" && !Launcher.open)
+                win.shown = false;
+        }
     }
 
     // The action waiting for its second Enter is always the selected row. It is
@@ -72,6 +190,24 @@ PanelWindow {
 
         function onArmedChanged() {
             win.selectArmed();
+        }
+
+        function onOpenChanged() {
+            if (Launcher.open) {
+                win.openHeight = card.targetHeight;
+                if (!win.shown) {
+                    win.shown = true;   // onVisibleChanged prepares and reveals
+                } else {                // reopened while the card was retracting
+                    win.prepare();
+                    win.reveal();
+                }
+            } else if (win.shown && win.attached && win.mappedReady && !Looks.restyling) {
+                frameOpenAnim.stop();
+                column.opacity = 0;
+                frameCloseAnim.restart();
+            } else {
+                win.shown = false;
+            }
         }
 
         // The list is rebuilt for a new search, and also under an unchanged one:
@@ -128,27 +264,145 @@ PanelWindow {
     }
 
     MouseArea {
+        id: backdrop
         anchors.fill: parent
         onClicked: Launcher.close()
+    }
+
+    AttachedShadow {
+        id: launcherShadow
+        readonly property real pad: Theme.frameShadowExtent
+        readonly property real wing: card.wingR >= 2 ? card.wingR : 0
+        readonly property real minX: Theme.frameThickness
+        readonly property real maxX: Math.max(minX, win.width - Theme.frameThickness)
+        readonly property real maxY: Math.max(Theme.barHeight, win.height - Theme.frameThickness)
+        readonly property real leftX: Math.max(minX, card.x - wing - pad)
+        readonly property real rightX: Math.min(maxX, card.x + card.width + wing + pad)
+        readonly property real bottomY: Math.min(maxY, card.y + card.height + pad)
+
+        x: leftX
+        y: Theme.barHeight
+        width: Math.max(0, rightX - leftX)
+        height: Math.max(0, bottomY - Theme.barHeight)
+        visible: win.attached && Theme.frameShadowEnabled && win.visible
+            && win.mappedReady && card.height >= 2
+            && width > 0 && height > 0
+        attachRect: Qt.vector4d(card.x, card.y, card.width, card.height)
+        attachRadii: Qt.vector4d(card.effR, wing, 0.0, 0.0)
+        innerBox: Qt.vector4d(
+            Theme.frameThickness, Theme.barHeight,
+            win.width - Theme.frameThickness, win.height - Theme.frameThickness)
+        shadowParams: Qt.vector4d(
+            Theme.frameShadowKeyOpacity, Theme.frameShadowAoOpacity,
+            Theme.frameShadowSigma, Theme.frameShadowAoSigma)
+        geomParams: Qt.vector4d(
+            Theme.innerRounding, Theme.frameShadowOffsetY,
+            pad, 0.0)
+        cutSpan: Qt.vector4d(
+            Launcher.activeCutRight > Launcher.activeCutLeft ? 1.0 : 0.0,
+            Launcher.activeCutLeft,
+            Launcher.activeCutRight,
+            0.0)
+    }
+
+    ConcaveCorner {
+        corner: "topRight"
+        visible: win.attached && win.visible && card.wingR >= 2
+        x: card.x - card.wingR
+        y: card.y
+        radius: card.wingR
+        fillColor: Theme.popBg
+        strokeColor: Theme.rim
+    }
+
+    ConcaveCorner {
+        corner: "topLeft"
+        visible: win.attached && win.visible && card.wingR >= 2
+        x: card.x + card.width
+        y: card.y
+        radius: card.wingR
+        fillColor: Theme.popBg
+        strokeColor: Theme.rim
     }
 
     Rectangle {
         id: card
 
+        readonly property real targetHeight: column.implicitHeight + 16
+        readonly property real fullHeight: Launcher.open ? card.targetHeight : win.openHeight
+        readonly property real effR: Math.max(1,
+            Math.min(Theme.radiusCard, height * 0.5, width * 0.5))
+        readonly property real wingR: win.attached
+            ? Math.min(Theme.wingRadius, Math.max(0, height - effR)) : 0
+        readonly property real frameMinX: Theme.frameThickness + Theme.innerRounding + Theme.wingRadius
+        readonly property real frameMaxX: Math.max(frameMinX + width, win.width - frameMinX)
+
+        onTargetHeightChanged: if (Launcher.open) win.openHeight = card.targetHeight
+
         width: 560
-        height: column.implicitHeight + 16
-        x: Math.max(12, Math.min(Launcher.anchorX, win.width - card.width - 12))
-        y: Theme.barMarginTop + Theme.barHeight + 6
-        radius: Theme.radiusCard
+        height: win.attached
+            ? Math.round(card.fullHeight * win.openReveal)
+            : card.targetHeight
+        x: Theme.isFramed
+            ? (Launcher.anchorCenterX >= 0
+                ? LooksLib.clampDrawerX(Launcher.anchorCenterX, width, card.frameMinX, card.frameMaxX)
+                : Math.round((win.width - width) / 2))
+            : Math.max(12, Math.min(Launcher.anchorX, win.width - card.width - 12))
+        y: win.attached ? Theme.barHeight : (Theme.barMarginTop + Theme.barHeight + 6)
+        topLeftRadius: win.attached ? 0 : Theme.radiusCard
+        topRightRadius: win.attached ? 0 : Theme.radiusCard
+        bottomLeftRadius: Theme.radiusCard
+        bottomRightRadius: Theme.radiusCard
         color: Theme.popBg
-        border.width: 1
+        border.width: win.attached ? 0 : 1
         border.color: Theme.rim
+        clip: win.attached
         transformOrigin: Item.Top
+
+        onXChanged: win.syncLauncherCut()
+        onHeightChanged: win.syncLauncherCut()
+        onWingRChanged: win.syncLauncherCut()
 
         ParallelAnimation {
             id: openAnim
             NumberAnimation { target: card; property: "opacity"; from: 0; to: 1; duration: Theme.motionFast; easing.type: Easing.OutCubic }
             NumberAnimation { target: card; property: "scale"; from: 0.97; to: 1; duration: Theme.motionFast; easing.type: Easing.OutCubic }
+        }
+
+        // Attached: the card grows out of the lip, solid, while what is in it
+        // fades in...
+        ParallelAnimation {
+            id: frameOpenAnim
+            NumberAnimation {
+                target: column
+                property: "opacity"
+                from: 0
+                to: 1
+                duration: Theme.motionFast
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Theme.curveEffects
+            }
+            NumberAnimation {
+                target: win
+                property: "openReveal"
+                from: 0
+                to: 1
+                duration: Theme.motionBase
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Theme.curveEffects
+            }
+        }
+
+        // ...and retracts into it, already empty, before the window goes.
+        NumberAnimation {
+            id: frameCloseAnim
+            target: win
+            property: "openReveal"
+            to: 0
+            duration: Theme.motionBase
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Theme.curveEffects
+            onFinished: if (!Launcher.open) win.shown = false
         }
 
         // The card's own padding is not "outside".
@@ -274,6 +528,62 @@ PanelWindow {
                         font.pixelSize: Theme.fontSize
                     }
                 }
+            }
+        }
+    }
+
+    // 3-sided 1px rim of the attached card, as an unclipped sibling (the top
+    // fuses into the bar lip).
+    Shape {
+        x: card.x
+        y: card.y
+        width: card.width
+        height: card.height
+        visible: win.attached && win.visible && card.height >= 2 && card.width >= 4
+        preferredRendererType: Shape.CurveRenderer
+        antialiasing: true
+        z: 2
+
+        ShapePath {
+            fillColor: "transparent"
+            strokeColor: Theme.rim
+            strokeWidth: 1
+            capStyle: ShapePath.FlatCap
+
+            startX: 0.5
+            startY: card.wingR
+
+            PathLine {
+                x: 0.5
+                y: card.height - card.effR
+            }
+
+            PathArc {
+                x: card.effR
+                y: card.height - 0.5
+                radiusX: Math.max(0.5, card.effR - 0.5)
+                radiusY: Math.max(0.5, card.effR - 0.5)
+                useLargeArc: false
+                direction: PathArc.Counterclockwise
+            }
+
+            PathLine {
+                x: card.width - card.effR
+                y: card.height - 0.5
+            }
+
+            PathArc {
+                x: card.width - 0.5
+                y: card.height - card.effR
+                radiusX: Math.max(0.5, card.effR - 0.5)
+                radiusY: Math.max(0.5, card.effR - 0.5)
+                useLargeArc: false
+                direction: PathArc.Counterclockwise
+            }
+
+            PathLine {
+                x: card.width - 0.5
+                y: card.wingR
             }
         }
     }
