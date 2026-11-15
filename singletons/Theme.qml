@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "looks.js" as LooksLib
 
 // Colors follow the wallpaper or a preset theme. scripts/theme-sync.sh (run by
 // the Wallpaper tab) writes ~/.local/state/tern-bar/palette.json; this
@@ -74,10 +75,35 @@ Singleton {
     Behavior on live { ColorAnimation { duration: root.paletteFade } }
     Behavior on bad { ColorAnimation { duration: root.paletteFade } }
 
+    // ── The active Look's tokens (see Looks.qml) ──
+    readonly property bool isFramed: Looks.isFramed
+    readonly property int frameThickness: Looks.frameThickness
+    readonly property int innerRounding: Looks.innerRounding
+    readonly property int wingRadius: Looks.wingRadius
+    readonly property bool frameShadowEnabled: Looks.frameShadowEnabled
+    readonly property real frameShadowKeyOpacity: Looks.frameDepthSpec.keyOpacity
+    readonly property real frameShadowAoOpacity: Looks.frameDepthSpec.aoOpacity
+    readonly property real frameShadowSigma: Looks.frameDepthSpec.sigma
+    readonly property real frameShadowAoSigma: Looks.frameDepthSpec.aoSigma
+    readonly property real frameShadowOffsetY: Looks.frameDepthSpec.offsetY
+    readonly property int frameShadowExtent: Looks.frameDepthSpec.extent
+    readonly property var curveSpatial: Looks.curveSpatial
+    readonly property var curveSpatialFast: Looks.curveSpatialFast
+    readonly property var curveEffects: Looks.curveEffects
+
     // ── Derived surfaces (Tern's ink-alpha convention) ──
-    // Capsule fill: the card at Tern's --pop-bg alpha, 92% so the requested
-    // backdrop blur keeps a hint of the wallpaper.
-    readonly property color popBg: Qt.alpha(root.card, 0.92)
+    // Ink for a label on top of Theme.accent (today's date, the play button,
+    // the active workspace chip): the card colour, as it has always been,
+    // unless the accent is too dark for it; then a light ink.
+    // (Not named "onAccent": QML reads a name that starts with "on" and a
+    // capital letter as a signal handler. The property existed, its
+    // calculation never ran, and the ink was always black.)
+    readonly property color accentInk: LooksLib.contrastInk(root.accent, root.card, "#f5f7fa")
+
+    // Capsule / frame fill: the card at Tern's --pop-bg alpha (92%, so the
+    // requested backdrop blur keeps a hint of the wallpaper), or solid ink
+    // with Tern Frame's Solid finish.
+    readonly property color popBg: Qt.alpha(root.card, Looks.activeSpec.frameAlpha)
     // Hairline: ink 9% PRE-computed over the card (instead of a translucent
     // border) so the 1px line stays neutral — a translucent border picks up the
     // wallpaper through the antialiased edge and reads as a tint.
@@ -90,39 +116,33 @@ Singleton {
     // dissolves into the real window. Fixed: it matches the terminal, not the bar.
     readonly property color morphFill: "#DB000000"
 
-    // Bar geometry (40px surface, 8px top margin; Quickshell adds the margin
-    // to exclusiveZone, so 40 + 8 = 48 reserved — identical to waybar's)
-    readonly property int barHeight: 40
-    readonly property int barMarginTop: 8
-    readonly property int barMarginSide: 12
-    readonly property int exclusiveZone: 40
-    readonly property int radiusCard: 12  // Tern's card radius
+    // Bar geometry — delegated to active Look spec ("pills" keeps original pixels)
+    readonly property int barHeight: Looks.activeSpec.barHeight
+    readonly property int barMarginTop: Looks.activeSpec.barMarginTop
+    readonly property int barMarginSide: Looks.activeSpec.barMarginSide
+    readonly property int exclusiveZone: Looks.activeSpec.exclusiveZone
+    readonly property int radiusCard: Looks.activeSpec.radiusCard
 
-    // Capsules ("pills") — the bar is a row of these
-    readonly property int pillHeight: 32
-    readonly property int pillRadius: 16  // stadium: half the pill height
-    readonly property int pillSpacing: 6
-    // A row with this many visible capsules merges into one continuous island
-    // (the individual fills fade out and the gaps close). Raise it to keep
-    // capsules separate, or lower it to merge sooner.
-    readonly property int pillMergeThreshold: 4
-    readonly property int pillPadding: 3       // vertical inset (items stay 26px tall)
-    readonly property int pillPaddingSide: 6   // horizontal breathing room inside a capsule
-    readonly property int itemRadius: 10
-    // Breathing room between the outermost capsules and the bar's screen edge
-    // (on top of barMarginSide, so the outer pill sits 18px from the screen).
-    readonly property int barPadding: 6
+    // Capsules ("pills")
+    readonly property int pillHeight: Looks.activeSpec.pillHeight
+    readonly property int pillRadius: Looks.activeSpec.pillRadius
+    readonly property int pillSpacing: Looks.activeSpec.pillSpacing
+    readonly property int pillMergeThreshold: Looks.activeSpec.pillMergeThreshold
+    readonly property int pillPadding: Looks.activeSpec.pillPadding
+    readonly property int pillPaddingSide: Looks.activeSpec.pillPaddingSide
+    readonly property int itemRadius: Looks.activeSpec.itemRadius
+    readonly property int barPadding: Looks.activeSpec.barPadding
 
     // Launch morph: mirrors of niri's geometry (config.kdl: gaps 12; the bar
-    // reserves 48 from the top) used to aim the morph at the tile a new
-    // terminal lands in.
-    readonly property int workAreaTop: 48
+    // reserves workAreaTop from the top, and Tern Frame its thickness on the
+    // other three edges) used to aim the morph at the tile a new terminal lands in.
+    readonly property int workAreaTop: Looks.activeSpec.workAreaTop
     readonly property int workAreaGap: 12
 
     // Motion (ms)
-    readonly property int motionFast: 140
-    readonly property int motionBase: 220
-    readonly property int motionSlow: 340
+    readonly property int motionFast: Looks.durationFast
+    readonly property int motionBase: Looks.durationBase
+    readonly property int motionSlow: Looks.durationSlow
     readonly property int paletteFade: 600  // wallpaper change crossfade
 
     // Type

@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "looks.js" as LooksLib
 
 // Bar preferences, persisted to ~/.config/tern-bar/bar.json: the order of the pills in the
 // bar's three groups ("left", "center", "right") and which of them are hidden.
@@ -16,7 +17,7 @@ Singleton {
     readonly property var sides: ["left", "center", "right"]
 
     // Every pill the bar has. A pill is known here under the same id it uses in
-    // BarPanel.pills; anything else in bar.json is ignored.
+    // BarContent.pills; anything else in bar.json is ignored.
     readonly property var pillIds: ["launcher", "workspaces", "title", "clock", "weather", "media",
         "poke", "updates", "resources", "network", "ascii", "volume", "mic", "keyboard", "battery", "tray",
         "tools", "system", "tern"]
@@ -57,6 +58,12 @@ Singleton {
     // Neither is persisted, so a reload closes the page on the Layout tab.
     property bool settingsOpen: false
     property string settingsTab: "layout"
+
+    // Active Look ("pills" | "frame") and its optional frame configuration.
+    // restyling momentarily disables geometry/radius Behaviors while hot-swapping.
+    property string look: LooksLib.DEFAULT_LOOK
+    property var lookOptions: LooksLib.normalizeLookOptions(null)
+    property bool restyling: false
 
     // The launch morph animates a fullscreen overlay-layer surface. Stay opt-in:
     // on 2026-10-09 a *loop* of those (a temporarily armed test timer, since
@@ -214,22 +221,68 @@ Singleton {
         root.save();
     }
 
+    function setLook(nextId) {
+        const target = LooksLib.normalizeLook(nextId);
+        if (root.look === target) return;
+        root.restyling = true;
+        restyleReset.restart();
+        root.look = target;
+        root.save();
+    }
+
+    function cycleLook() {
+        root.setLook(LooksLib.nextLook(root.look));
+        return root.look;
+    }
+
+    function setLookOptions(patch) {
+        const current = LooksLib.normalizeLookOptions(root.lookOptions);
+        const merged = Object.assign({}, current, (patch && typeof patch === "object") ? patch : {});
+        const normalized = LooksLib.normalizeLookOptions(merged);
+        if (JSON.stringify(normalized) === JSON.stringify(current)) return;
+        root.lookOptions = normalized;
+        root.save();
+    }
+
+    function setLookOption(key, value) {
+        const patch = {};
+        patch[key] = value;
+        root.setLookOptions(patch);
+    }
+
+    function resetLookOptions() {
+        const defaults = LooksLib.normalizeLookOptions(null);
+        const current = LooksLib.normalizeLookOptions(root.lookOptions);
+        if (JSON.stringify(defaults) === JSON.stringify(current)) return;
+        root.lookOptions = defaults;
+        root.save();
+    }
+
+    Timer {
+        id: restyleReset
+        interval: 32
+        repeat: false
+        onTriggered: root.restyling = false
+    }
+
     function save() {
         file.setText(JSON.stringify({
             layout: root.layout,
             hidden: root.hidden,
             nightLight: root.nightLight,
             weatherFahrenheit: root.weatherFahrenheit,
-            doNotDisturb: root.doNotDisturb
+            doNotDisturb: root.doNotDisturb,
+            look: root.look,
+            lookOptions: root.lookOptions
         }, null, 2) + "\n");
     }
 
     // ── Settings page ──────────────────────────────────────────────────────
 
-    // Open the page on `tab` — "layout", "wallpaper" or "ascii". Anything else
-    // falls back to the layout editor.
+    // Open the page on `tab` — "layout", "look", "wallpaper" or "ascii".
+    // Anything else falls back to the layout editor.
     function openSettings(tab) {
-        root.settingsTab = (tab === "wallpaper" || tab === "ascii") ? tab : "layout";
+        root.settingsTab = (tab === "look" || tab === "wallpaper" || tab === "ascii") ? tab : "layout";
         root.settingsOpen = true;
     }
 
@@ -285,6 +338,8 @@ Singleton {
             root.nightLight = o.nightLight === true;
             root.weatherFahrenheit = o.weatherFahrenheit === true;
             root.doNotDisturb = o.doNotDisturb === true;
+            root.look = LooksLib.normalizeLook(o.look);
+            root.lookOptions = LooksLib.normalizeLookOptions(o.lookOptions);
         } else if (String(rawText).trim() !== "") {
             rejected.setText(rawText);
         }
