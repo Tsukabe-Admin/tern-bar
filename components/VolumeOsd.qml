@@ -18,19 +18,34 @@ PanelWindow {
     property bool armed: false
     property bool shown: false
     property string screenName: ""
+    readonly property bool onFullscreen: osd.screenName !== "" && Compositor.isOutputFullscreen(osd.screenName)
+    readonly property bool docked: Theme.isFramed && !osd.onFullscreen
 
+    function syncDock() {
+        Popups.reportOsdDock("volume", osd.screenName, osd.visible && osd.docked, surface.activeCutSpan);
+    }
+
+    // Mapped for as long as the surface has something to show: while `shown`,
+    // and in Tern Frame while the docked tab retracts afterwards.
     screen: Popups.screenNamed(osd.screenName)
-    visible: osd.shown
+    visible: surface.presented
     anchors.bottom: true
-    margins.bottom: 96
+    margins.bottom: osd.docked
+        ? Math.max(0, Theme.frameThickness - 1)
+        : (Theme.isFramed ? Math.max(0, 36 - surface.shadowPadBottom) : 96)
     exclusionMode: ExclusionMode.Ignore
-    implicitWidth: 260
-    implicitHeight: 44
+    implicitWidth: surface.implicitWidth
+    implicitHeight: surface.implicitHeight
     color: "transparent"
     mask: Region {}
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "tern-bar-osd"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+
+    onVisibleChanged: osd.syncDock()
+    onDockedChanged: osd.syncDock()
+    onScreenNameChanged: osd.syncDock()
+    Component.onDestruction: Popups.reportOsdDock("volume", "", false, 0)
 
 
     PwObjectTracker {
@@ -65,12 +80,13 @@ PanelWindow {
         onTriggered: osd.shown = false
     }
 
-    Rectangle {
-        anchors.fill: parent
-        radius: height / 2
-        color: Theme.popBg
-        border.width: 1
-        border.color: Theme.rim
+    OsdSurface {
+        id: surface
+        active: osd.shown
+        docked: osd.docked
+        tabWidth: 260
+        tabHeight: 44
+        onActiveCutSpanChanged: osd.syncDock()
 
         Row {
             anchors.centerIn: parent
