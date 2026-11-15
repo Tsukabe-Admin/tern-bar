@@ -19,8 +19,21 @@ Singleton {
     property string mode: "all"
     property string query: ""
     property string screenName: ""
-    // The card's left edge in screen coordinates: under the pill it came from.
+    // The card's left edge and horizontal pill center in screen coordinates.
     property real anchorX: 0
+    property real anchorCenterX: -1
+    // Horizontal cutout span (including concave wings) and card shape reported to
+    // FrameHost so the top frame hairline and inward shadow stay clean around an
+    // attached Launcher drawer. LauncherWindow writes them for as long as its
+    // card is on screen, which is a little longer than `open`: the card
+    // retracts into the lip after closing.
+    property real activeCutLeft: 0
+    property real activeCutRight: 0
+    property real activeCutX: 0
+    property real activeCutWidth: 0
+    property real activeCutHeight: 0
+    property real activeCutRadius: 0
+    property real activeCutWing: 0
     // A power action waiting for its confirming second Enter, or "".
     property string armed: ""
 
@@ -44,23 +57,32 @@ Singleton {
         }
     }
 
+    function anchorCenterFor(item) {
+        try {
+            return item.mapToItem(null, item.width / 2, 0).x + Theme.barMarginSide;
+        } catch (e) {
+            return -1;
+        }
+    }
+
     // A click on a pill: open on that bar's screen, under `item`.
     function toggleFrom(screenName, item, mode) {
-        root.show(screenName, root.anchorFor(item), mode, "");
+        root.show(screenName, root.anchorFor(item), mode, "", root.anchorCenterFor(item));
     }
 
     // A shortcut (IPC): the focused screen, under its launcher pill when shown.
     function toggleOnFocused(mode, query) {
         const name = Popups.focusedScreenName();
         const pill = root.pills[name];
-        const x = (pill && !BarConfig.isHidden("launcher"))
-            ? root.anchorFor(pill) : Theme.barMarginSide + Theme.barPadding;
-        root.show(name, x, mode, query);
+        const visiblePill = pill && !BarConfig.isHidden("launcher");
+        const x = visiblePill ? root.anchorFor(pill) : Theme.barMarginSide + Theme.barPadding;
+        const cx = visiblePill ? root.anchorCenterFor(pill) : -1;
+        root.show(name, x, mode, query, cx);
     }
 
     // Pressing the same thing again closes: same screen, same mode, and
     // clipboard-or-not unchanged.
-    function show(screenName, x, mode, query) {
+    function show(screenName, x, mode, query, centerX) {
         const sameKind = (root.query.indexOf(";") === 0) === (query === ";");
         if (root.open && root.mode === mode && root.screenName === screenName && sameKind) {
             root.close();
@@ -72,16 +94,34 @@ Singleton {
         root.unarm();
         root.screenName = screenName;
         root.anchorX = x;
+        root.anchorCenterX = (centerX !== undefined && centerX !== null) ? centerX : -1;
         root.mode = mode;
         root.query = query;
         root.open = true;
     }
 
+    // anchorCenterX stays as it is: the card is still under its pill while it
+    // retracts, and show() sets it afresh.
     function close() {
         root.open = false;
         root.query = "";
         root.unarm();
         root.clipsLoaded = false;
+    }
+
+    Connections {
+        target: BarConfig
+        function onLookChanged() {
+            root.close();
+        }
+    }
+
+    Connections {
+        target: Compositor
+        function onFullscreenChanged(output, isFullscreen) {
+            if (isFullscreen && root.open && root.screenName === output)
+                root.close();
+        }
     }
 
     onQueryChanged: {

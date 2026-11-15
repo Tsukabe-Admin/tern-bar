@@ -35,6 +35,50 @@ Scope {
         };
     }
 
+    // Outputs whose active workspace shows a fullscreen window. Hyprland's
+    // workspace flag (`hasfullscreen`) is also set for a maximized window,
+    // which leaves the bar in view, so the flag only opens the question and
+    // the window's own state answers it: 2 is fullscreen, 1 is maximized.
+    // That state comes from the last client list (refreshed on the
+    // `fullscreen` event below).
+    readonly property var fullscreenOutputs: {
+        const next = {};
+        for (const w of Hyprland.workspaces.values) {
+            if (w.monitor && w.monitor.name) {
+                const out = w.monitor.name;
+                if (!(out in next))
+                    next[out] = false;
+                if (w.active && w.hasFullscreen
+                        && w.toplevels.values.some((t) => t.lastIpcObject && t.lastIpcObject.fullscreen === 2))
+                    next[out] = true;
+            }
+        }
+        return next;
+    }
+    property var _prevFullscreenOutputs: ({})
+    signal fullscreenChanged(string output, bool isFullscreen)
+
+    onFullscreenOutputsChanged: {
+        const prev = root._prevFullscreenOutputs || {};
+        const next = root.fullscreenOutputs || {};
+        const seen = {};
+        const nextKeys = Object.keys(next);
+        for (let i = 0; i < nextKeys.length; i++) {
+            const k = nextKeys[i];
+            seen[k] = true;
+            const nowFs = Boolean(next[k]);
+            if (Boolean(prev[k]) !== nowFs)
+                root.fullscreenChanged(k, nowFs);
+        }
+        const prevKeys = Object.keys(prev);
+        for (let j = 0; j < prevKeys.length; j++) {
+            const pk = prevKeys[j];
+            if (!seen[pk] && Boolean(prev[pk]))
+                root.fullscreenChanged(pk, false);
+        }
+        root._prevFullscreenOutputs = next;
+    }
+
     readonly property var windows: Hyprland.toplevels.values.map(root.windowOf)
 
     // One monitor's workspaces in niri's shape: numbered ones in order, then
@@ -168,8 +212,10 @@ Scope {
         function onRawEvent(event) {
             const name = event.name;
             // Quickshell's own openwindow handler leaves out the window class;
-            // a refresh fills it in (lastIpcObject.class).
-            if (name === "openwindow") {
+            // a refresh fills it in (lastIpcObject.class). Its fullscreen
+            // handler updates the workspace, not the window (see
+            // fullscreenOutputs).
+            if (name === "openwindow" || name === "fullscreen") {
                 Hyprland.refreshToplevels();
             } else if (name === "activelayout" || name === "configreloaded") {
                 keyboardRefresh.restart();

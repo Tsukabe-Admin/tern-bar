@@ -130,4 +130,36 @@ Singleton {
         if (root.isNiri)
             Niri.showHotkeyOverlay();
     }
+
+    // ── Fullscreen ─────────────────────────────────────────────────────────
+    // { output name: true } where the window in front covers the whole
+    // output, bar included. Popups and the launcher close when that starts;
+    // the OSD and the launcher card then float instead of docking into a
+    // frame that is hidden under the window.
+    readonly property var fullscreenOutputs: root.isHyprland
+        ? (root.hy ? root.hy.fullscreenOutputs : ({}))
+        : (root.isNiri ? Niri.fullscreenOutputs : ({}))
+
+    function isOutputFullscreen(output) {
+        return Boolean(root.fullscreenOutputs && root.fullscreenOutputs[output]);
+    }
+
+    signal fullscreenChanged(string output, bool isFullscreen)
+
+    // `target: Niri` alone would build the Niri singleton, and open its
+    // socket, on Hyprland too.
+    Connections {
+        target: root.isNiri ? Niri : null
+        function onFullscreenChanged(output, isFullscreen) {
+            root.fullscreenChanged(output, isFullscreen);
+        }
+    }
+
+    Connections {
+        target: root.hy
+        enabled: root.isHyprland
+        function onFullscreenChanged(output, isFullscreen) {
+            root.fullscreenChanged(output, isFullscreen);
+        }
+    }
 }

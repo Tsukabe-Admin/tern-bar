@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import "keyboard.js" as Keyboard
+import "looks.js" as LooksLib
 
 // niri 26.04 IPC client: subscribes to the event stream over $NIRI_SOCKET and
 // exposes workspaces/windows plus a focus-by-Id action. Everything here is
@@ -25,6 +26,41 @@ Singleton {
     readonly property string shortKeyboardLayout: Keyboard.abbreviate(root.currentKeyboardLayout)
 
     readonly property alias connected: socket.connected
+
+    signal fullscreenChanged(string output, bool isFullscreen)
+
+    readonly property var fullscreenOutputs: {
+        const sizes = {};
+        const screens = Quickshell.screens;
+        for (let i = 0; i < screens.length; i++) {
+            const s = screens[i];
+            if (s && s.name)
+                sizes[s.name] = { width: s.width, height: s.height };
+        }
+        return LooksLib.detectNiriFullscreenOutputs(root.windows, root.workspaces, sizes);
+    }
+    property var _prevFullscreenOutputs: ({})
+
+    onFullscreenOutputsChanged: {
+        const prev = root._prevFullscreenOutputs || {};
+        const next = root.fullscreenOutputs || {};
+        const seen = {};
+        const nextKeys = Object.keys(next);
+        for (let i = 0; i < nextKeys.length; i++) {
+            const k = nextKeys[i];
+            seen[k] = true;
+            const nowFs = Boolean(next[k]);
+            if (Boolean(prev[k]) !== nowFs)
+                root.fullscreenChanged(k, nowFs);
+        }
+        const prevKeys = Object.keys(prev);
+        for (let j = 0; j < prevKeys.length; j++) {
+            const pk = prevKeys[j];
+            if (!seen[pk] && Boolean(prev[pk]))
+                root.fullscreenChanged(pk, false);
+        }
+        root._prevFullscreenOutputs = next;
+    }
 
     function handle(line) {
         var obj;
@@ -144,6 +180,29 @@ Singleton {
             root.windows = kept;
             if (root.focusedWindowId === cid)
                 root.focusedWindowId = -1;
+        } else if (obj.WindowLayoutsChanged) {
+            var changes = obj.WindowLayoutsChanged.changes || [];
+            if (changes.length === 0)
+                return;
+            var byId = {};
+            for (var c = 0; c < changes.length; c++) {
+                var pair = changes[c];
+                if (pair && pair.length >= 2)
+                    byId[pair[0]] = pair[1];
+            }
+            var updated = [];
+            var anyChanged = false;
+            for (var u = 0; u < root.windows.length; u++) {
+                var wu = root.windows[u];
+                if (byId[wu.id] !== undefined) {
+                    updated.push(Object.assign({}, wu, { layout: byId[wu.id] }));
+                    anyChanged = true;
+                } else {
+                    updated.push(wu);
+                }
+            }
+            if (anyChanged)
+                root.windows = updated;
         } else if (obj.KeyboardLayoutsChanged) {
             var kl = obj.KeyboardLayoutsChanged.keyboard_layouts;
             if (kl) {
