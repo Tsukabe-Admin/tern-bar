@@ -150,7 +150,10 @@ ShellRoot {
     // the rotation timer and the screen hotplug handler would not exist until
     // the Wallpaper tab had been opened once. NightLight, Brightness, Weather
     // and Updates likewise; the notification server has to own its bus name
-    // from the start, whatever the bar shows.
+    // from the start, whatever the bar shows. The list of installed apps is
+    // read the same way: started by the first launcher opening, it arrived
+    // while the card was already up, and the selection followed whichever app
+    // had been first in the half-read list, several rows down.
     Component.onCompleted: {
         Wallpaper.rescan();
         NightLight.available;
@@ -158,5 +161,6 @@ ShellRoot {
         Weather.wanted;
         Updates.wanted;
         Notifications.dnd;
+        DesktopEntries.applications;
     }
 }
