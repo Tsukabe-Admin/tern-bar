@@ -1,36 +1,30 @@
 import QtQuick
-import Quickshell
-import Quickshell.Wayland
 import Quickshell.Services.SystemTray
 import "../singletons"
 
-// The bar is a row of capsules ("pills"), one per group of items, floating on
-// a transparent surface. Geometry matches waybar's occupancy exactly: 8px from
-// the top, 12px sides, 40px tall, 48px reserved.
+// All the bar's pills, their layout rows, and group islands for one screen.
+// Owned inside ScreenBarShell so timers, sockets, and pill objects stay alive
+// when hot-swapping between Classic Pills and Tern Frame hosts.
 //
 // Which pill sits in which of the three rows, and in what order, comes from
 // BarConfig.layout; hidden pills stay alive in pillStore. Reparenting keeps the
 // pill objects themselves, so their timers, sockets and scroll state survive a
 // move — the rows hold no children of their own.
-PanelWindow {
-    id: bar
+Item {
+    id: content
 
-    required property var modelData
-    screen: modelData
+    required property var screenInfo
+    required property string screenName
+    property var hostWindow: null
 
-    anchors {
-        top: true
-        left: true
-        right: true
-    }
-    margins {
-        top: Theme.barMarginTop
-        left: Theme.barMarginSide
-        right: Theme.barMarginSide
-    }
-    exclusiveZone: Theme.exclusiveZone
-    implicitHeight: Theme.barHeight
-    color: "transparent"
+    signal pokeMenuRequested(Item anchorItem)
+    signal ternLaunchRequested(Item anchorItem)
+
+    property Item calPreferredAnchor: null
+    property Item quickPreferredAnchor: null
+
+    width: parent ? parent.width : 0
+    height: parent ? parent.height : Theme.barHeight
 
     // A crowded row turns into one island: see components/PillRow.qml and
     // components/GroupBackground.qml. The backgrounds come first so the pills
@@ -51,7 +45,7 @@ PanelWindow {
         // Keep the centre group between the side groups. On a wide bar this is
         // exactly the centred position; on a narrow output — or when the tray
         // grows — it slides instead of drawing pills on top of the right group.
-        readonly property real preferredX: (bar.width - width) / 2
+        readonly property real preferredX: (content.width - width) / 2
         readonly property real leftLimit: leftRow.x + leftRow.width + Theme.pillSpacing
         readonly property real rightLimit: rightRow.x - width - Theme.pillSpacing
         x: Math.max(leftLimit, Math.min(preferredX, rightLimit))
@@ -77,15 +71,15 @@ PanelWindow {
             IconButton {
                 text: "󰣇"
                 fg: Theme.accent
-                action: () => Launcher.toggleFrom(bar.modelData.name, launcherPill, "all")
-                rightAction: () => bar.openSettings("layout")
+                action: () => Launcher.toggleFrom(content.screenName, launcherPill, "all")
+                rightAction: () => content.openSettings("layout")
             }
         }
 
         Pill {
             id: workspacesPill
             Workspaces {
-                output: bar.modelData.name
+                output: content.screenName
             }
         }
 
@@ -94,7 +88,7 @@ PanelWindow {
             visible: titleItem.hasWindow
             WindowTitle {
                 id: titleItem
-                output: bar.modelData.name
+                output: content.screenName
             }
         }
 
@@ -102,8 +96,8 @@ PanelWindow {
             id: clockPill
             Clock {
                 onClicked: {
-                    calPopup.preferredAnchor = clockPill;
-                    Popups.toggle("calendar", bar.modelData.name);
+                    content.calPreferredAnchor = clockPill;
+                    Popups.toggle("calendar", content.screenName);
                 }
             }
         }
@@ -114,8 +108,8 @@ PanelWindow {
             WeatherPill {
                 id: weatherItem
                 onClicked: {
-                    calPopup.preferredAnchor = weatherPill;
-                    Popups.toggle("calendar", bar.modelData.name);
+                    content.calPreferredAnchor = weatherPill;
+                    Popups.toggle("calendar", content.screenName);
                 }
             }
         }
@@ -125,7 +119,7 @@ PanelWindow {
             visible: mediaItem.hasPlayer
             MprisPill {
                 id: mediaItem
-                onClicked: Popups.toggle("media", bar.modelData.name)
+                onClicked: Popups.toggle("media", content.screenName)
             }
         }
 
@@ -136,19 +130,10 @@ PanelWindow {
             visible: Poke.available
             PokePill {
                 launch: () => {
-                    Compositor.focusMonitor(bar.modelData.name);
+                    Compositor.focusMonitor(content.screenName);
                     Poke.open("");
                 }
-                menuRequested: (item) => {
-                    // Screen coordinates for the card: the bar window sits at the
-                    // theme's margins, the item's own position is window-relative.
-                    const p = item.mapToItem(null, 0, 0);
-                    pokeMenu.barWindow = bar;
-                    pokeMenu.screenInfo = bar.modelData;
-                    pokeMenu.anchorX = Theme.barMarginSide + p.x;
-                    pokeMenu.anchorY = Theme.barMarginTop + p.y + Theme.pillHeight + 4;
-                    pokeMenu.openFor(item);
-                }
+                menuRequested: (item) => content.pokeMenuRequested(item)
             }
         }
 
@@ -158,7 +143,7 @@ PanelWindow {
             UpdatesPill {
                 id: updatesItem
                 onClicked: {
-                    Compositor.focusMonitor(bar.modelData.name);
+                    Compositor.focusMonitor(content.screenName);
                     Updates.runUpdate();
                 }
             }
@@ -207,8 +192,8 @@ PanelWindow {
             Battery {
                 id: batteryItem
                 onClicked: {
-                    quickPopup.preferredAnchor = batteryPill;
-                    Popups.toggle("quick", bar.modelData.name);
+                    content.quickPreferredAnchor = batteryPill;
+                    Popups.toggle("quick", content.screenName);
                 }
             }
         }
@@ -217,8 +202,8 @@ PanelWindow {
             id: trayPill
             visible: SystemTray.items.values.length > 0
             Tray {
-                barWindow: bar
-                screenInfo: bar.modelData
+                barWindow: content.hostWindow
+                screenInfo: content.screenInfo
             }
         }
 
@@ -227,7 +212,7 @@ PanelWindow {
             IconButton {
                 text: "󰸉"
                 fg: Theme.t2
-                action: () => bar.openSettings("wallpaper")
+                action: () => content.openSettings("wallpaper")
             }
             // niri's own hotkey overlay; Hyprland has none.
             IconButton {
@@ -239,7 +224,7 @@ PanelWindow {
             IconButton {
                 text: "\uf013"
                 fg: Theme.t2
-                action: () => bar.openSettings("layout")
+                action: () => content.openSettings("layout")
             }
         }
 
@@ -249,8 +234,8 @@ PanelWindow {
                 text: "\uf1de"
                 fg: Theme.t2
                 action: () => {
-                    quickPopup.preferredAnchor = systemPill;
-                    Popups.toggle("quick", bar.modelData.name);
+                    content.quickPreferredAnchor = systemPill;
+                    Popups.toggle("quick", content.screenName);
                 }
             }
             // Keep awake is on: shown so it cannot be forgotten; a click ends it.
@@ -261,12 +246,12 @@ PanelWindow {
                 action: () => KeepAwake.toggle()
             }
             Bell {
-                screenName: bar.modelData.name
+                screenName: content.screenName
             }
             IconButton {
                 text: "⏻"
                 fg: Theme.bad
-                action: () => Launcher.toggleFrom(bar.modelData.name, systemPill, "power")
+                action: () => Launcher.toggleFrom(content.screenName, systemPill, "power")
             }
         }
 
@@ -275,16 +260,7 @@ PanelWindow {
             id: ternPill
             visible: Tern.installed
             TernPill {
-                launch: () => {
-                    // Open on the screen whose pill was clicked: the compositor
-                    // puts new windows on the focused output, and hovering the bar
-                    // does not change that.
-                    Compositor.focusMonitor(bar.modelData.name);
-                    if (morphLoader.item)
-                        morphLoader.item.launchFrom(ternPill);
-                    else
-                        Tern.open();
-                }
+                launch: () => content.ternLaunchRequested(ternPill)
                 cycleSide: () => BarConfig.cycleTernPillSide()
             }
         }
@@ -297,6 +273,24 @@ PanelWindow {
         keyboard: keyboardPill, battery: batteryPill, tray: trayPill, tools: toolsPill,
         system: systemPill, tern: ternPill
     })
+
+    function anchorForPopup(name) {
+        if (name === "calendar") {
+            if (content.calPreferredAnchor && content.calPreferredAnchor.visible)
+                return content.calPreferredAnchor;
+            return (!BarConfig.isHidden("clock") && clockPill.visible) ? clockPill : weatherPill;
+        }
+        if (name === "media")
+            return mediaPill;
+        if (name === "quick") {
+            if (content.quickPreferredAnchor && content.quickPreferredAnchor.visible)
+                return content.quickPreferredAnchor;
+            return systemPill;
+        }
+        if (name === "notifications")
+            return systemPill;
+        return null;
+    }
 
     function rowFor(side) {
         return side === "left" ? leftRow : side === "center" ? centerRow : rightRow;
@@ -323,22 +317,22 @@ PanelWindow {
             const list = BarConfig.layout[side] || [];
             for (let i = list.length - 1; i >= 0; i--) {
                 const id = list[i];
-                const pill = bar.pills[id];
+                const pill = content.pills[id];
                 if (pill)
                     pill.parent = BarConfig.isHidden(id) ? pillStore : staging;
             }
         }
         for (const id of BarConfig.pillIds) {
-            const pill = bar.pills[id];
+            const pill = content.pills[id];
             if (pill && pill.parent !== pillStore && pill.parent !== staging)
                 pill.parent = pillStore;
         }
         for (const side of BarConfig.sides) {
-            const row = bar.rowFor(side);
+            const row = content.rowFor(side);
             const list = BarConfig.layout[side] || [];
             for (let i = 0; i < list.length; i++) {
                 const id = list[i];
-                const pill = bar.pills[id];
+                const pill = content.pills[id];
                 if (pill && !BarConfig.isHidden(id))
                     pill.parent = row;
             }
@@ -349,64 +343,24 @@ PanelWindow {
     // a new window on the focused output, and hovering the bar does not change
     // that), on `tab` — "layout" or "wallpaper".
     function openSettings(tab) {
-        Compositor.focusMonitor(bar.modelData.name);
+        Compositor.focusMonitor(content.screenName);
         BarConfig.openSettings(tab);
     }
 
     Component.onCompleted: {
         applyLayout();
-        Launcher.registerPill(bar.modelData.name, launcherPill);
+        Launcher.registerPill(content.screenName, launcherPill);
     }
-
-    // Right-click menu for the PokeToken pill (a sibling window, like TrayMenu).
-    PokeMenu {
-        id: pokeMenu
-    }
-
-    // The popups this bar can own (Popups decides which is open, and where).
-    CalendarPopup {
-        id: calPopup
-        property Item preferredAnchor: null
-        barWindow: bar
-        screenInfo: bar.modelData
-        anchorItem: (calPopup.preferredAnchor && calPopup.preferredAnchor.visible)
-            ? calPopup.preferredAnchor
-            : ((!BarConfig.isHidden("clock") && clockPill.visible) ? clockPill : weatherPill)
-    }
-    MediaPopup { barWindow: bar; screenInfo: bar.modelData; anchorItem: mediaPill }
-    QuickSettings {
-        id: quickPopup
-        property Item preferredAnchor: null
-        barWindow: bar
-        screenInfo: bar.modelData
-        anchorItem: (quickPopup.preferredAnchor && quickPopup.preferredAnchor.visible)
-            ? quickPopup.preferredAnchor : systemPill
-    }
-    NotificationCenter { barWindow: bar; screenInfo: bar.modelData; anchorItem: systemPill }
 
     Connections {
         target: BarConfig
 
         function onLayoutChanged() {
-            bar.applyLayout();
+            content.applyLayout();
         }
 
         function onHiddenChanged() {
-            bar.applyLayout();
-        }
-    }
-
-    // The morph overlay exists only while it is explicitly enabled, so the
-    // bar normally never creates a second, fullscreen layer surface. It aims at
-    // niri's half-width column, so it is niri only.
-    Loader {
-        id: morphLoader
-        active: BarConfig.morphEnabled && Compositor.isNiri
-        sourceComponent: Component {
-            TernMorph {
-                screenInfo: bar.modelData
-                screenName: bar.modelData.name
-            }
+            content.applyLayout();
         }
     }
 }

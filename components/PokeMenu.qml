@@ -13,9 +13,8 @@ PopupWindow {
     property var screenInfo: null
     property Item anchorItem: null
 
-    // The popup's own origin is the screen's top-left (niri ignores the layer
-    // anchor of a popup under a margins-positioned panel), so the card is placed
-    // from the anchor item's *screen* coordinates, supplied by the caller.
+    // Card anchor coordinates relative to `barWindow`'s top-left corner (matching
+    // TrayMenu and PopoutPopupHost).
     property real anchorX: 0
     property real anchorY: 0
 
@@ -79,6 +78,13 @@ PopupWindow {
     grabFocus: false
     color: "transparent"
 
+    Connections {
+        target: BarConfig
+        function onLookChanged() {
+            menu.visible = false;
+        }
+    }
+
     readonly property int cardWidth: 260
     readonly property int cardHeight: content.implicitHeight + 16
 
@@ -93,12 +99,48 @@ PopupWindow {
 
     Rectangle {
         id: card
-        x: Math.max(0, Math.min(menu.anchorX, menu.width - width))
-        y: Math.max(0, Math.min(menu.anchorY, menu.height - height))
+
+        property real slideOffset: 0
+        property real revealOpacity: 1
+
+        Connections {
+            target: menu
+            function onVisibleChanged() {
+                if (menu.visible)
+                    menuReveal.restart();
+            }
+        }
+
+        ParallelAnimation {
+            id: menuReveal
+            NumberAnimation {
+                target: card
+                property: "revealOpacity"
+                from: 0
+                to: 1
+                duration: Theme.motionFast
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Theme.curveEffects
+            }
+            NumberAnimation {
+                target: card
+                property: "slideOffset"
+                from: -6
+                to: 0
+                duration: Theme.motionFast
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Theme.curveEffects
+            }
+        }
+
+        readonly property int edgePad: Theme.isFramed ? (Theme.frameThickness + 6) : 0
+        x: Math.max(edgePad, Math.min(menu.anchorX, menu.width - width - edgePad))
+        y: Math.max(0, Math.min(menu.anchorY, menu.height - height)) + card.slideOffset
         width: menu.cardWidth
         height: menu.cardHeight
+        opacity: card.revealOpacity
         color: Theme.popBg
-        radius: Theme.itemRadius
+        radius: Theme.isFramed ? Theme.radiusCard : Theme.itemRadius
         border.width: 1
         border.color: Theme.rim
 
@@ -129,7 +171,7 @@ PopupWindow {
                         visible: entryRow.modelData.action !== "separator"
                         anchors.fill: parent
                         anchors.margins: 4
-                        radius: 6
+                        radius: Theme.isFramed ? Math.max(4, Theme.itemRadius - 4) : 6
                         color: (rowHover.hovered && entryRow.modelData.enabled) ? Theme.hover : "transparent"
                     }
 

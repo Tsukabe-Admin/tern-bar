@@ -302,7 +302,7 @@ PanelWindow {
 
         Rectangle {
             anchors.fill: parent
-            radius: 6
+            radius: Theme.isFramed ? Math.max(4, Theme.itemRadius - 4) : 6
             color: Theme.popBg
             border.width: 1
             border.color: Theme.rim
@@ -331,7 +331,7 @@ PanelWindow {
 
         Rectangle {
             anchors.fill: parent
-            radius: 8
+            radius: Theme.isFramed ? Theme.itemRadius : 8
             color: Theme.popBg
             border.width: 1
             border.color: pet.bubbleCritical ? Theme.bad : Theme.rim
@@ -470,7 +470,7 @@ PanelWindow {
                         Rectangle {
                             anchors.fill: parent
                             anchors.margins: 4
-                            radius: 6
+                            radius: Theme.isFramed ? Math.max(4, Theme.itemRadius - 4) : 6
                             color: petRowHover.hovered ? Theme.hover : "transparent"
                         }
 

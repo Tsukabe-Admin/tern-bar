@@ -9,7 +9,7 @@ ShellRoot {
         model: Quickshell.screens
 
         delegate: Component {
-            BarPanel {}
+            ScreenBarShell {}
         }
     }
 
@@ -62,6 +62,10 @@ ShellRoot {
             BarConfig.openSettings("layout");
         }
 
+        function look(): void {
+            BarConfig.toggleSettings("look");
+        }
+
         // Mod+W and the tools pill's wallpaper button.
         function wallpaper(): void {
             BarConfig.toggleSettings("wallpaper");
@@ -108,7 +112,7 @@ ShellRoot {
         }
     }
 
-    // quickshell ipc -c tern-bar call bar <calendar|media|quickSettings|notifications|close>
+    // quickshell ipc -c tern-bar call bar <calendar|media|quickSettings|notifications|cycleLook|close>
     IpcHandler {
         target: "bar"
 
@@ -126,6 +130,10 @@ ShellRoot {
 
         function notifications(): void {
             Popups.toggle("notifications", Popups.focusedScreenName());
+        }
+
+        function cycleLook(): void {
+            BarConfig.cycleLook();
         }
 
         function close(): void {

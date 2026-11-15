@@ -62,14 +62,16 @@ PanelWindow {
         const p = item.mapToItem(null, 0, 0);
         overlay.fromRect = Qt.rect(Theme.barMarginSide + p.x, Theme.barMarginTop + p.y, item.width, item.height);
         // The overlay window is not realized yet, so aim with the screen size
-        // (the work area, inset by niri's gaps below the reserved bar strip).
+        // (the work area, inset by niri's gaps below the reserved bar strip;
+        // Tern Frame also reserves its thickness on the sides and the bottom).
         // config.kdl's default-column-width is 0.5, so the new terminal lands
         // centered at half the work area — aim there for a seamless dissolve.
-        const tileW = (overlay.screenInfo.width - 2 * Theme.workAreaGap) * 0.5;
+        const inset = Theme.frameThickness;
+        const tileW = (overlay.screenInfo.width - 2 * inset - 2 * Theme.workAreaGap) * 0.5;
         overlay.toRect = Qt.rect((overlay.screenInfo.width - tileW) / 2,
                                  Theme.workAreaTop + Theme.workAreaGap,
                                  tileW,
-                                 overlay.screenInfo.height - Theme.workAreaTop - 2 * Theme.workAreaGap);
+                                 overlay.screenInfo.height - Theme.workAreaTop - inset - 2 * Theme.workAreaGap);
         overlay.knownTernIds = overlay.ternIdsNow();
         overlay.startedAt = Date.now();
         overlay.fading = false;

@@ -15,7 +15,7 @@ import "../singletons"
 Item {
     id: root
 
-    property var launch: null          // left click (BarPanel focuses this output first)
+    property var launch: null          // left click (ScreenBarShell focuses this output first)
     property var menuRequested: null   // right click; called with this item as the anchor
 
     readonly property var parts: (Poke.status && Poke.status.parts) ? Poke.status.parts : []
