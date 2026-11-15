@@ -6,13 +6,22 @@ small floating rounded "pills". **Tern Frame** draws a border around the whole s
 as its top edge and the popups as drawers that grow out of it. Both can follow your wallpaper's
 colors.
 
-![Classic Tern: floating pills](screenshots/classic.png)
+**Classic Tern**: floating pills, and each popup is a card under its pill (here the calendar, under
+the clock).
 
-![Tern Frame: a border around the screen, with the calendar drawer open](screenshots/frame.png)
+![Classic Tern: floating pills over the wallpaper, with the calendar card open under the clock](screenshots/classic.png)
+
+**Tern Frame**: a border around the whole screen with rounded inner corners. The launcher grows out
+of the top edge, and the brightness pop-up out of the bottom one.
+
+![Tern Frame: a dark border around the screen, the launcher hanging from its top edge and the brightness tab in its bottom edge](screenshots/frame.png)
 
 The pills up close:
 
-![the three groups of pills](screenshots/bar.png)
+![the three groups of pills: launcher, workspaces and window title; clock, weather and music; updates, CPU and memory, the ASCII animation, volume, tools and the system buttons](screenshots/bar.png)
+
+(The pictures were taken from a fresh copy with an empty config, on a 1600x900 screen; the weather,
+the update count and the music are stand-ins.)
 
 ## What you get
 
@@ -344,19 +353,19 @@ which part of the bar, edit `matugen/palette.json`.
 ## What's inside
 
 ```
-shell.qml        starts the bar on every screen
-components/      the bar and each of its pills, and the two looks' hosts (PillsHost, FrameHost)
-components/views/  what is inside each popup, shared by the Classic cards and the Frame drawers
-singletons/      shared pieces: theme, looks, settings, wallpaper, compositor connection (niri, Hyprland)
-shaders/         the Tern Frame shadows: GLSL sources and the compiled .qsb files the bar loads
-scripts/         helpers: wallpaper, colours, network status, IP hiding
-themes/          the ten built-in colour themes
-matugen/         an optional template, for driving the colours from your own matugen setup
-screenshots/     pictures for this page
-assets/ascii/    text frames for the ASCII pill and the launcher's empty state
-tests/           unit tests for the script libraries (node --test tests/)
-tools/ascii/     generator for those frames and for animated ASCII wallpapers (needs node)
-tools/bt-agent/  the Bluetooth pairing helper, in Rust (see Bluetooth above)
+shell.qml               starts the bar on every screen
+components/             the bar and each of its pills, and the two looks' hosts (PillsHost, FrameHost)
+components/views/       what is inside each popup, shared by the Classic cards and the Frame drawers
+singletons/             shared pieces: theme, looks, settings, wallpaper, compositor connection (niri, Hyprland)
+shaders/                the Tern Frame shadows: GLSL sources and the compiled .qsb files the bar loads
+scripts/                helpers: wallpaper, colours, network status, IP hiding
+themes/                 the ten built-in colour themes
+matugen/                an optional template, for driving the colours from your own matugen setup
+screenshots/            pictures for this page
+assets/ascii/           text frames for the ASCII pill and the launcher's empty state
+tests/                  unit tests for the script libraries (node --test tests/)
+tools/ascii/            generator for those frames and for animated ASCII wallpapers (needs node)
+tools/bt-agent/         the Bluetooth pairing helper, in Rust (see Bluetooth above)
 tools/build-shaders.sh  rebuilds the compiled shaders after a change to their sources
 ```
 
