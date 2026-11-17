@@ -235,7 +235,7 @@ Item {
             anchors.right: parent.right
             anchors.verticalCenter: folderText.verticalCenter
             text: "Change folder…"
-            onClicked: Wallpaper.chooseFolder()
+            onClicked: folderPicker.open(Wallpaper.settings.folder)
         }
 
         GridView {
@@ -659,5 +659,16 @@ Item {
                 }
             }
         }
+    }
+
+    // "Change folder…": a picker drawn over this page, inside the settings window.
+    FolderPicker {
+        id: folderPicker
+        anchors.fill: parent
+        title: "Wallpaper folder"
+        home: Wallpaper.home
+        onChosen: (path) => Wallpaper.setFolder(path)
+        // The keyboard goes back to the search box, where it was.
+        onClosed: searchField.forceActiveFocus()
     }
 }
