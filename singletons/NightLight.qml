@@ -2,48 +2,71 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import Quickshell.Io
 
-// Night light: a warm screen (about 4000 K) while on, through wlsunset.
-// wlsunset has no fixed-temperature mode, so its day and night temperatures are
-// set one kelvin apart (and manual sunrise/sunset times stand in for a
-// location): day or night the screen stays at ~4000 K. Stopping the process
-// restores normal colours — the compositor drops a gamma client's ramps when it
-// leaves. On/off is saved in bar.json.
+// Night light: a warm screen (4000 K) while on. The bar runs
+// `skua-helper night-light` (tools/skua-helper; its lines are described at the
+// top of src/night_light.rs) only while the setting is on: the job takes every
+// screen's gamma control, and when it ends (the setting turned off, the bar
+// quit) the compositor gives the screens their own colours back. On/off is
+// saved in bar.json.
 Singleton {
     id: root
 
-    readonly property bool available: Programs.has("wlsunset")
+    readonly property bool available: SkuaHelper.installed
     readonly property bool on: BarConfig.nightLight
-    // Whether the screen is being warmed, which the setting alone does not say:
-    // wlsunset can be killed or fail to start, and when the compositor refuses
-    // it the gamma control of an output it prints one line and stays alive with
-    // that screen at its normal colours. The quick settings tile shows `active`,
-    // and `problem` when the setting is on and the screen is not warm.
-    property bool refused: false
-    readonly property bool active: proc.running && !root.refused
+    // Kelvin: the colour of the screens' white while on (6500 is normal).
+    readonly property int temperature: 4000
+    // The screens in the job's last state line: [{ name, state }], state
+    // "applied" (warm), "refused" (another program holds that screen's gamma,
+    // or it has none) or "waiting"; [] while the job is not running.
+    property var screens: []
+    // The setting alone does not say whether the screens are warm: the job can
+    // fail, and the compositor can refuse a screen. The quick settings tile
+    // shows `active`, and `problem` when the setting is on and nothing is warm.
+    readonly property bool running: helper.running
+    readonly property bool active: helper.running && root.screens.some((s) => s.state === "applied")
+    readonly property bool refused: root.screens.length > 0 && root.screens.every((s) => s.state === "refused")
     readonly property string problem: (!root.on || !root.available || root.active) ? ""
-        : root.refused ? "No gamma control" : "Not running"
+        : helper.running && root.refused ? "No gamma control"
+        : helper.outdated ? "Update skua-helper"
+        : !helper.running ? "Not running"
+        : ""
+
+    // The temperature has been sent to the job running now.
+    property bool asked: false
 
     function toggle() {
         BarConfig.setNightLight(!BarConfig.nightLight);
     }
 
-    Process {
-        id: proc
-        command: ["wlsunset", "-t", "4000", "-T", "4001", "-S", "06:00", "-s", "18:00"]
-        running: root.on && root.available
-
-        onRunningChanged: {
-            if (proc.running)
-                root.refused = false;
-        }
-
-        stderr: SplitParser {
-            onRead: (line) => {
-                if (/gamma control of output .* failed/.test(line))
-                    root.refused = true;
+    function handle(message) {
+        if (message.event === "state") {
+            // A list inside a message reaches here through HelperJob's signal
+            // as a Qt sequence, not a JS array (Array.isArray says false), so
+            // it is copied into one first.
+            root.screens = Array.from(message.outputs || []).filter((o) => o !== null && typeof o === "object").map((o) => ({
+                name: String(o.name || ""),
+                state: String(o.state || "")
+            }));
+            // The first state line says the job has found the screens: that
+            // is when it can be told what to do with them.
+            if (!root.asked) {
+                root.asked = true;
+                helper.send({ temperature: root.temperature });
             }
+        } else if (message.event === "error") {
+            console.warn("skua-helper night-light:", message.message);
+        }
+    }
+
+    HelperJob {
+        id: helper
+        name: "night-light"
+        wanted: root.on
+        onReceived: (message) => root.handle(message)
+        onStopped: {
+            root.asked = false;
+            root.screens = [];
         }
     }
 }

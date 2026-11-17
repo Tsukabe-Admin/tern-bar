@@ -111,8 +111,8 @@ Item {
                 enabled: NightLight.available
                 glyph: "\uf186"
                 title: "Night light"
-                subtitle: !NightLight.available ? "Install wlsunset"
-                    : NightLight.active ? "4000 K" : NightLight.problem !== "" ? NightLight.problem : "Off"
+                subtitle: !NightLight.available ? "Install skua-helper"
+                    : NightLight.active ? NightLight.temperature + " K" : NightLight.problem !== "" ? NightLight.problem : "Off"
                 on: NightLight.active
                 onClicked: NightLight.toggle()
             }

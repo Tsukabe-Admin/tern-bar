@@ -7,6 +7,7 @@ process of its own, so one job failing never stops another.
 | Job | What it does |
 |---|---|
 | `skua-helper bluetooth` | answers BlueZ's pairing questions (a PIN, a passkey, "does the device show 123456?") through the bar |
+| `skua-helper night-light` | warms the screens' colours (night light) through the compositor's gamma control |
 
 ```sh
 cargo install --path tools/skua-helper --root ~/.local    # from the repository's top folder
@@ -48,6 +49,26 @@ What BlueZ does with an agent:
   question. One that a device starts always asks.
 - If another agent registers as the default after this one (blueman, for example), BlueZ asks that
   one instead.
+
+## Night light
+
+While night light is on, the bar runs `skua-helper night-light` (`singletons/NightLight.qml`) and
+sends it `{"temperature":4000}`. The job asks the compositor for each screen's gamma control (the
+`wlr-gamma-control` protocol, which niri and Hyprland offer), screens plugged in later too, and sets
+each screen's colour ramps to that temperature. After that and after every change it writes one
+line saying, for each screen by name, whether it is `applied`, `refused` or `waiting`. Turning night
+light off ends the job, and the compositor gives every screen its own colours back as soon as the
+job's gamma controls are gone.
+
+- Only one program at a time can set a screen's colours. If wlsunset, gammastep, hyprsunset or
+  another night light already holds a screen, that screen is `refused`; the quick-settings tile says
+  "No gamma control" when every screen is.
+- The colours are wlsunset 0.4.0's, computed the same way (`src/gamma.rs`), so 4000 K looks the
+  same as it did with wlsunset. The tests in that file compare every value with numbers from
+  wlsunset's own C code.
+- A compositor without the gamma-control protocol gets an error line and exit code 3.
+
+Gamma cannot be read back over Wayland, so the colours on a real screen are checked by eye.
 
 ## Checking a change
 
