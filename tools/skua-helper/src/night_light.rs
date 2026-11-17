@@ -383,7 +383,9 @@ fn run_loop(
             move |event, _, state: &mut NightLight| match event {
                 channel::Event::Msg(command) => match temperature_of(&command) {
                     Some(kelvin) => state.set_temperature(kelvin),
-                    None => protocol::error(format!("unknown command: {command}")),
+                    None => {
+                        protocol::error(format!("unknown command: {}", protocol::shape(&command)))
+                    }
                 },
                 channel::Event::Closed => stop.stop(),
             },

@@ -123,10 +123,18 @@ impl Store {
 
         let path = dir.join(INDEX);
         let mut index: Index = match fs::read(&path) {
+            // The serde message is left out: it can quote what it found, and
+            // that is a piece of the history. The bar logs this.
             Ok(text) => serde_json::from_slice(&text).map_err(|err| {
                 io::Error::other(format!(
-                    "{} cannot be read ({err}); move it away to start a new history",
-                    path.display()
+                    "{} cannot be read ({} at line {}, column {}); move it away to start a new history",
+                    path.display(),
+                    match err.classify() {
+                        serde_json::error::Category::Data => "not a history index",
+                        _ => "not JSON",
+                    },
+                    err.line(),
+                    err.column()
                 ))
             })?,
             Err(err) if err.kind() == io::ErrorKind::NotFound => Index::default(),
@@ -554,6 +562,12 @@ mod tests {
         fs::write(folder.join("index.json"), b"{not json").unwrap();
         assert!(Store::open(folder.clone()).is_err());
         assert!(folder.join("1.txt").exists());
+
+        // What the index holds stays out of the message, which the bar logs.
+        fs::write(folder.join("index.json"), br#"{"entries":"a copied text"}"#).unwrap();
+        let message = Store::open(folder.clone()).err().unwrap().to_string();
+        assert!(message.contains("not a history index"), "{message}");
+        assert!(!message.contains("a copied text"), "{message}");
     }
 
     #[test]

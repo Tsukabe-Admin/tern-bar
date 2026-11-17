@@ -21,7 +21,7 @@ pub const IMAGE_TYPES: [&str; 4] = ["image/png", "image/jpeg", "image/webp", "im
 /// Password managers (KeePassXC, for one) offer this type, with the content
 /// `secret`, next to a copied password, and `wl-copy --sensitive` does the
 /// same: a clipboard history must not keep it.
-pub const SECRET_HINT: &str = "x-kde-passwordManagerHint";
+const SECRET_HINT: &str = "x-kde-passwordManagerHint";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -58,6 +58,16 @@ pub fn choose(offered: &[String]) -> Option<(Kind, &str)> {
         .into_iter()
         .find_map(find)
         .map(|name| (Kind::Image, name))
+}
+
+/// The password hint among the types of an offer, in the app's own spelling,
+/// which is what has to be asked for. Type names are compared without regard
+/// to case, as `choose` does: a hint spelled another way is still a hint.
+pub fn secret_hint(offered: &[String]) -> Option<&str> {
+    offered
+        .iter()
+        .find(|name| name.eq_ignore_ascii_case(SECRET_HINT))
+        .map(String::as_str)
 }
 
 /// Whether the content of the password hint asks for the entry to be left
@@ -202,6 +212,15 @@ pub mod tests {
         let offered = names(&["text/html", "application/x-qt-image", "image/bmp"]);
         assert_eq!(choose(&offered), None);
         assert_eq!(choose(&[]), None);
+    }
+
+    #[test]
+    fn the_secret_hint_is_found_in_any_spelling() {
+        let offered = names(&["text/plain", "X-KDE-PasswordManagerHint"]);
+        assert_eq!(secret_hint(&offered), Some("X-KDE-PasswordManagerHint"));
+        let offered = names(&["text/plain", "x-kde-passwordManagerHint"]);
+        assert_eq!(secret_hint(&offered), Some("x-kde-passwordManagerHint"));
+        assert_eq!(secret_hint(&names(&["text/plain"])), None);
     }
 
     #[test]

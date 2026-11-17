@@ -502,8 +502,12 @@ PanelWindow {
                             // Anywhere else the field gets the key as usual.
                             const row = Launcher.results[win.selected];
                             if (row && row.kind === "clip") {
-                                win.removing = win.selected;
-                                Launcher.removeClip(row);
+                                // A held key repeats, and one press removes
+                                // one entry: the repeats are swallowed.
+                                if (!event.isAutoRepeat) {
+                                    win.removing = win.selected;
+                                    Launcher.removeClip(row);
+                                }
                                 event.accepted = true;
                             }
                         }

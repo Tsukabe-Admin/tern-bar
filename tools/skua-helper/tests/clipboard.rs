@@ -733,6 +733,40 @@ fn leaves_out_secrets_and_what_it_cannot_keep() {
 }
 
 #[test]
+fn a_hint_in_another_spelling_and_a_bad_command_give_nothing_away() {
+    let home = tempfile::tempdir().unwrap();
+    let mut compositor = Compositor::new(Some(ext_protocol()));
+    let mut job = started(&mut compositor, home.path());
+    job.expect("ready");
+
+    // Type names are not case-sensitive: this is a password too.
+    compositor.copy(
+        &["text/plain;charset=utf-8", "X-KDE-PasswordManagerHint"],
+        &[
+            ("text/plain;charset=utf-8", b"hunter2"),
+            ("X-KDE-PasswordManagerHint", b"secret"),
+        ],
+        Duration::ZERO,
+    );
+    assert_eq!(job.expect("skipped")["reason"], "secret");
+    assert_eq!(compositor.asked(), ["X-KDE-PasswordManagerHint"]);
+
+    // The bar logs error messages: a command that cannot be used is named by
+    // its keys, without the text it carries.
+    job.send(json!({"copyText": "hunter2", "extra": true}));
+    let error = job.expect("error");
+    let message = error["message"].as_str().unwrap();
+    assert!(message.contains("copyText"), "{message}");
+    assert!(!message.contains("hunter2"), "{message}");
+    job.send(json!({"copyText": 5}));
+    assert_eq!(
+        job.expect("error")["message"],
+        "unknown command: {copyText}"
+    );
+    assert!(job.items().is_empty());
+}
+
+#[test]
 fn a_slow_paste_does_not_hold_up_the_job() {
     let home = tempfile::tempdir().unwrap();
     let mut compositor = Compositor::new(Some(ext_protocol()));

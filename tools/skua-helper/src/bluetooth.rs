@@ -296,7 +296,7 @@ pub fn run() -> ExitCode {
     // The bar's answers arrive on stdin. A plain thread reads them and hands
     // each one to the question waiting for it.
     std::thread::spawn(move || {
-        protocol::read_commands(|command| match serde_json::from_value::<Answer>(command) {
+        protocol::read_commands(|command| match Answer::deserialize(&command) {
             // An answer that arrives after BlueZ withdrew its question has
             // nobody waiting for it, and is dropped.
             Ok(answer) => {
@@ -304,7 +304,8 @@ pub fn run() -> ExitCode {
                     let _ = sender.send(answer);
                 }
             }
-            Err(err) => protocol::error(format!("unreadable answer: {err}")),
+            // Not serde's message: it can quote the value, and that may be a PIN.
+            Err(_) => protocol::error(format!("unreadable answer: {}", protocol::shape(&command))),
         });
         // stdin closed: the bar quit or reloaded.
         std::process::exit(0);

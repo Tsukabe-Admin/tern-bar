@@ -105,7 +105,10 @@ Scope {
                 try {
                     message = JSON.parse(line);
                 } catch (e) {
-                    console.warn("skua-helper " + job.name + " wrote a line that is not JSON:", line);
+                    // The line itself stays out of the log: a damaged one can
+                    // hold the start of a copied text.
+                    console.warn("skua-helper " + job.name + " wrote a line that is not JSON ("
+                        + line.length + " characters)");
                     return;
                 }
                 if (!message || typeof message !== "object")

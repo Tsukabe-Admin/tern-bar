@@ -39,6 +39,23 @@ pub fn error(message: impl Display) {
     emit(json!({"event": "error", "message": message.to_string()}));
 }
 
+/// What a command is made of, for an error message: its keys, never what they
+/// hold. A command can carry a copied text or a pairing code, and the bar
+/// writes error messages to its log.
+pub fn shape(command: &Value) -> String {
+    match command {
+        Value::Object(fields) => {
+            let keys: Vec<&str> = fields.keys().map(String::as_str).collect();
+            format!("{{{}}}", keys.join(", "))
+        }
+        Value::Null => "null".to_owned(),
+        Value::Bool(_) => "a boolean".to_owned(),
+        Value::Number(_) => "a number".to_owned(),
+        Value::String(_) => "a string".to_owned(),
+        Value::Array(_) => "a list".to_owned(),
+    }
+}
+
 /// Hands each of the bar's commands to `on_command` until stdin closes, then
 /// returns. Blank lines are skipped; a line that is not JSON is reported and
 /// skipped.
@@ -52,5 +69,19 @@ pub fn read_commands(mut on_command: impl FnMut(Value)) {
             Ok(command) => on_command(command),
             Err(err) => error(format!("unreadable command: {err}")),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_shape_of_a_command_names_its_keys_and_nothing_they_hold() {
+        let command = json!({"copyText": "hunter2", "extra": ["hunter3"]});
+        assert_eq!(shape(&command), "{copyText, extra}");
+        assert_eq!(shape(&json!("hunter2")), "a string");
+        assert_eq!(shape(&json!(["hunter2"])), "a list");
+        assert_eq!(shape(&json!(1234)), "a number");
     }
 }

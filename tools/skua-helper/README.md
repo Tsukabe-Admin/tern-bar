@@ -23,8 +23,10 @@ command again: the bar compares the version the helper reports with the one in t
 
 One JSON object per line, both ways: lines to the bar (stdout) carry an `"event"`, lines from the
 bar (stdin) are commands. The first line of every job is
-`{"event":"hello","job":"bluetooth","version":"0.1.0"}`. A problem the job carries on after is
-`{"event":"error","message":"..."}`; stderr is only for crashes. When the bar quits, reloads or no
+`{"event":"hello","job":"bluetooth","version":"0.1.1"}`. A problem the job carries on after is
+`{"event":"error","message":"..."}`; stderr is only for crashes. The bar writes error messages to
+its log, so a message names a command it could not use by its keys and never quotes what the
+command held (a copied text, a pairing code). When the bar quits, reloads or no
 longer wants a job, the job's stdin closes and it ends. The details are in `src/protocol.rs`; each
 job's own lines are described at the top of its file. On the bar's side, `singletons/HelperJob.qml`
 runs a job and starts it again if it stops (after 5 s, then 30 s, then every 5 minutes).

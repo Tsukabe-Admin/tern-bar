@@ -34,8 +34,10 @@ Singleton {
     property real activeCutHeight: 0
     property real activeCutRadius: 0
     property real activeCutWing: 0
-    // A power action waiting for its confirming second Enter, or "".
+    // An action waiting for its confirming second Enter or click, or "", and
+    // when it began to wait (ms since 1970).
     property string armed: ""
+    property real armedAt: 0
 
     // Each bar's launcher pill, so a keyboard shortcut can still drop the card
     // from the pill on the focused screen.
@@ -346,17 +348,14 @@ Singleton {
     }
 
     // Pausing switches at once and the card stays open, so the row shows the
-    // new state. Clearing everything needs a second Enter within 3 s, as Reboot
-    // does.
+    // new state. Clearing everything needs a second Enter or click within 3 s,
+    // as Reboot does.
     function runClipAction(action) {
         if (action === "clip-pause") {
             ClipboardHistory.setPaused(!ClipboardHistory.paused);
         } else if (action === "clip-clear") {
-            if (root.armed !== action) {
-                root.armed = action;
-                disarm.restart();
+            if (!root.confirmed(action))
                 return;
-            }
             root.unarm();
             ClipboardHistory.clear();
         }
@@ -432,6 +431,21 @@ Singleton {
         disarm.stop();
     }
 
+    // Whether this Enter or click on `action` confirms it. The first one only
+    // arms it. A later one confirms, unless it follows the arming within a
+    // double-click's time: both clicks of a double-click reach the row, and a
+    // double-click is one gesture, not a decision made twice. The action stays
+    // armed then, so one more Enter or click confirms it.
+    function confirmed(action) {
+        if (root.armed !== action) {
+            root.armed = action;
+            root.armedAt = Date.now();
+            disarm.restart();
+            return false;
+        }
+        return Date.now() - root.armedAt >= Qt.styleHints.mouseDoubleClickInterval;
+    }
+
     function activate(row) {
         if (!row)
             return;
@@ -468,11 +482,8 @@ Singleton {
         const p = root.powerActions.find((a) => a.key === key);
         if (!p)
             return;
-        if (p.confirm && root.armed !== key) {
-            root.armed = key;
-            disarm.restart();
+        if (p.confirm && !root.confirmed(key))
             return;
-        }
         root.close();
         const color = Theme.card.toString().slice(1, 7);
         const lock = Programs.has("swaylock")

@@ -2,7 +2,7 @@
 name = "skua-helper"
 # The bar compares this with the version a running helper reports, so bump it
 # whenever a job's lines change: a helper built before a `git pull` is noticed.
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Skua's background jobs: Bluetooth pairing questions, night light and clipboard history"
 license = "MIT"

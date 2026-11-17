@@ -75,7 +75,7 @@ use serde_json::{json, Value};
 use wayland_client::QueueHandle;
 
 use crate::protocol::{self, emit};
-use content::{Kind, SECRET_HINT, TEXT_TYPES};
+use content::{Kind, TEXT_TYPES};
 use import::{Cliphist, Old};
 use pipe::{Incoming, Outgoing, Pump};
 use store::{Added, Store};
@@ -259,7 +259,7 @@ fn added(added: Added) {
 impl Job {
     fn command(&mut self, command: Value) {
         let Ok(parsed) = Command::deserialize(&command) else {
-            protocol::error(format!("unknown command: {command}"));
+            protocol::error(format!("unknown command: {}", protocol::shape(&command)));
             return;
         };
         match parsed {
@@ -363,18 +363,20 @@ impl Job {
             return;
         }
         let types = offer.types();
-        let reading = if types.iter().any(|name| name == SECRET_HINT) {
-            None
-        } else {
-            match content::choose(&types) {
-                Some((kind, name)) => Some((kind, name.to_owned())),
+        // The password hint first, if the app offers one; else the content.
+        let (kind, name) = match content::secret_hint(&types) {
+            Some(hint) => (None, hint),
+            None => match content::choose(&types) {
+                Some((kind, name)) => (Some(kind), name),
                 None => {
                     offer.destroy();
                     skipped("unsupported");
                     return;
                 }
-            }
+            },
         };
+        let reading = kind.map(|kind| (kind, name.to_owned()));
+        let limit = kind.map_or(HINT_LIMIT, Kind::limit);
         self.serial += 1;
         let serial = self.serial;
         let timer =
@@ -387,10 +389,6 @@ impl Job {
             offer.destroy();
             protocol::error("cannot start a timer");
             return;
-        };
-        let (name, limit) = match &reading {
-            Some((kind, name)) => (name.as_str(), kind.limit()),
-            None => (SECRET_HINT, HINT_LIMIT),
         };
         match self.receive(&offer, name) {
             Ok(pipe) => {
