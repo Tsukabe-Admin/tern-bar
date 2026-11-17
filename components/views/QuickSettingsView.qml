@@ -570,9 +570,12 @@ Item {
                 leftPadding: 8
                 rightPadding: 8
                 wrapMode: Text.WordWrap
-                text: BluetoothAgent.active
-                    ? "Check that the device is still in pairing mode, then click it again."
-                    : "Check that the device is still in pairing mode, then click it again. A device that asks for a PIN code needs Skua's pairing helper; the README says how to install it."
+                text: "Check that the device is still in pairing mode, then click it again."
+                    + (!BluetoothAgent.active
+                        ? " A device that asks for a PIN code needs skua-helper, Skua's helper program; the README says how to install it."
+                        : BluetoothAgent.outdated
+                        ? " skua-helper is older than this copy of Skua: install it again (the README says how)."
+                        : "")
                 color: Theme.t3
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSize - 2

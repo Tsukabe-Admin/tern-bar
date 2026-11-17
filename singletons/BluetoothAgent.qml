@@ -2,25 +2,24 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import Quickshell.Bluetooth
 
 // Skua's Bluetooth pairing agent. A pairing can need a person: a PIN or a
 // passkey to type, a number to compare with the one on the device, "may this
 // device pair or connect?". BlueZ puts those questions to a pairing agent, and
-// Quickshell has none, so the bar runs tools/bt-agent (installed as
-// skua-bt-agent). It registers with BlueZ as the default agent and passes
-// each question here as one line of JSON (the format is described at the top of
-// tools/bt-agent/src/main.rs). BluetoothPrompt shows it, and the answer goes
-// back the same way.
+// Quickshell has none, so the bar runs `skua-helper bluetooth` (tools/skua-helper;
+// the lines it writes are described at the top of src/bluetooth.rs). It
+// registers with BlueZ as the default agent and passes each question here as one
+// line of JSON. BluetoothPrompt shows it, and the answer goes back the same way.
 //
-// Without the program, only devices that pair without a code can be paired
-// from the bar: BlueZ then has nobody to ask.
+// Without skua-helper, only devices that pair without a code can be paired from
+// the bar: BlueZ then has nobody to ask.
 Singleton {
     id: root
 
-    readonly property string program: "skua-bt-agent"
-    readonly property bool installed: Programs.has(root.program)
+    readonly property bool installed: helper.installed
+    // The helper was built from older sources than this copy of the bar.
+    readonly property bool outdated: helper.outdated
     // Registered with BlueZ: its questions come to the bar.
     property bool active: false
     // The question on screen, or null:
@@ -29,8 +28,6 @@ Singleton {
     // "service": yes or no. "show-pin" or "show-passkey": type this code on the
     // device itself; nothing to answer, and no id.
     property var prompt: null
-    // Starts of the helper that have failed since it last ran for a minute.
-    property int failures: 0
 
     function deviceFor(p) {
         if (!p)
@@ -61,7 +58,7 @@ Singleton {
         else
             reply.accept = value === true;
         root.prompt = null;
-        root.send(reply);
+        helper.send(reply);
     }
 
     // Closes the prompt without a yes. A question is refused (an answer without
@@ -73,28 +70,15 @@ Singleton {
             return;
         root.prompt = null;
         if (p.id !== undefined)
-            root.send({ id: p.id });
+            helper.send({ id: p.id });
         const device = root.deviceFor(p);
         if (device)
             BluetoothDevices.cancelPair(device);
     }
 
-    function send(reply) {
-        if (helper.running)
-            helper.write(JSON.stringify(reply) + "\n");
-    }
-
-    function handle(line) {
-        let message = null;
-        try {
-            message = JSON.parse(line);
-        } catch (e) {
-            console.warn("skua-bt-agent wrote a line that is not JSON:", line);
-            return;
-        }
+    function handle(message) {
         if (message.event === "ready") {
             root.active = true;
-            healthy.restart();
         } else if (message.event === "waiting") {
             root.active = false;
             root.prompt = null;
@@ -105,7 +89,7 @@ Singleton {
         } else if (message.event === "cancel") {
             root.prompt = null;
         } else if (message.event === "error") {
-            console.warn("skua-bt-agent:", message.message);
+            console.warn("skua-helper bluetooth:", message.message);
         }
     }
 
@@ -140,66 +124,13 @@ Singleton {
         }
     }
 
-    // ── The helper ─────────────────────────────────────────────────────────
-    // A helper that stops is started again after 5 s, then 30 s, then every
-    // 5 minutes: never in a loop. A minute of normal running resets that.
-
-    function start() {
-        if (!root.installed || helper.running)
-            return;
-        helper.running = true;
-        startCheck.restart();
-    }
-
-    function retry() {
-        const delays = [5000, 30000, 300000];
-        restartTimer.interval = delays[Math.min(root.failures, delays.length - 1)];
-        root.failures++;
-        restartTimer.restart();
-    }
-
-    Timer {
-        id: restartTimer
-        onTriggered: root.start()
-    }
-
-    // A program that cannot start at all sends no signal; this notices.
-    Timer {
-        id: startCheck
-        interval: 3000
-        onTriggered: {
-            if (!helper.running && !restartTimer.running)
-                root.retry();
-        }
-    }
-
-    Timer {
-        id: healthy
-        interval: 60000
-        onTriggered: root.failures = 0
-    }
-
-    Process {
+    HelperJob {
         id: helper
-        command: [root.program]
-        stdinEnabled: true
-        stdout: SplitParser {
-            onRead: (line) => root.handle(line)
-        }
-        // Only a crash writes here.
-        stderr: SplitParser {
-            onRead: (line) => console.warn("skua-bt-agent:", line)
-        }
-        onRunningChanged: {
-            if (helper.running)
-                return;
+        name: "bluetooth"
+        onReceived: (message) => root.handle(message)
+        onStopped: {
             root.active = false;
             root.prompt = null;
-            healthy.stop();
-            root.retry();
         }
     }
-
-    onInstalledChanged: root.start()
-    Component.onCompleted: root.start()
 }

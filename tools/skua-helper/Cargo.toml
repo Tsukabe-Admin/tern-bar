@@ -1,0 +1,20 @@
+[package]
+name = "skua-helper"
+# The bar compares this with the version a running helper reports, so bump it
+# whenever a job's lines change: a helper built before a `git pull` is noticed.
+version = "0.1.0"
+edition = "2021"
+description = "Skua's background jobs: Bluetooth pairing questions, night light and clipboard history"
+license = "MIT"
+publish = false
+
+[dependencies]
+async-io = "2"
+futures-channel = "0.3"
+futures-lite = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+zbus = "5"
+
+[profile.release]
+strip = true

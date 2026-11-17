@@ -149,7 +149,7 @@ Each one is only needed for the part it powers; the rest of the bar works withou
 | `systemd` (`systemctl`, `loginctl`, `busctl`, `udevadm`) | Suspend, Reboot and Power off; Lock when swaylock is missing; finding the power-profile service; backlight uevents |
 | `power-profiles-daemon`, UPower | the power profile switch; the system battery pill (hidden on desktops without a battery) |
 | BlueZ | the Bluetooth tile; finding, pairing, connecting and forgetting devices |
-| Rust (`cargo`), once, to build `tools/bt-agent` | pairing devices that ask for a PIN, a passkey or a number check (see **Bluetooth** below) |
+| Rust (`cargo`), once, to build `tools/skua-helper` | pairing devices that ask for a PIN, a passkey or a number check (see **Bluetooth** below) |
 | `blueman` (optional) | the "Bluetooth settings" button |
 | NetworkManager | the Wi-Fi tile and the list of Wi-Fi networks; `nm-connection-editor` for networks that need more than a password |
 | `pavucontrol`, PipeWire | right-click on volume or microphone; the volume and microphone pills and quick-settings controls, choosing the sound output and input |
@@ -311,17 +311,18 @@ which part of the bar, edit `matugen/palette.json`.
   connected. Click a paired device to connect or disconnect it; point at it for **Forget**, which asks
   for a second click. Devices that need no code (headphones, speakers, mice, game controllers) pair
   as they are. For the ones that ask for a PIN, a passkey or "does the device show this number?",
-  install the pairing helper once and restart the bar:
+  install Skua's helper program once and restart the bar:
 
   ```bash
-  cargo install --path tools/bt-agent --root ~/.local    # puts skua-bt-agent in ~/.local/bin
+  cargo install --path tools/skua-helper --root ~/.local    # puts skua-helper in ~/.local/bin
   ```
 
   The bar then shows each question in a small window under the bar (on its own, too, when a device
   asks to pair or connect while the card is closed). Nothing is accepted without your click or the
   code you type. While the bar runs, the helper is your computer's Bluetooth pairing agent, and BlueZ
   keeps the adapter pairable; it is never made discoverable. `~/.local/bin` has to be on the `PATH`
-  the bar starts with. See `tools/bt-agent/README.md`.
+  the bar starts with. After a `git pull` that changes the helper, run the same command again; the
+  Bluetooth list says when the installed one is older. See `tools/skua-helper/README.md`.
 - **Your IP stays hidden:** the network pill shows only the Wi-Fi name until you click it; click
   again to hide the IP. The choice is the file `~/.local/state/skua/show_ip`.
 - **Weather lookup:** the weather pill is on by default and asks a geolocation service
@@ -366,7 +367,7 @@ assets/ascii/           text frames for the ASCII pill and the launcher's empty 
 assets/logo/            the logo: app icon, the bird alone, and the heading for light and dark pages
 tests/                  unit tests for the script libraries (node --test tests/)
 tools/ascii/            generator for those frames and for animated ASCII wallpapers (needs node)
-tools/bt-agent/         the Bluetooth pairing helper, in Rust (see Bluetooth above)
+tools/skua-helper/      Skua's helper program, in Rust: Bluetooth pairing (see Bluetooth above)
 tools/build-shaders.sh  rebuilds the compiled shaders after a change to their sources
 ```
 
@@ -387,11 +388,12 @@ git -C ~/.config/quickshell/skua remote set-url origin https://github.com/Tsukab
 Then, in your niri or Hyprland config, change every `-c tern-bar` to `-c skua` and the settings
 window's title rule to `^skua settings$`. Rename any `TERN_BAR_…` variable you set to `SKUA_…`, and
 in a matugen template `[templates.tern-bar]` becomes `[templates.skua]` with the new paths. If you
-installed the Bluetooth pairing helper, install it again under its new name and remove the old one:
+installed the Bluetooth pairing helper, install Skua's helper program in its place and remove the old
+one:
 
 ```bash
-cargo install --path ~/.config/quickshell/skua/tools/bt-agent --root ~/.local
-rm ~/.local/bin/tern-bar-bt-agent
+cargo install --path ~/.config/quickshell/skua/tools/skua-helper --root ~/.local
+rm -f ~/.local/bin/tern-bar-bt-agent ~/.local/bin/skua-bt-agent
 ```
 
 Start the bar with `quickshell -c skua` (or log out and in again).

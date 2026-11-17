@@ -1,13 +1,13 @@
-//! skua-bt-agent: answers BlueZ's pairing questions for Skua.
+//! `skua-helper bluetooth`: answers BlueZ's pairing questions for Skua.
 //!
 //! BlueZ, the Linux Bluetooth service, hands every question a pairing can
 //! raise to a "pairing agent": a PIN to type, a passkey, "does the device show
 //! 123456?", "may this device pair or connect?". Quickshell has no agent, so
-//! Skua starts this program. It registers with BlueZ as the default agent
-//! and passes each question to the bar as one line of JSON on stdout; the bar
+//! Skua starts this job. It registers with BlueZ as the default agent and
+//! passes each question to the bar as one line of JSON on stdout; the bar
 //! shows it and writes the answer back as one line of JSON on stdin.
 //!
-//! To the bar (stdout), one object per line:
+//! To the bar (stdout), after the hello line (protocol.rs), one object per line:
 //!
 //! ```text
 //! {"event":"ready"}      registered with BlueZ: the questions come here now
@@ -22,15 +22,15 @@
 //! {"event":"show","kind":"pin"|"passkey","device":PATH,"address":ADDR,"code":"012345","entered":3}
 //!     type this code on the device itself; nothing to answer
 //! {"event":"cancel"}     BlueZ withdrew its question (it waits one minute at most)
-//! {"event":"error","message":"..."}   something failed; the program goes on
+//! {"event":"error","message":"..."}   something failed; the job goes on
 //! ```
 //!
-//! An answer without a value, or with an empty PIN, refuses. The program ends
-//! when stdin closes (the bar quit or reloaded), and BlueZ forgets an agent
-//! whose connection has gone.
+//! An answer without a value, or with an empty PIN, refuses. The job ends when
+//! stdin closes (the bar quit or reloaded), and BlueZ forgets an agent whose
+//! connection has gone.
 
 use std::collections::HashMap;
-use std::io::{BufRead, Write};
+use std::process::ExitCode;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -41,6 +41,8 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use zbus::zvariant::{ObjectPath, OwnedObjectPath};
 use zbus::{fdo, interface, proxy, Connection};
+
+use crate::protocol::{self, emit};
 
 /// Where the agent lives on the bus. Any path works; BlueZ is told this one.
 const AGENT_PATH: &str = "/org/skua/agent";
@@ -74,15 +76,6 @@ type Waiting = Arc<Mutex<HashMap<u64, oneshot::Sender<Answer>>>>;
 struct Agent {
     waiting: Waiting,
     next_id: AtomicU64,
-}
-
-/// Writes one line for the bar.
-fn emit(line: Value) {
-    let mut out = std::io::stdout().lock();
-    // If the bar has gone, stdin has closed too and the program is about to
-    // end, so a failed write needs nothing more.
-    let _ = writeln!(out, "{line}");
-    let _ = out.flush();
 }
 
 /// "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF" gives "AA:BB:CC:DD:EE:FF".
@@ -157,8 +150,8 @@ impl Agent {
 /// zbus turns each name into the D-Bus one: request_pin_code is RequestPinCode.
 #[interface(name = "org.bluez.Agent1")]
 impl Agent {
-    /// BlueZ no longer uses this agent because it is stopping. run() registers
-    /// again when it is back.
+    /// BlueZ no longer uses this agent because it is stopping. run_agent()
+    /// registers again when it is back.
     fn release(&self) {
         self.cancel_all();
         emit(json!({"event": "waiting"}));
@@ -262,12 +255,11 @@ async fn register_with_retries(connection: &Connection) {
         async_io::Timer::after(Duration::from_secs(1)).await;
     }
     if let Some(err) = last_error {
-        let message = format!("could not register with BlueZ: {err}");
-        emit(json!({"event": "error", "message": message}));
+        protocol::error(format!("could not register with BlueZ: {err}"));
     }
 }
 
-async fn run(waiting: Waiting) -> zbus::Result<()> {
+async fn run_agent(waiting: Waiting) -> zbus::Result<()> {
     let agent = Agent {
         waiting,
         next_id: AtomicU64::new(1),
@@ -297,36 +289,31 @@ async fn run(waiting: Waiting) -> zbus::Result<()> {
     }
 }
 
-fn main() {
+pub fn run() -> ExitCode {
+    protocol::hello("bluetooth");
     let waiting: Waiting = Arc::default();
     let answers = Arc::clone(&waiting);
     // The bar's answers arrive on stdin. A plain thread reads them and hands
     // each one to the question waiting for it.
     std::thread::spawn(move || {
-        for line in std::io::stdin().lock().lines() {
-            let Ok(line) = line else { break };
-            if line.trim().is_empty() {
-                continue;
-            }
-            match serde_json::from_str::<Answer>(&line) {
-                // An answer that arrives after BlueZ withdrew its question has
-                // nobody waiting for it, and is dropped.
-                Ok(answer) => {
-                    if let Some(sender) = answers.lock().unwrap().remove(&answer.id) {
-                        let _ = sender.send(answer);
-                    }
-                }
-                Err(err) => {
-                    let message = format!("unreadable answer: {err}");
-                    emit(json!({"event": "error", "message": message}));
+        protocol::read_commands(|command| match serde_json::from_value::<Answer>(command) {
+            // An answer that arrives after BlueZ withdrew its question has
+            // nobody waiting for it, and is dropped.
+            Ok(answer) => {
+                if let Some(sender) = answers.lock().unwrap().remove(&answer.id) {
+                    let _ = sender.send(answer);
                 }
             }
-        }
+            Err(err) => protocol::error(format!("unreadable answer: {err}")),
+        });
         // stdin closed: the bar quit or reloaded.
         std::process::exit(0);
     });
-    if let Err(err) = async_io::block_on(run(waiting)) {
-        emit(json!({"event": "error", "message": err.to_string()}));
-        std::process::exit(1);
+    match async_io::block_on(run_agent(waiting)) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(err) => {
+            protocol::error(err);
+            ExitCode::FAILURE
+        }
     }
 }
