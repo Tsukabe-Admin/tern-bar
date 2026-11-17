@@ -17,7 +17,7 @@ import ".."
 // pair, connect/disconnect, forget; see BluetoothDevices) and links to the
 // full settings apps.
 // A tile or slider whose hardware/service is missing is hidden; night light
-// without wlsunset says what to install.
+// without skua-helper says what to install.
 Item {
     id: view
 

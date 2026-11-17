@@ -140,16 +140,14 @@ Each one is only needed for the part it powers; the rest of the bar works withou
 |---|---|
 | `awww` (and its `awww-daemon`) | setting the wallpaper (Wallpaper tab) |
 | `matugen` | colours taken from the wallpaper (the built-in themes don't need it) |
-| `cliphist`, `wl-clipboard` | clipboard history in the launcher (with `wl-paste --watch cliphist store` running); copying calculator answers |
 | `swaylock` | Lock and Suspend (without it `loginctl lock-session` is sent instead, which only locks if a screen locker is listening for it) |
-| `wlsunset` | night light |
 | `brightnessctl`, `/sys/class/backlight` | the screen brightness slider in quick settings and the brightness OSD (hidden when no backlight device exists) |
 | `checkupdates` (`pacman-contrib`), `paru` or `yay` | the package updates pill (hidden when 0 updates are pending or `pacman` is absent); a click runs the upgrade with `paru`, `yay` or `sudo pacman -Syu` |
 | a terminal: `$TERMINAL`, else the first of `xdg-terminal-exec`, `kitty`, `foot`, `alacritty`, `ghostty`, `wezterm` | the upgrade started from the updates pill (without one the click does nothing), and launcher entries that run in a terminal |
 | `systemd` (`systemctl`, `loginctl`, `busctl`, `udevadm`) | Suspend, Reboot and Power off; Lock when swaylock is missing; finding the power-profile service; backlight uevents |
 | `power-profiles-daemon`, UPower | the power profile switch; the system battery pill (hidden on desktops without a battery) |
 | BlueZ | the Bluetooth tile; finding, pairing, connecting and forgetting devices |
-| Rust (`cargo`), once, to build `tools/skua-helper` | pairing devices that ask for a PIN, a passkey or a number check (see **Bluetooth** below) |
+| Rust (`cargo`), once, to build `tools/skua-helper` | night light; clipboard history in the launcher and copying calculator answers; pairing devices that ask for a PIN, a passkey or a number check (see **Night light**, **Launcher** and **Bluetooth** below) |
 | `blueman` (optional) | the "Bluetooth settings" button |
 | NetworkManager | the Wi-Fi tile and the list of Wi-Fi networks; `nm-connection-editor` for networks that need more than a password |
 | `pavucontrol`, PipeWire | right-click on volume or microphone; the volume and microphone pills and quick-settings controls, choosing the sound output and input |
@@ -282,10 +280,13 @@ which part of the bar, edit `matugen/palette.json`.
 - **Launcher:** click the launcher pill (or Mod+Space). Type to search apps and open windows; type
   a sum like `2*(3+4)` to see the answer (Enter copies it; whole numbers are exact up to
   9,007,199,254,740,991, anything larger or with a fraction is shown to 10 significant digits); start
-  with `;` to search clipboard history. Up/Down pick, Enter opens, Esc clears and then closes. Apps
-  you open often move to the top (counts in `~/.local/state/skua/launcher.json`). The ⏻ button
-  opens the power actions; Log out, Reboot and Power off need a second Enter (or click) within 3
-  seconds. Holding Enter down does not count, and moving the selection or typing cancels it.
+  with `;` to search clipboard history: the last 500 texts and images you copied, kept by Skua's
+  helper program in `~/.local/state/skua/clipboard` (readable only by you). Passwords a password
+  manager marks secret are left out, and an existing cliphist history is imported the first time.
+  Up/Down pick, Enter opens, Esc clears and then closes. Apps you open often move to the top (counts
+  in `~/.local/state/skua/launcher.json`). The ⏻ button opens the power actions; Log out, Reboot and
+  Power off need a second Enter (or click) within 3 seconds. Holding Enter down does not count, and
+  moving the selection or typing cancels it.
 - **Quick settings:** the sliders button in the right-hand pill. **Calendar:** click the clock.
 - **Wi-Fi:** in quick settings, the networks around are listed while the card is open (the radio only
   scans then). Click one to connect; one that needs a password asks for it in a small window under the
@@ -298,6 +299,10 @@ which part of the bar, edit `matugen/palette.json`.
 - **Keep awake:** the coffee tile in quick settings stops the screen from dimming, locking or sleeping
   on its own. A coffee cup in the right-hand pill shows it is on (click it to turn it off), and it is
   off again after a restart of the bar.
+- **Night light:** the moon tile in quick settings warms every screen to 4000 K through Skua's helper
+  program, using the compositor's gamma control (niri and Hyprland both have it). Only one program
+  can set a screen's colours at a time: if wlsunset, gammastep or hyprsunset starts at login, remove
+  it, or the tile says "No gamma control".
 - **Notifications:** new ones pop up in the top-right corner of the focused screen. One stays as long
   as its app asks, else 6 seconds (3 for low-priority ones); critical ones stay until you close them,
   and the pointer over one keeps it up. Click one for its app's default action, × to dismiss it. The
@@ -367,7 +372,7 @@ assets/ascii/           text frames for the ASCII pill and the launcher's empty 
 assets/logo/            the logo: app icon, the bird alone, and the heading for light and dark pages
 tests/                  unit tests for the script libraries (node --test tests/)
 tools/ascii/            generator for those frames and for animated ASCII wallpapers (needs node)
-tools/skua-helper/      Skua's helper program, in Rust: Bluetooth pairing (see Bluetooth above)
+tools/skua-helper/      Skua's helper program, in Rust: night light, clipboard history, Bluetooth pairing
 tools/build-shaders.sh  rebuilds the compiled shaders after a change to their sources
 ```
 
@@ -387,9 +392,10 @@ git -C ~/.config/quickshell/skua remote set-url origin https://github.com/Tsukab
 
 Then, in your niri or Hyprland config, change every `-c tern-bar` to `-c skua` and the settings
 window's title rule to `^skua settings$`. Rename any `TERN_BAR_…` variable you set to `SKUA_…`, and
-in a matugen template `[templates.tern-bar]` becomes `[templates.skua]` with the new paths. If you
-installed the Bluetooth pairing helper, install Skua's helper program in its place and remove the old
-one:
+in a matugen template `[templates.tern-bar]` becomes `[templates.skua]` with the new paths. If your
+compositor starts `wl-paste --watch cliphist store` or wlsunset, remove those lines: Skua keeps the
+clipboard history itself now (it imports cliphist's once) and runs night light itself. Install
+Skua's helper program, and remove the old Bluetooth helper if you had one:
 
 ```bash
 cargo install --path ~/.config/quickshell/skua/tools/skua-helper --root ~/.local

@@ -5,9 +5,11 @@ import Quickshell.Io
 // One job of skua-helper (`skua-helper <name>`), run as a process of its own
 // for as long as `wanted` is true and the program is installed. Each line it
 // writes is one JSON object: the first, {"event":"hello", "version": ...}, is
-// read here; every other one arrives as received(message). send(message) writes
-// one line to it. The job ends when its stdin closes, so stopping the process
-// (wanted turned false, or the bar reloads) is all it takes.
+// read here; every other one arrives as received(message). A list inside a
+// message reaches the handler as a Qt sequence, not a JS array (Array.isArray
+// is false): copy it with Array.from before using array methods. send(message)
+// writes one line to it. Quickshell ends the process (SIGTERM) when `wanted`
+// turns false or the bar reloads, which ends the job.
 //
 // A job that stops on its own is started again after 5 s, then 30 s, then every
 // 5 minutes, never in a loop; a minute of running resets that.

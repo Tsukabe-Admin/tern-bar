@@ -43,6 +43,9 @@ edit, it keeps running the old code — restart it with
 - `/usr/lib/qt6/bin/qmllint -I /usr/lib/qt6/qml -I . shell.qml components/*.qml components/views/*.qml singletons/*.qml`
   must not report an error (the path is Arch's; qmllint comes with Qt's declarative tools). It
   prints a couple of hundred warnings about Quickshell types it cannot see; those are expected.
+- `tools/skua-helper` (Rust): `cargo test`, `cargo clippy --all-targets -- -D warnings` and
+  `cargo fmt --check` from that folder. Its README says how each job is checked without touching
+  your own session, and when to bump its version.
 - The Frame look's shadows are two GLSL shaders in `shaders/`. The bar loads the compiled
   `.frag.qsb` files, not the sources, so after editing a `.frag` run `tools/build-shaders.sh` and
   commit both. `tools/build-shaders.sh --check` says whether the compiled files match their sources.
