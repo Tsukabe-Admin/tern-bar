@@ -22,9 +22,9 @@ Scope {
     // What the running job said in its hello line; "" before that.
     property string version: ""
     // Built from older sources than this copy of the bar: a `git pull` without
-    // a reinstall. The job still runs; whoever shows it should say so.
-    readonly property bool outdated: job.version !== "" && SkuaHelper.expectedVersion !== ""
-        && job.version !== SkuaHelper.expectedVersion
+    // a reinstall. The job may still run; whoever shows it should say so.
+    readonly property bool outdated: SkuaHelper.outdated || (job.version !== ""
+        && SkuaHelper.expectedVersion !== "" && job.version !== SkuaHelper.expectedVersion)
     // Starts that have failed since it last ran for a minute.
     property int failures: 0
     // Stopped on purpose and not ended yet: when it ends that is no failure,
@@ -43,6 +43,7 @@ Scope {
     function start() {
         if (!job.wanted || !job.installed || proc.running || job.stopping)
             return;
+        SkuaHelper.recheck();
         proc.running = true;
         startCheck.restart();
     }
