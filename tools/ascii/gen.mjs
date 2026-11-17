@@ -113,9 +113,9 @@ function mix(a, b, amount) {
     return hex(from.map((c, i) => c + (to[i] - c) * amount));
 }
 
-// The bar's colours, for `--palette theme`. scripts/theme-sync.sh writes them to
-// palette.json in the state folder, the same one singletons/BarConfig.qml and
-// the scripts work out. Until a theme has been applied that file does not exist
+// The bar's colours, for `--palette theme`. The Wallpaper tab's recolour writes
+// them to palette.json in the state folder, the same one singletons/BarConfig.qml
+// and the scripts work out. Until a theme has been applied that file does not exist
 // and the bar shows the fallbacks in singletons/Theme.qml, so they are used here
 // too: keep the four in step with that file.
 const THEME_FALLBACK = { card: "#050F16", faint: "#263238", accent: "#2979FF", live: "#00E5FF" };

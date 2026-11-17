@@ -519,13 +519,11 @@ Singleton {
             return;
         }
 
+        // 127: no matugen; 4: no image, or it is gone; 1: matugen failed (its own
+        // exit code is not passed on, so it can never be mistaken for the other
+        // two). matugen is checked first, so its message is the one shown when
+        // both are missing, as before.
         const image = s.wallpapers["*"] || "";
-        if (image === "") {
-            root.finishThemeSync("Choose an All screens wallpaper first, or pick a theme");
-            return;
-        }
-        // 127: no matugen; 4: the image is gone; 1: matugen failed (its own exit
-        // code is not passed on, so it can never be mistaken for the other two).
         matugenProcess.label = image.slice(image.lastIndexOf("/") + 1);
         matugenProcess.command = ["sh", "-c",
             "command -v matugen >/dev/null 2>&1 || exit 127; [ -f \"$1\" ] || exit 4; shift; matugen \"$@\" || exit 1",
@@ -543,8 +541,8 @@ Singleton {
             root.finishThemeSync("Couldn't recolour: matugen's colour data was not readable");
             return false;
         }
-        colorsFile.setText(text);
-        paletteFile.setText(JSON.stringify(palette, null, 2) + "\n");
+        root.writeFile(colorsFile, root.colorsPath, text);
+        root.writeFile(paletteFile, BarConfig.palettePath, JSON.stringify(palette, null, 2) + "\n");
         if (root.saveFailure !== "") {
             root.finishThemeSync("");
             return false;
@@ -552,6 +550,16 @@ Singleton {
         root.themeLabel = label;
         Theme.reloadPalette();
         return true;
+    }
+
+    // FileView skips a write whose text equals what it last wrote, even when the
+    // file has since been deleted, changed by another program, or that write
+    // failed (measured on Quickshell 0.3.2). Pointed at the file afresh, it has
+    // only what is on disk to compare with, so the write always lands.
+    function writeFile(view, path, text) {
+        view.path = "";
+        view.path = path;
+        view.setText(text);
     }
 
     function runThemeHook() {
@@ -609,9 +617,10 @@ Singleton {
         }
     }
 
+    // No path until writeFile() gives one, so neither file is read for nothing at start.
     FileView {
         id: colorsFile
-        path: root.colorsPath
+        blockLoading: true
         blockWrites: true
         atomicWrites: true
         printErrors: false
@@ -620,7 +629,7 @@ Singleton {
 
     FileView {
         id: paletteFile
-        path: BarConfig.palettePath
+        blockLoading: true
         blockWrites: true
         atomicWrites: true
         printErrors: false

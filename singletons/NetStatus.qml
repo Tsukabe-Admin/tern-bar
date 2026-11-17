@@ -98,11 +98,19 @@ Singleton {
         onExited: (exitCode, exitStatus) => root.refresh()
     }
 
+    // Every 4 s: the full refresh while the pill is on the bar, else only a look
+    // at the mask file. Its watcher cannot exist when the state folder appeared
+    // after the bar started (a first run), and Mod+P must still be confirmed.
     Timer {
         interval: 4000
         repeat: true
-        running: root.wanted
-        onTriggered: root.refresh()
+        running: true
+        onTriggered: {
+            if (root.wanted)
+                root.refresh();
+            else
+                maskFile.reload();
+        }
     }
 
     onWantedChanged: {
