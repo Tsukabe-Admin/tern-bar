@@ -37,9 +37,11 @@ ShellRoot {
     LauncherWindow {}
 
     // Volume and Brightness OSDs: one surface each for the whole shell, shown
-    // near the bottom of the focused screen when volume or brightness changes.
+    // near the bottom of the focused screen when volume or brightness changes,
+    // and the same kind of surface for the bar's own short messages (Notice).
     VolumeOsd {}
     BrightnessOsd {}
+    NoticeOsd {}
 
     // Questions BlueZ asks during a pairing (a PIN, a number to compare), when
     // the pairing helper is installed, and the Wi-Fi password: one window each
@@ -158,10 +160,12 @@ ShellRoot {
     // the rotation timer and the screen hotplug handler would not exist until
     // the Wallpaper tab had been opened once. NightLight, Brightness, Weather
     // and Updates likewise; the notification server has to own its bus name
-    // from the start, whatever the bar shows. The list of installed apps is
-    // read the same way: started by the first launcher opening, it arrived
-    // while the card was already up, and the selection followed whichever app
-    // had been first in the half-read list, several rows down.
+    // from the start, whatever the bar shows; and NetStatus watches the IP mask,
+    // whose change (Mod+P) gets a message even with the network pill hidden. The
+    // list of installed apps is read the same way: started by the first launcher
+    // opening, it arrived while the card was already up, and the selection
+    // followed whichever app had been first in the half-read list, several rows
+    // down.
     Component.onCompleted: {
         Wallpaper.rescan();
         NightLight.available;
@@ -169,6 +173,7 @@ ShellRoot {
         Weather.wanted;
         Updates.wanted;
         Notifications.dnd;
+        NetStatus.ipShown;
         DesktopEntries.applications;
     }
 }

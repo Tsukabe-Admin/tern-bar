@@ -7,6 +7,7 @@ singleton Poke 1.0 Poke.qml
 singleton Wallpaper 1.0 Wallpaper.qml
 singleton Programs 1.0 Programs.qml
 singleton NetStatus 1.0 NetStatus.qml
+singleton Notice 1.0 Notice.qml
 singleton SysStats 1.0 SysStats.qml
 singleton Popups 1.0 Popups.qml
 singleton Notifications 1.0 Notifications.qml

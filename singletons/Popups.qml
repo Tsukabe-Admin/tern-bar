@@ -15,7 +15,7 @@ Singleton {
     property string screenName: ""
     // Selected MPRIS player's dbusName when multiple players are active.
     property string preferredPlayer: ""
-    // Active bottom-docked OSD spans by key ("volume" / "brightness") -> { screenName, spanWidth }.
+    // Active bottom-docked OSD spans by key ("volume" / "brightness" / "notice") -> { screenName, spanWidth }.
     property var osdDocks: ({})
 
     function reportOsdDock(key, screenName, active, spanWidth) {

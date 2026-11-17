@@ -10,7 +10,8 @@ import Quickshell.Io
 //
 // The mask is one state file ($XDG_STATE_HOME/skua/show_ip), so the pill
 // both watches it and re-reads right after its own toggle: a toggle from
-// anywhere (this pill, Mod+P) shows up at once instead of at the next poll.
+// anywhere (this pill, Mod+P) shows up at once instead of at the next poll,
+// and is confirmed with the bar's own message ("IP address hidden").
 Singleton {
     id: root
 
@@ -24,7 +25,23 @@ Singleton {
 
     property bool recheck: false
 
+    // Whether the IP is shown (the mask file exists), or null until the file has
+    // been looked at once. Only a change after that first look is announced, so
+    // starting the bar says nothing.
+    property var ipShown: null
+
+    function maskSeen(shown) {
+        if (root.ipShown !== null && shown !== root.ipShown) {
+            Notice.show(shown ? "\u{F0208}" : "\u{F0209}",
+                shown ? "IP address shown" : "IP address hidden");
+        }
+        root.ipShown = shown;
+    }
+
     function refresh() {
+        // The poll looks at the mask file too: its watcher needs the state folder
+        // to have existed when the bar started, which a fresh install's has not.
+        maskFile.reload();
         // A request that lands while the helper is still running (the toggle
         // just exited, or the state file changed) must not be dropped.
         if (fetch.running)
@@ -62,13 +79,15 @@ Singleton {
 
     // Same watcher contract as Theme.qml's palette: the file's folder has to
     // exist when the bar starts, and the file itself may be absent (that is
-    // the "IP hidden" state).
+    // the "IP hidden" state). A deleted file reports loadFailed, not loaded.
     FileView {
         id: maskFile
         path: BarConfig.stateDir + "/show_ip"
         watchChanges: true
         printErrors: false
         onFileChanged: root.refresh()
+        onLoaded: root.maskSeen(true)
+        onLoadFailed: (error) => root.maskSeen(false)
     }
 
     // The pill's own click: re-read the moment the toggle exits, so the
