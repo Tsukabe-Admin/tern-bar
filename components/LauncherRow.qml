@@ -3,8 +3,9 @@ import Quickshell
 import "../singletons"
 
 // One launcher result: icon (or glyph), title, subtitle. The keyboard-selected
-// row is tinted with the accent; hover only brightens. A power action waiting
-// for its second Enter turns red and says "again to confirm".
+// row is tinted with the accent; hover only brightens. An action waiting for
+// its second Enter (a power action, or clearing the clipboard history) turns
+// red and says "again to confirm".
 Item {
     id: row
 
@@ -14,7 +15,7 @@ Item {
 
     signal activated
 
-    readonly property bool armed: row.modelData.kind === "power" && Launcher.armed === row.modelData.action
+    readonly property bool armed: Launcher.armed !== "" && Launcher.armed === row.modelData.action
     readonly property string iconSource: row.modelData.icon ? Quickshell.iconPath(row.modelData.icon, true) : ""
 
     width: ListView.view ? ListView.view.width : 0

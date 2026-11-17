@@ -283,6 +283,8 @@ which part of the bar, edit `matugen/palette.json`.
   with `;` to search clipboard history: the last 500 texts and images you copied, kept by Skua's
   helper program in `~/.local/state/skua/clipboard` (readable only by you). Passwords a password
   manager marks secret are left out, and an existing cliphist history is imported the first time.
+  Shift+Delete removes the selected entry; the last rows pause the history or clear it (clearing
+  asks for a second Enter).
   Up/Down pick, Enter opens, Esc clears and then closes. Apps you open often move to the top (counts
   in `~/.local/state/skua/launcher.json`). The ⏻ button opens the power actions; Log out, Reboot and
   Power off need a second Enter (or click) within 3 seconds. Holding Enter down does not count, and
@@ -301,8 +303,8 @@ which part of the bar, edit `matugen/palette.json`.
   off again after a restart of the bar.
 - **Night light:** the moon tile in quick settings warms every screen to 4000 K through Skua's helper
   program, using the compositor's gamma control (niri and Hyprland both have it). Only one program
-  can set a screen's colours at a time: if wlsunset, gammastep or hyprsunset starts at login, remove
-  it, or the tile says "No gamma control".
+  can set a screen's colours at a time: if wlsunset or gammastep starts at login, remove it, or the
+  tile says "No gamma control". hyprsunset would tint on top of night light instead: turn it off.
 - **Notifications:** new ones pop up in the top-right corner of the focused screen. One stays as long
   as its app asks, else 6 seconds (3 for low-priority ones); critical ones stay until you close them,
   and the pointer over one keeps it up. Click one for its app's default action, × to dismiss it. The

@@ -61,9 +61,10 @@ line saying, for each screen by name, whether it is `applied`, `refused` or `wai
 light off ends the job, and the compositor gives every screen its own colours back as soon as the
 job's gamma controls are gone.
 
-- Only one program at a time can set a screen's colours. If wlsunset, gammastep, hyprsunset or
-  another night light already holds a screen, that screen is `refused`; the quick-settings tile says
-  "No gamma control" when every screen is.
+- Only one program at a time can set a screen's colours. If wlsunset, gammastep or another
+  gamma-control night light already holds a screen, that screen is `refused`; the quick-settings
+  tile says "No gamma control" when every screen is. hyprsunset is different: it tints through
+  Hyprland's own colour-matrix protocol, so it is not refused and both tints add up. Turn it off.
 - The colours are wlsunset 0.4.0's, computed the same way (`src/gamma.rs`), so 4000 K looks the
   same as it did with wlsunset. The tests in that file compare every value with numbers from
   wlsunset's own C code.
@@ -88,10 +89,12 @@ compositor's *data-control* protocol (`ext_data_control_manager_v1`, or the olde
 
 The history is in `~/.local/state/skua/clipboard` (`$XDG_STATE_HOME/skua/clipboard`): an
 `index.json` and one file per entry, readable only by you (folder 0700, files 0600). It is kept as
-plain files, like cliphist's: the secret hint, the size limits, pausing and clearing are its only
-protections. When the launcher puts an entry back on the clipboard, this job holds it and answers
-every paste itself, so `wl-copy` is not needed. Like anything on a Wayland clipboard, it is gone
-when the program holding it ends: a bar restart empties a clipboard the history had filled.
+plain files, like cliphist's: the secret hint and the size limits keep things out, and in the
+launcher Shift+Delete removes an entry and the last rows of the list pause the history or clear it
+(clearing asks for a second Enter). When the launcher puts an entry back on the clipboard, this job
+holds it and answers every paste itself, so `wl-copy` is not needed. Like anything on a Wayland
+clipboard, it is gone when the program holding it ends: a bar restart empties a clipboard the
+history had filled.
 
 The first time it runs, the bar asks it to import the newest 500 entries of an existing cliphist
 history (`cliphist list` and `cliphist decode`, so cliphist must still be installed then); it

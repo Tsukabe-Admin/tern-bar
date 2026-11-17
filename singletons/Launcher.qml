@@ -163,7 +163,8 @@ Singleton {
     // ── Results ────────────────────────────────────────────────────────────
     // Row: { kind, key, title, subtitle, icon, glyph, … } where kind is one of
     // "app" (entry), "window" (windowId), "calc" (value), "clip" (clipId),
-    // "power" (action) or "info" (not activatable).
+    // "clipaction" (action: pausing or clearing the history), "power" (action)
+    // or "info" (not activatable).
     readonly property var results: root.open ? root.compute() : []
 
     function compute() {
@@ -312,7 +313,53 @@ Singleton {
                 icon: "", glyph: image ? "\uf03e" : "\uf0ea"
             });
         }
+        // The history's own controls come after its entries (Up from the first
+        // row reaches them), and only for the whole list, not in a search. An
+        // empty history starts with a row Enter does nothing on, so Enter on a
+        // bare ";" never pauses or clears by accident.
+        if (q !== "")
+            return rows;
+        if (items.length === 0)
+            rows.push(root.clipNote("info:clip-empty", "Nothing copied yet",
+                ClipboardHistory.paused ? "The history is paused" : "Texts and images you copy appear here"));
+        rows.push({
+            kind: "clipaction", key: "clipaction:pause", action: "clip-pause",
+            title: ClipboardHistory.paused ? "Resume clipboard history" : "Pause clipboard history",
+            subtitle: ClipboardHistory.paused ? "Paused: new copies are not kept"
+                : "Keep no new copies until you resume",
+            icon: "", glyph: ClipboardHistory.paused ? "\uf04b" : "\uf04c"
+        });
+        if (items.length > 0)
+            rows.push({
+                kind: "clipaction", key: "clipaction:clear", action: "clip-clear",
+                title: "Clear clipboard history",
+                subtitle: "Deletes all " + items.length + " entries; Shift+Delete removes only the selected one",
+                icon: "", glyph: "\uf1f8"
+            });
         return rows;
+    }
+
+    // Shift+Delete on an entry: it goes from the history and from the disk.
+    function removeClip(row) {
+        if (row && row.kind === "clip")
+            ClipboardHistory.remove(row.clipId);
+    }
+
+    // Pausing switches at once and the card stays open, so the row shows the
+    // new state. Clearing everything needs a second Enter within 3 s, as Reboot
+    // does.
+    function runClipAction(action) {
+        if (action === "clip-pause") {
+            ClipboardHistory.setPaused(!ClipboardHistory.paused);
+        } else if (action === "clip-clear") {
+            if (root.armed !== action) {
+                root.armed = action;
+                disarm.restart();
+                return;
+            }
+            root.unarm();
+            ClipboardHistory.clear();
+        }
     }
 
     // Why there is no history to show, or null when there is one.
@@ -409,6 +456,8 @@ Singleton {
         } else if (row.kind === "clip") {
             ClipboardHistory.copy(row.clipId);
             root.close();
+        } else if (row.kind === "clipaction") {
+            root.runClipAction(row.action);
         } else if (row.kind === "power") {
             root.runPower(row.action);
         }

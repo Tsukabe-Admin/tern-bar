@@ -25,6 +25,11 @@ PanelWindow {
     // the search (mode and text) the list was last built for.
     property string selectedKey: ""
     property string builtFor: ""
+    // Where the selection was when Shift+Delete removed that clipboard entry, or
+    // -1. When the entry's row is gone from the rebuilt list, the selection
+    // stays at that place (on the next entry) instead of jumping to the top, so
+    // several entries can be removed one after another.
+    property int removing: -1
     readonly property int rowHeight: 44
     readonly property int maxRows: 8
 
@@ -222,11 +227,18 @@ PanelWindow {
             if (!win.selectArmed()) {
                 const at = sameSearch
                     ? Launcher.results.findIndex((row) => row.key === win.selectedKey) : -1;
-                win.selected = Math.max(0, at);
-                if (at > 0)
-                    list.positionViewAtIndex(at, ListView.Contain);
-                else
-                    list.positionViewAtBeginning();
+                if (at === -1 && sameSearch && win.removing >= 0) {
+                    win.selected = Math.max(0, Math.min(win.removing, Launcher.results.length - 1));
+                    list.positionViewAtIndex(win.selected, ListView.Contain);
+                } else {
+                    win.selected = Math.max(0, at);
+                    if (at > 0)
+                        list.positionViewAtIndex(at, ListView.Contain);
+                    else
+                        list.positionViewAtBeginning();
+                }
+                if (at === -1 || !sameSearch)
+                    win.removing = -1;
             }
             win.rememberSelection();
         }
@@ -242,11 +254,12 @@ PanelWindow {
         }
     }
 
-    // Selects the armed power action. False when nothing is armed or it is not listed.
+    // Selects the armed action (a power action, or clearing the clipboard
+    // history). False when nothing is armed or it is not listed.
     function selectArmed() {
         if (Launcher.armed === "")
             return false;
-        const at = Launcher.results.findIndex((row) => row.kind === "power" && row.action === Launcher.armed);
+        const at = Launcher.results.findIndex((row) => row.action === Launcher.armed);
         if (at === -1)
             return false;
         win.selected = at;
@@ -259,6 +272,7 @@ PanelWindow {
         if (n === 0)
             return;
         Launcher.unarm();
+        win.removing = -1;
         win.selected = (win.selected + step + n) % n;
         list.positionViewAtIndex(win.selected, ListView.Contain);
     }
@@ -483,6 +497,15 @@ PanelWindow {
                             else
                                 Launcher.close();
                             event.accepted = true;
+                        } else if (event.key === Qt.Key_Delete && (event.modifiers & Qt.ShiftModifier)) {
+                            // Shift+Delete removes the selected clipboard entry.
+                            // Anywhere else the field gets the key as usual.
+                            const row = Launcher.results[win.selected];
+                            if (row && row.kind === "clip") {
+                                win.removing = win.selected;
+                                Launcher.removeClip(row);
+                                event.accepted = true;
+                            }
                         }
                     }
                 }
