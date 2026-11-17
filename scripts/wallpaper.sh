@@ -1,51 +1,69 @@
 #!/usr/bin/env bash
 # Put Skua's chosen wallpaper on screen with awww.
 #
-#   wallpaper.sh                        every screen, no transition (bar start, hotplug)
-#   wallpaper.sh --animate              every screen, using the saved transition
-#   wallpaper.sh --animate DP-3 DP-2    only the named screens
+#   wallpaper.sh [--animate] --fill MODE --fill-color '#rrggbb' --transition NAME
+#                --duration SECONDS --all IMAGE -- [SCREEN=IMAGE ...]
 #
-# Settings come from ${XDG_CONFIG_HOME:-~/.config}/skua/wallpaper.json. The
-# bar's Wallpaper tab is the only writer; this script only reads. A missing file,
-# or a key that is absent or out of range, falls back to the defaults. A screen
-# with no image of its own and no "All screens" image is left alone.
+# The bar runs this with its Wallpaper tab's settings (~/.config/skua/wallpaper.json)
+# spelled out, so the script reads no file. --all is the "All screens" image. Each
+# SCREEN=IMAGE is a screen to paint and its own image, empty when it follows "All
+# screens". With no screen named, the "All screens" image goes on every screen awww
+# knows about. Without --animate the change is instant (bar start, hotplug). A value
+# that is missing or out of range falls back to the default. A screen with no image
+# of its own and no "All screens" image is left alone.
 #
-# Exit codes: 0 done (or nothing to do), 3 awww is not installed, 5 jq is not
-# installed, 7 a chosen image is no longer there (after showing what it can),
-# 1 anything else.
+# Exit codes: 0 done (or nothing to do), 3 awww is not installed, 7 a chosen image is
+# no longer there (after showing what it can), 1 anything else.
 
 set -uo pipefail
 
-# Every setting below is read with jq; without it read_setting falls back to the
-# defaults and the script would silently do nothing.
-if ! command -v jq >/dev/null 2>&1; then
-    echo "wallpaper.sh: jq is not installed" >&2
-    exit 5
-fi
-
-STATE="${XDG_CONFIG_HOME:-$HOME/.config}/skua/wallpaper.json"
-
 ANIMATE=0
-OUTPUTS=()
-for arg in "$@"; do
-    case "$arg" in
-        --animate) ANIMATE=1 ;;
-        *) OUTPUTS+=("$arg") ;;
+FILL=crop
+FILL_COLOR='#000000'
+TRANSITION=fade
+DURATION=1.5
+STAR=""
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --animate) ANIMATE=1; shift ;;
+        --fill | --fill-color | --transition | --duration | --all)
+            if [ $# -lt 2 ]; then
+                echo "wallpaper.sh: $1 needs a value" >&2
+                exit 1
+            fi
+            case "$1" in
+                --fill) FILL=$2 ;;
+                --fill-color) FILL_COLOR=$2 ;;
+                --transition) TRANSITION=$2 ;;
+                --duration) DURATION=$2 ;;
+                --all) STAR=$2 ;;
+            esac
+            shift 2 ;;
+        --) shift; break ;;
+        *)
+            echo "wallpaper.sh: unknown argument: $1" >&2
+            exit 1 ;;
+    esac
+done
+
+# Each screen and the image chosen for it alone ("" = follows "All screens"). A
+# screen name holds no "=", an image path may, so the split is at the first one.
+SCREENS=()
+declare -A OWN=()
+for pair in "$@"; do
+    case "$pair" in
+        ?*=*)
+            SCREENS+=("${pair%%=*}")
+            OWN[${pair%%=*}]=${pair#*=} ;;
+        *)
+            echo "wallpaper.sh: expected SCREEN=IMAGE, got: $pair" >&2
+            exit 1 ;;
     esac
 done
 
 # ── Settings ────────────────────────────────────────────────────────────────
 
-# One field from the state file, or the fallback when the file is missing, the
-# key is absent, the value has the wrong type, or the JSON is broken.
-read_setting() {
-    local value
-    value=$(jq -r "$1" "$STATE" 2>/dev/null || true)
-    case "$value" in "" | null) value="$2" ;; esac
-    printf '%s' "$value"
-}
-
-FILL=$(read_setting '.fill | select(type == "string")' crop)
 case "$FILL" in
     crop) RESIZE=crop ;;
     fit) RESIZE=fit ;;
@@ -55,78 +73,61 @@ case "$FILL" in
 esac
 
 # awww takes --fill-color as RRGGBBAA with no leading '#'.
-FILL_COLOR=$(read_setting '.fillColor | select(type == "string")' '#000000')
 [[ "$FILL_COLOR" =~ ^\#[0-9a-fA-F]{6}$ ]] || FILL_COLOR='#000000'
 FILL_COLOR="${FILL_COLOR#\#}ff"
 
-TRANSITION=$(read_setting '.transition | select(type == "string")' fade)
 case "$TRANSITION" in
     fade | wipe | wave | grow | outer | left | random | none) ;;
     *) TRANSITION=fade ;;
 esac
 [ "$ANIMATE" = 1 ] || TRANSITION=none
 
-DURATION=$(read_setting '.transitionDuration | select(type == "number")' 1.5)
 [[ "$DURATION" =~ ^[0-9]+(\.[0-9]+)?$ ]] || DURATION=1.5
 
 # ── Images ──────────────────────────────────────────────────────────────────
 
-# The "All screens" image, or nothing when none is chosen or the file is gone.
-star_image() {
-    local image
-    image=$(jq -r '.wallpapers["*"] // empty' "$STATE" 2>/dev/null || true)
-    if [ -n "$image" ] && [ "${image#/}" != "$image" ] && [ -f "$image" ]; then
-        printf '%s' "$image"
-    fi
+# An image that can be shown: an absolute path to a file that is there. Absolute
+# only, because the path is handed to `awww img`, where an option-like string
+# (--help) would be read as a flag.
+usable() {
+    [ -n "$1" ] && [ "${1#/}" != "$1" ] && [ -f "$1" ]
 }
 
-# A screen's own image when it has one that exists, else the "All screens" one.
-image_for() {
-    local image
-    image=$(jq -r --arg o "$1" '.wallpapers[$o] // empty' "$STATE" 2>/dev/null || true)
-    if [ -n "$image" ] && [ "${image#/}" != "$image" ] && [ -f "$image" ]; then
-        printf '%s' "$image"
-    else
-        star_image
-    fi
-}
-
-# True when the image chosen for $1 (a screen, or "*") names a file that is no
-# longer there. The screen then falls back as above; GONE makes the script say
-# so at the end instead of looking as if nothing had been asked for.
-chosen_is_gone() {
-    local image
-    image=$(jq -r --arg o "$1" '.wallpapers[$o] // empty' "$STATE" 2>/dev/null || true)
-    [ -n "$image" ] && [ "${image#/}" != "$image" ] && [ ! -f "$image" ]
+# A chosen image that names a file that is no longer there. The screen then falls
+# back as below; GONE makes the script say so at the end instead of looking as if
+# nothing had been asked for.
+gone() {
+    [ -n "$1" ] && [ "${1#/}" != "$1" ] && [ ! -f "$1" ]
 }
 GONE=0
 
-# ── Screens ─────────────────────────────────────────────────────────────────
+STAR_IMAGE=""
+usable "$STAR" && STAR_IMAGE=$STAR
 
-SCREENS=("${OUTPUTS[@]}")
-if [ ${#SCREENS[@]} -eq 0 ]; then
-    mapfile -t SCREENS < <(niri msg --json outputs 2>/dev/null | jq -r 'keys[]' 2>/dev/null)
-fi
+# ── Screens ─────────────────────────────────────────────────────────────────
 
 # One command per distinct image, naming every screen that shows it. Screens that
 # share an image animate together, which is what "All screens" should look like.
 declare -A IMAGE_SCREENS=()
 FALLBACK=""
 if [ ${#SCREENS[@]} -eq 0 ]; then
-    # No usable screen list (niri did not answer): the "All screens" image goes
-    # on everything awww knows about.
-    FALLBACK=$(star_image)
+    # No screen named: the "All screens" image goes on everything awww knows about.
+    FALLBACK=$STAR_IMAGE
     if [ -z "$FALLBACK" ]; then
-        chosen_is_gone "*" && exit 7
+        gone "$STAR" && exit 7
         exit 0
     fi
 else
     for output in "${SCREENS[@]}"; do
-        chosen_is_gone "$output" && GONE=1
-        image=$(image_for "$output")
-        if [ -z "$image" ]; then
+        own=${OWN[$output]}
+        gone "$own" && GONE=1
+        if usable "$own"; then
+            image=$own
+        elif [ -n "$STAR_IMAGE" ]; then
+            image=$STAR_IMAGE
+        else
             # Nothing of its own that exists: it wanted the "All screens" image.
-            chosen_is_gone "*" && GONE=1
+            gone "$STAR" && GONE=1
             continue
         fi
         if [ -n "${IMAGE_SCREENS[$image]:-}" ]; then

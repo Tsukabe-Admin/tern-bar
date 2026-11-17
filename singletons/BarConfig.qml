@@ -309,8 +309,8 @@ Singleton {
         (String(Quickshell.env("XDG_STATE_HOME") || "") || (root.home + "/.local/state")) + "/skua"
     readonly property string scriptsDir: Quickshell.shellDir + "/scripts"
     readonly property string configPath: root.configDir + "/bar.json"
-    // The Wallpaper tab: the settings file it alone writes, the palette
-    // scripts/theme-sync.sh generates, and the preset themes it lists.
+    // The Wallpaper tab: the settings file it alone writes, the palette its
+    // recolour generates, and the preset themes it lists.
     readonly property string wallpaperStatePath: root.configDir + "/wallpaper.json"
     // The ASCII tab's settings (wallpaper look/colour/speed, pill piece/colour/speed).
     readonly property string asciiStatePath: root.configDir + "/ascii.json"

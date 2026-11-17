@@ -3,23 +3,25 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "themesync.js" as ThemeSync
 
 // The Wallpaper tab's backend. One settings file, ~/.config/skua/wallpaper.json,
-// which this bar is the only writer of — the scripts only read it — plus the
-// two scripts in this repo that act on it:
+// which this bar is the only reader and writer of, and the two jobs that act on it:
 //
-//   scripts/wallpaper.sh    puts an image on one screen ("DP-3") or on all of them ("*")
-//   scripts/theme-sync.sh   recolours the bar (and matugen's templates), from that
-//                           image or from a preset in themes/presets.json
+//   scripts/wallpaper.sh   puts an image on one screen ("DP-3") or on all of them ("*");
+//                          the bar hands it the settings on its command line
+//   recolouring            the bar's colours (and matugen's templates), from that
+//                          image through matugen or from a theme in themes/presets.json;
+//                          the colour work is in themesync.js
 //
-// Both are run as short-lived processes; nothing here talks to their internals.
+// Every outside program is a short-lived process; nothing here talks to its internals.
 Singleton {
     id: root
 
     readonly property string home: String(Quickshell.env("HOME") || "")
 
     // ── Option lists (what the page shows, in display order) ───────────────
-    // The values are the ones wallpaper.sh and theme-sync.sh accept.
+    // The values are the ones wallpaper.sh and matugen accept.
     readonly property var fills: ["crop", "fit", "center", "stretch"]
     readonly property var fillNames: ["Crop", "Fit", "Center", "Stretch"]
 
@@ -57,16 +59,12 @@ Singleton {
 
     // Every image in settings.folder: { path, name, mtime }.
     property var files: []
-    // What the page shows when a script failed. One slot per script: an "All
-    // screens" pick runs both, and with a single slot whichever finished last
-    // (usually a success) wiped the other one's message.
+    // What the page shows when putting the image up or recolouring failed. One
+    // slot each: an "All screens" pick does both, and with a single slot whichever
+    // finished last (usually a success) wiped the other one's message.
     property string wallpaperError: ""
     property string themeError: ""
     readonly property string lastError: root.wallpaperError !== "" ? root.wallpaperError : root.themeError
-    // The one message both scripts give. Each checks for jq before anything
-    // else, so either one ending any other way proves jq is installed and
-    // clears the other's copy as well.
-    readonly property string jqMissing: "Install jq to use the Wallpaper tab"
 
     readonly property var screens: {
         const out = [];
@@ -76,8 +74,7 @@ Singleton {
     }
 
     // ── Persistence ────────────────────────────────────────────────────────
-    // blockWrites: the scripts read this file the moment they are started, so a
-    // queued asynchronous write would let them read the previous state.
+    // blockWrites: each change is on disk by the time its setter returns.
     FileView {
         id: file
         path: BarConfig.wallpaperStatePath
@@ -333,17 +330,6 @@ Singleton {
         root.rescan();
     }
 
-    function chooseFolder() {
-        if (zenity.running)
-            return;
-        root.folderChoice = "";
-        zenity.command = ["zenity", "--file-selection", "--directory",
-            "--title=Wallpaper folder", "--filename=" + root.settings.folder + "/"];
-        zenity.running = true;
-    }
-
-    property string folderChoice: ""
-
     // ── Shuffle and rotation ───────────────────────────────────────────────
 
     // Pick a different image at random out of `candidates`.
@@ -417,14 +403,13 @@ Singleton {
         }
     }
 
-    // ── The scripts ────────────────────────────────────────────────────────
-    // One Process per script so an exit code can be attributed. Both inherit the
-    // bar's environment, which is where NIRI_SOCKET comes from.
+    // ── Putting the image on screen ────────────────────────────────────────
+    // scripts/wallpaper.sh, with the settings spelled out on its command line, so
+    // it reads no file. It inherits the bar's environment.
 
-    // A run requested while the process is busy, or null. For the wallpaper, an
-    // empty output list means "every screen" and therefore widens any list.
+    // A run requested while the script is busy, or null. An empty output list
+    // means "every screen" and therefore widens any list.
     property var pendingWallpaper: null
-    property bool pendingThemeSync: false
 
     function runWallpaper(outputs, animate) {
         if (wpProcess.running) {
@@ -451,24 +436,22 @@ Singleton {
             return;
         }
 
-        let command = [BarConfig.scriptsDir + "/wallpaper.sh"];
+        // "Every screen" is named screen by screen too, from the screens the bar
+        // itself has, on niri and Hyprland alike. Each name carries that screen's
+        // own image, or nothing when it follows "All screens".
+        const s = root.settings;
+        const names = outputs.length > 0 ? outputs : root.screens;
+        const command = [BarConfig.scriptsDir + "/wallpaper.sh",
+            "--fill", s.fill, "--fill-color", s.fillColor,
+            "--transition", s.transition, "--duration", String(s.transitionDuration),
+            "--all", s.wallpapers["*"] || ""];
         if (animate)
             command.push("--animate");
-        // "All screens" (no names): on niri the script asks niri which screens
-        // exist. On Hyprland the bar names them, so the script never asks a niri
-        // that may be running outside a nested Hyprland.
-        wpProcess.command = command.concat((outputs.length === 0 && Compositor.isHyprland)
-            ? Quickshell.screens.map((s) => s.name) : outputs);
+        command.push("--");
+        for (const name of names)
+            command.push(name + "=" + (s.wallpapers[name] || ""));
+        wpProcess.command = command;
         wpProcess.running = true;
-    }
-
-    function runThemeSync() {
-        if (themeProcess.running) {
-            root.pendingThemeSync = true;
-            return;
-        }
-        themeProcess.command = [BarConfig.scriptsDir + "/theme-sync.sh"];
-        themeProcess.running = true;
     }
 
     Process {
@@ -477,11 +460,8 @@ Singleton {
         onExited: (exitCode, exitStatus) => {
             root.wallpaperError = (exitCode === 0) ? ""
                 : (exitCode === 3) ? "Install awww to set wallpapers"
-                : (exitCode === 5) ? root.jqMissing
                 : (exitCode === 7) ? "A chosen image is no longer there: pick another"
                 : "Couldn't set the wallpaper (wallpaper.sh exited " + exitCode + ")";
-            if (exitCode !== 5 && root.themeError === root.jqMissing)
-                root.themeError = "";
             // The grid may still be showing the image that has gone.
             if (exitCode === 7)
                 root.rescan();
@@ -493,44 +473,158 @@ Singleton {
         }
     }
 
-    Process {
-        id: themeProcess
+    // ── Recolouring ────────────────────────────────────────────────────────
+    // The colours come from the "All screens" image (matugen) or from a theme in
+    // themes/presets.json (themesync.js). They are written to the state folder as
+    // colors.json (every Material role, in matugen's format) and palette.json (the
+    // bar's eight colours, which Theme.qml reads), each written whole and renamed
+    // into place so nothing reads half a file. Then your matugen templates follow
+    // a theme, and last ~/.config/skua/theme-hook.sh runs, if you have one, as
+    // theme-hook.sh <colors.json> <label>.
+    //
+    // One recolour at a time; asking again meanwhile runs it once more afterwards.
+    // Each step is a Process run through `sh`, which is always there, so a missing
+    // matugen is an exit code and not a Process that never starts (and so never
+    // reports back, which would leave themeBusy set for good).
+    property bool themeBusy: false
+    property bool pendingThemeSync: false
+    property string themeLabel: ""
+    // A failed write of either file. The write may report after the run has moved
+    // on, so finishThemeSync() shows it rather than a success.
+    property string saveFailure: ""
+    readonly property string colorsPath: BarConfig.stateDir + "/colors.json"
 
-        onExited: (exitCode, exitStatus) => {
-            root.themeError = (exitCode === 0) ? ""
-                : (exitCode === 3) ? "Install matugen to take colours from the wallpaper, or pick a theme"
-                : (exitCode === 4) ? "Choose an All screens wallpaper first, or pick a theme"
-                : (exitCode === 5) ? root.jqMissing
-                : (exitCode === 6) ? "Install python3 to use the built-in themes"
-                : "Couldn't recolour (theme-sync.sh exited " + exitCode + ")";
-            if (exitCode !== 5 && root.wallpaperError === root.jqMissing)
-                root.wallpaperError = "";
-            if (exitCode === 0)
-                Theme.reloadPalette();
+    function runThemeSync() {
+        if (root.themeBusy) {
+            root.pendingThemeSync = true;
+            return;
+        }
+        root.themeBusy = true;
+        root.saveFailure = "";
+        const s = root.settings;
 
-            if (root.pendingThemeSync) {
-                root.pendingThemeSync = false;
-                root.runThemeSync();
+        if (s.colorSource === "preset") {
+            const preset = ThemeSync.pickPreset(root.presets, s.preset);
+            if (!ThemeSync.isUsablePreset(preset)) {
+                root.finishThemeSync("Couldn't recolour: themes/presets.json has no usable theme");
+                return;
             }
+            const colours = JSON.stringify(ThemeSync.colorFile(ThemeSync.presetRoles(preset)), null, 2);
+            if (!root.writeColours(colours, preset.name))
+                return;
+            templatesProcess.command = ["sh", "-c",
+                "command -v matugen >/dev/null 2>&1 || exit 0; exec matugen json \"$1\" >/dev/null",
+                "skua-theme", root.colorsPath];
+            templatesProcess.running = true;
+            return;
+        }
+
+        const image = s.wallpapers["*"] || "";
+        if (image === "") {
+            root.finishThemeSync("Choose an All screens wallpaper first, or pick a theme");
+            return;
+        }
+        // 127: no matugen; 4: the image is gone; 1: matugen failed (its own exit
+        // code is not passed on, so it can never be mistaken for the other two).
+        matugenProcess.label = image.slice(image.lastIndexOf("/") + 1);
+        matugenProcess.command = ["sh", "-c",
+            "command -v matugen >/dev/null 2>&1 || exit 127; [ -f \"$1\" ] || exit 4; shift; matugen \"$@\" || exit 1",
+            "skua-theme", image].concat(ThemeSync.matugenImageArgs(image, s.scheme, s.contrast));
+        matugenProcess.running = true;
+    }
+
+    // Writes colors.json as given and palette.json cut out of it. False, with the
+    // message shown, when the text is not a colour file or a write failed.
+    function writeColours(text, label) {
+        let palette;
+        try {
+            palette = ThemeSync.paletteOf(JSON.parse(text));
+        } catch (e) {
+            root.finishThemeSync("Couldn't recolour: matugen's colour data was not readable");
+            return false;
+        }
+        colorsFile.setText(text);
+        paletteFile.setText(JSON.stringify(palette, null, 2) + "\n");
+        if (root.saveFailure !== "") {
+            root.finishThemeSync("");
+            return false;
+        }
+        root.themeLabel = label;
+        Theme.reloadPalette();
+        return true;
+    }
+
+    function runThemeHook() {
+        hookProcess.command = ["sh", "-c", "[ -x \"$1\" ] || exit 0; exec \"$@\"", "skua-theme-hook",
+            BarConfig.configDir + "/theme-hook.sh", root.colorsPath, root.themeLabel];
+        hookProcess.running = true;
+    }
+
+    function finishThemeSync(error) {
+        root.themeError = error !== "" ? error : root.saveFailure;
+        root.themeBusy = false;
+        if (root.pendingThemeSync) {
+            root.pendingThemeSync = false;
+            root.runThemeSync();
         }
     }
 
     Process {
-        id: zenity
-
-        stdout: SplitParser {
-            onRead: (line) => {
-                const picked = line.trim();
-                if (root.folderChoice === "" && picked !== "")
-                    root.folderChoice = picked;
-            }
+        id: matugenProcess
+        property string label: ""
+        stdout: StdioCollector {
+            id: matugenOutput
         }
 
         onExited: (exitCode, exitStatus) => {
-            if (exitCode === 0 && root.folderChoice !== "")
-                root.setFolder(root.folderChoice);
-            root.folderChoice = "";
+            if (exitCode === 127)
+                root.finishThemeSync("Install matugen to take colours from the wallpaper, or pick a theme");
+            else if (exitCode === 4)
+                root.finishThemeSync("Choose an All screens wallpaper first, or pick a theme");
+            else if (exitCode !== 0)
+                root.finishThemeSync("Couldn't recolour: matugen could not read " + matugenProcess.label);
+            else if (root.writeColours(matugenOutput.text, matugenProcess.label))
+                root.runThemeHook();
         }
+    }
+
+    // A theme's colours through your own matugen templates, when matugen is installed.
+    Process {
+        id: templatesProcess
+
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0)
+                console.warn("Wallpaper: matugen could not render every template; Skua itself was recoloured");
+            root.runThemeHook();
+        }
+    }
+
+    Process {
+        id: hookProcess
+
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0)
+                console.warn("Wallpaper: theme-hook.sh exited " + exitCode);
+            root.finishThemeSync("");
+        }
+    }
+
+    FileView {
+        id: colorsFile
+        path: root.colorsPath
+        blockWrites: true
+        atomicWrites: true
+        printErrors: false
+        onSaveFailed: (error) => root.saveFailure = "Couldn't save the colours (" + FileViewError.toString(error) + ")"
+    }
+
+    FileView {
+        id: paletteFile
+        path: BarConfig.palettePath
+        blockWrites: true
+        atomicWrites: true
+        printErrors: false
+        onSaveFailed: (error) => root.saveFailure = "Couldn't save the colours (" + FileViewError.toString(error) + ")"
     }
 
     // ── The folder listing ─────────────────────────────────────────────────
@@ -607,7 +701,7 @@ Singleton {
 
     // ── Preset themes ──────────────────────────────────────────────────────
     // The list the "matugen off" side of the Colours section shows. It is the
-    // same file theme-sync.sh expands roles out of, so the two can never drift.
+    // same list runThemeSync() expands a theme out of, so the two can never drift.
     readonly property var presets: {
         let raw;
         try {

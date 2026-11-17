@@ -5,8 +5,8 @@ import Quickshell
 import Quickshell.Io
 import "looks.js" as LooksLib
 
-// Colors follow the wallpaper or a preset theme. scripts/theme-sync.sh (run by
-// the Wallpaper tab) writes ~/.local/state/skua/palette.json; this
+// Colors follow the wallpaper or a preset theme. The Wallpaper tab's recolour
+// (singletons/Wallpaper.qml) writes ~/.local/state/skua/palette.json; this
 // singleton watches that file and crossfades to the new colors. With no
 // palette file yet the bar keeps the fallbacks below, which are the
 // dark-midnight entry of Tern's theme registry (src/themes.rs):
@@ -42,7 +42,7 @@ Singleton {
         onFileChanged: reload()
     }
 
-    // theme-sync.sh just wrote a new palette. Toggling watchChanges rebuilds
+    // The Wallpaper tab just wrote a new palette. Toggling watchChanges rebuilds
     // the file watcher, then the file is read at once. Needed on a fresh
     // install: ~/.local/state/skua did not exist when the bar started, so
     // the watcher had no folder to watch and would never see the first palette.
