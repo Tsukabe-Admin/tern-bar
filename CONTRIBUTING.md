@@ -1,6 +1,6 @@
 # Contributing
 
-This is a hobby project and a vibecoding experiment, not a product with a support team. Small,
+This is a hobby project, not a product with a support team. Small,
 focused changes are easiest to review, and ideas are as welcome as code.
 
 ## Reporting a bug

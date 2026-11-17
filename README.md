@@ -10,10 +10,6 @@ desktops, in two looks you can switch between while it runs. **Pills** puts ever
 floating rounded "pills". **Frame** draws a border around the whole screen, with the bar as its top
 edge and the popups as drawers that grow out of it. Both can follow your wallpaper's colors.
 
-A skua is a seabird that steals fish from other birds, hence the logo. Until November 2026 this
-project was called tern-bar: its look was inspired by the Tern terminal, but it is not made by or
-connected with Tern's developers. Used tern-bar before? See [Coming from tern-bar](#coming-from-tern-bar).
-
 **Pills**: floating pills, and each popup is a card under its pill (here the calendar, under the
 clock).
 
@@ -420,20 +416,14 @@ terminal inside Hyprland, which already has `HYPRLAND_INSTANCE_SIGNATURE`.
 Without `NIRI_SOCKET` (niri) or `HYPRLAND_INSTANCE_SIGNATURE` (Hyprland) the bar still starts, but
 workspaces and the window name stay empty.
 
-## An experiment in vibecoding
-
-This bar is an experiment in **vibecoding** — building software by describing what you want to an
-AI coding agent and iterating on what it produces. The code here was mostly written by Claude Code
-and OMP while I described the behaviour, tested it on the live desktop and decided what shipped.
-It is a new way to work, and I wanted to see how far it can go: not a toy demo, but a daily-driver
-bar with a launcher, settings, wallpaper tools, weather, media controls and the rest.
+## Status
 
 It runs every day on my machine (Arch, niri, Quickshell 0.3.2, two monitors), in the Frame look.
 Hyprland support, in both looks, was checked in a nested Hyprland 0.57 with a Lua config, but is
 not used day to day yet. The brightness pop-up was checked against a stand-in backlight folder: the
-machine has no backlight. It has not been tested on every distro, GPU or Quickshell version, so
-treat it as a working experiment rather than a finished product. The parts that matter were checked
-on the live desktop, not only compiled.
+machine has no backlight. It has not been tested on every distro, GPU or Quickshell version yet.
+
+## Contributing
 
 Bug reports, ideas, pull requests and questions are welcome — especially from people who know QML
 or Quickshell better than I do. Screenshots of odd behaviour are just as useful as patches. I am

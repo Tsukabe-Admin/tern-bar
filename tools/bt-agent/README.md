@@ -37,6 +37,7 @@ the agent.
 
 ## Checking a change
 
-`cargo clippy -- -D warnings` and `cargo fmt --check`. For a real test without a real device, the
-probe rig has a fake BlueZ that asks every kind of question:
-`~/.claude/skills/audit-toolkit/quickshell-probe/examples/fake_bluez.py`.
+`cargo clippy -- -D warnings` and `cargo fmt --check`. For a test without a real device, a stand-in
+BlueZ service on a private D-Bus session bus can call the agent's `org.bluez.Agent1` methods
+(`RequestPinCode`, `RequestPasskey`, `RequestConfirmation`, `RequestAuthorization`,
+`AuthorizeService`) directly, so each kind of question can be checked without pairing anything.
