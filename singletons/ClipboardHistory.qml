@@ -11,9 +11,10 @@ import Quickshell
 // so neither cliphist nor wl-clipboard is needed.
 //
 // It leaves out a password a password manager marks secret, text over 1 MB,
-// an image over 20 MB, and anything an app takes over 2 s to hand over. It
-// keeps at most 500 entries; copying something already kept moves it to the
-// top.
+// an image over 20 MB (or one that is not really a PNG, JPEG, WebP or GIF),
+// anything an app takes over 2 s to hand over, and a flood of copies (more
+// than 30 new entries at once). It keeps at most 500 entries and 500 MB;
+// copying something already kept moves it to the top.
 //
 // The first time it runs, it imports an existing cliphist history once: the
 // job remembers that it has, also when there was none to import.

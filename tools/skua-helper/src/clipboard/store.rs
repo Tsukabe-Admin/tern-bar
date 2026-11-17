@@ -8,18 +8,23 @@
 //! ```
 //!
 //! Only this user may open the folder (0700) or its files (0600): copied text
-//! can be private. Files are written under a temporary name and renamed into
-//! place, so a crash leaves the old file or the new one, never half of one.
-//! Opening the store drops an entry whose file is missing or the wrong size,
-//! and deletes a file no entry names (one written just before a crash).
+//! can be private. The folder has to be a real folder of this user's: a link
+//! in its place is refused. Files are written under a temporary name and
+//! renamed into place, so a crash leaves the old file or the new one, never
+//! half of one. Opening the store drops an entry whose file is missing or the
+//! wrong size, and deletes a file no entry names (one written just before a
+//! crash).
 //!
 //! Ids are numbers that are never reused, so the bar can go on using one it
 //! was given, also across restarts.
 
 use std::fs::{self, DirBuilder, OpenOptions};
 use std::io::{self, Write};
-use std::os::unix::fs::{DirBuilderExt, OpenOptionsExt, PermissionsExt};
+use std::os::unix::fs::{DirBuilderExt, OpenOptionsExt};
 use std::path::{Path, PathBuf};
+
+use rustix::fs::{Mode, OFlags};
+use rustix::io::Errno;
 
 use serde::{Deserialize, Serialize};
 
@@ -28,7 +33,14 @@ use super::content::{self, Kind};
 /// The most entries kept. A new one beyond this deletes the oldest.
 pub const MAX_ITEMS: usize = 500;
 
+/// The most bytes kept, 500 MB. A new entry beyond this deletes the oldest
+/// ones: 500 images of 20 MB each would otherwise be 10 GB.
+pub const MAX_BYTES: u64 = 500 << 20;
+
 const INDEX: &str = "index.json";
+
+/// The extensions of entry files (path_of).
+const EXTENSIONS: [&str; 6] = ["txt", "png", "jpg", "webp", "gif", "img"];
 
 /// One entry as the bar sees it.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -87,13 +99,15 @@ pub struct Added {
     /// The entry now at the top: a new one, or an older copy of the same
     /// content moved up.
     pub item: Item,
-    /// Old entries deleted to stay within MAX_ITEMS.
+    /// Old entries deleted to stay within MAX_ITEMS and MAX_BYTES.
     pub dropped: Vec<u64>,
 }
 
 pub struct Store {
     dir: PathBuf,
     index: Index,
+    /// MAX_BYTES; less only in a test.
+    max_bytes: u64,
 }
 
 /// `$XDG_STATE_HOME/skua/clipboard`, or `~/.local/state/skua/clipboard`.
@@ -118,8 +132,20 @@ impl Store {
             Err(err) if err.kind() != io::ErrorKind::AlreadyExists => return Err(err),
             _ => {}
         }
-        // A folder made by something else may be open to others.
-        fs::set_permissions(&dir, fs::Permissions::from_mode(0o700))?;
+        // Opened without following a link: one planted in the folder's place
+        // would send the history, and the clean-up below, somewhere else.
+        let wanted = OFlags::RDONLY | OFlags::DIRECTORY | OFlags::NOFOLLOW | OFlags::CLOEXEC;
+        let folder = rustix::fs::open(&dir, wanted, Mode::empty()).map_err(|err| match err {
+            Errno::LOOP | Errno::NOTDIR => io::Error::other(format!(
+                "{} is not a folder: a link or a file is in its place",
+                dir.display()
+            )),
+            err => err.into(),
+        })?;
+        // A folder made by something else may be open to others. Only its
+        // owner can change that, so another user's folder is refused here.
+        rustix::fs::fchmod(&folder, Mode::from_raw_mode(0o700))?;
+        drop(folder);
 
         let path = dir.join(INDEX);
         let mut index: Index = match fs::read(&path) {
@@ -144,6 +170,7 @@ impl Store {
         let mut store = Store {
             dir,
             index: Index::default(),
+            max_bytes: MAX_BYTES,
         };
         let before = index.entries.len();
         index.entries.retain(|entry| {
@@ -161,7 +188,8 @@ impl Store {
     }
 
     /// Deletes files that no entry names: an entry file or an index written
-    /// just before a crash. Only names this store gives are touched.
+    /// just before a crash. Only plain files with a name this store gives are
+    /// touched.
     fn delete_strays(&self) -> io::Result<()> {
         let named: Vec<PathBuf> = self
             .index
@@ -170,11 +198,15 @@ impl Store {
             .map(|entry| self.path_of(&entry.item))
             .collect();
         for found in fs::read_dir(&self.dir)? {
-            let path = found?.path();
-            let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
+            let found = found?;
+            if !found.file_type()?.is_file() {
                 continue;
-            };
-            let ours = name.starts_with(|c: char| c.is_ascii_digit()) || name.ends_with(".tmp");
+            }
+            let path = found.path();
+            let ours = path
+                .file_name()
+                .and_then(|name| name.to_str())
+                .is_some_and(is_own_name);
             if ours && !named.contains(&path) {
                 remove_file(&path)?;
             }
@@ -239,11 +271,7 @@ impl Store {
         let entry = self.write_entry(kind, mime, data, hash, time)?;
         let item = entry.item.clone();
         self.index.entries.insert(0, entry);
-        let old = if self.index.entries.len() > MAX_ITEMS {
-            self.index.entries.split_off(MAX_ITEMS)
-        } else {
-            Vec::new()
-        };
+        let old = self.take_overflow();
         self.save()?;
         let mut dropped = Vec::with_capacity(old.len());
         for entry in old {
@@ -253,11 +281,35 @@ impl Store {
         Ok(Added { item, dropped })
     }
 
+    /// Takes the oldest entries out of the index until the history is within
+    /// MAX_ITEMS and the byte limit again. The newest entry always stays.
+    fn take_overflow(&mut self) -> Vec<Entry> {
+        let mut bytes = self.bytes();
+        let mut old = Vec::new();
+        while self.index.entries.len() > 1
+            && (self.index.entries.len() > MAX_ITEMS || bytes > self.max_bytes)
+        {
+            let Some(entry) = self.index.entries.pop() else {
+                break;
+            };
+            bytes -= entry.item.size;
+            old.push(entry);
+        }
+        old
+    }
+
+    fn bytes(&self) -> u64 {
+        self.items().map(|item| item.size).sum()
+    }
+
     /// Puts older content at the bottom, for an import: None when it is
-    /// already in the history or the history is full. The index is written
-    /// by save() once the import is done.
+    /// already in the history or the history is full (by count or by bytes;
+    /// an import never pushes anything out). The index is written by save()
+    /// once the import is done.
     pub fn add_old(&mut self, kind: Kind, mime: &str, data: &[u8]) -> io::Result<Option<Item>> {
-        if self.index.entries.len() >= MAX_ITEMS {
+        if self.index.entries.len() >= MAX_ITEMS
+            || self.bytes() + data.len() as u64 > self.max_bytes
+        {
             return Ok(None);
         }
         let hash = content::hash(data);
@@ -400,10 +452,29 @@ fn remove_file(path: &Path) -> io::Result<()> {
     }
 }
 
+/// Whether a file name is one this store gives: an entry ("17.png"), or the
+/// temporary name of an entry or of the index ("17.png.tmp",
+/// "index.json.tmp"). Anything else in the folder is somebody else's.
+fn is_own_name(name: &str) -> bool {
+    let (name, temporary) = match name.strip_suffix(".tmp") {
+        Some(rest) => (rest, true),
+        None => (name, false),
+    };
+    if name == INDEX {
+        return temporary;
+    }
+    name.split_once('.').is_some_and(|(id, extension)| {
+        !id.is_empty()
+            && id.bytes().all(|byte| byte.is_ascii_digit())
+            && EXTENSIONS.contains(&extension)
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::clipboard::content::tests::PNG;
+    use std::os::unix::fs::PermissionsExt;
 
     fn open(dir: &Path) -> Store {
         Store::open(dir.join("skua/clipboard")).unwrap()
@@ -541,14 +612,23 @@ mod tests {
         fs::write(folder.join("2.txt"), b"tw").unwrap();
         fs::write(folder.join("9.png"), b"left over").unwrap();
         fs::write(folder.join("10.txt.tmp"), b"half").unwrap();
+        fs::write(folder.join("index.json.tmp"), b"half").unwrap();
+        // Not the store's: left alone, and no reason not to open.
         fs::write(folder.join("notes"), b"not ours").unwrap();
+        fs::write(folder.join("notes.tmp"), b"not ours").unwrap();
+        fs::write(folder.join("2024-holiday.txt"), b"not ours").unwrap();
+        fs::create_dir(folder.join("123")).unwrap();
+        fs::create_dir(folder.join("7.txt")).unwrap();
 
         let store = open(dir.path());
         assert_eq!(ids(&store), [3]);
         assert!(!folder.join("9.png").exists());
         assert!(!folder.join("10.txt.tmp").exists());
+        assert!(!folder.join("index.json.tmp").exists());
         assert!(!folder.join("2.txt").exists());
-        assert!(folder.join("notes").exists());
+        for kept in ["notes", "notes.tmp", "2024-holiday.txt", "123", "7.txt"] {
+            assert!(folder.join(kept).exists(), "{kept}");
+        }
         drop(store);
         assert_eq!(ids(&open(dir.path())), [3], "the repaired index was saved");
     }
@@ -608,5 +688,102 @@ mod tests {
             .unwrap()
             .is_none());
         assert_eq!(ids(&store), [1, 2]);
+    }
+
+    #[test]
+    fn keeps_at_most_the_byte_limit_and_always_the_newest() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut store = open(dir.path());
+        store.max_bytes = 10;
+        store.add(Kind::Text, "text/plain", b"aaaa", 1).unwrap();
+        store.add(Kind::Text, "text/plain", b"bbbb", 2).unwrap();
+        let added = store.add(Kind::Text, "text/plain", b"cccc", 3).unwrap();
+        assert_eq!(added.dropped, [1]);
+        assert_eq!(ids(&store), [3, 2]);
+        assert!(!store.dir.join("1.txt").exists());
+
+        // One entry larger than the whole limit pushes the rest out and stays.
+        let added = store
+            .add(Kind::Text, "text/plain", b"dddddddddddd", 4)
+            .unwrap();
+        assert_eq!(added.dropped, [2, 3]);
+        assert_eq!(ids(&store), [4]);
+        assert_eq!(fs::read_dir(&store.dir).unwrap().count(), 2);
+
+        // An import pushes nothing out: it stops when the history is full.
+        let old = store.add_old(Kind::Text, "text/plain", b"old").unwrap();
+        assert!(old.is_none());
+        store.max_bytes = 15;
+        let old = store.add_old(Kind::Text, "text/plain", b"old").unwrap();
+        assert!(old.is_some());
+        assert_eq!(ids(&store), [4, 5]);
+    }
+
+    #[test]
+    fn a_link_in_the_folders_place_is_refused_and_its_target_left_alone() {
+        let dir = tempfile::tempdir().unwrap();
+        let target = dir.path().join("documents");
+        fs::create_dir(&target).unwrap();
+        fs::set_permissions(&target, fs::Permissions::from_mode(0o755)).unwrap();
+        fs::write(target.join("2024-taxes.txt"), b"mine").unwrap();
+        fs::write(target.join("draft.tmp"), b"mine").unwrap();
+        let folder = dir.path().join("skua/clipboard");
+        fs::create_dir_all(folder.parent().unwrap()).unwrap();
+        std::os::unix::fs::symlink(&target, &folder).unwrap();
+
+        let message = Store::open(folder).err().unwrap().to_string();
+        assert!(message.contains("is not a folder"), "{message}");
+        assert_eq!(mode(&target), 0o755);
+        assert!(target.join("2024-taxes.txt").exists());
+        assert!(target.join("draft.tmp").exists());
+        assert_eq!(
+            fs::read_dir(&target).unwrap().count(),
+            2,
+            "no history was written there"
+        );
+    }
+
+    #[test]
+    fn only_names_the_store_gives_are_its_own() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = open(dir.path());
+        let kinds = [
+            (Kind::Text, "text/plain"),
+            (Kind::Image, "image/png"),
+            (Kind::Image, "image/jpeg"),
+            (Kind::Image, "image/webp"),
+            (Kind::Image, "image/gif"),
+            (Kind::Image, "image/x-other"),
+        ];
+        for (kind, mime) in kinds {
+            let item = Item {
+                id: 17,
+                kind,
+                mime: mime.to_owned(),
+                preview: String::new(),
+                time: 0,
+                size: 0,
+                width: None,
+                height: None,
+            };
+            let path = store.path_of(&item);
+            let name = path.file_name().unwrap().to_str().unwrap();
+            assert!(is_own_name(name), "{name}");
+            assert!(is_own_name(&format!("{name}.tmp")), "{name}.tmp");
+        }
+        assert!(is_own_name("index.json.tmp"));
+        for other in [
+            "index.json",
+            "notes",
+            "notes.tmp",
+            "2024-holiday.txt",
+            "9.png.bak",
+            "9.svg",
+            "9",
+            ".txt",
+            "9.txt.tmp.tmp",
+        ] {
+            assert!(!is_own_name(other), "{other}");
+        }
     }
 }

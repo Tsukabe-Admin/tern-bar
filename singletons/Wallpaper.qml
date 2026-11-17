@@ -673,7 +673,11 @@ Singleton {
     Process {
         id: find
 
-        command: ["find", "-L", root.settings.folder, "-type", "f",
+        // Links are followed, so a linked folder of pictures works; the depth
+        // limit keeps a link to "/" or to the home folder (one inside a
+        // downloaded pack, say) from sending the scan through the whole disk.
+        // Pictures up to four folders down are found.
+        command: ["find", "-L", root.settings.folder, "-maxdepth", "5", "-type", "f",
             "(", "-iname", "*.jpg", "-o", "-iname", "*.jpeg", "-o", "-iname", "*.png",
             "-o", "-iname", "*.webp", "-o", "-iname", "*.gif", ")", "-not", "-name", ".*",
             "-printf", "%T@\\t%p\\0"]

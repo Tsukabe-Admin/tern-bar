@@ -76,8 +76,9 @@ pub fn is_secret(hint: &[u8]) -> bool {
     hint.trim_ascii() == b"secret"
 }
 
-/// The image type of `data` from its first bytes, for content whose type is
-/// not known (an imported cliphist entry).
+/// The image type of `data` from its first bytes. What an app calls an image
+/// is kept only when this agrees that it is one, and an imported cliphist
+/// entry has no other type to go by.
 pub fn sniff_image(data: &[u8]) -> Option<&'static str> {
     if data.starts_with(b"\x89PNG\r\n\x1a\n") {
         Some("image/png")

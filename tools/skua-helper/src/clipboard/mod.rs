@@ -4,11 +4,13 @@
 //! disk (store.rs), and puts an entry back on the clipboard when the launcher
 //! picks one; this job then answers every paste itself, so nothing else
 //! (wl-copy, cliphist) is needed. Text and images are kept: plain text when an
-//! app offers it, else a PNG, JPEG, WebP or GIF (content.rs). Not kept: a
-//! password a password manager marks secret, anything over 1 MB of text or
-//! 20 MB of image, content an app takes over 2 s to hand over, and anything at
-//! all while paused. At most 500 entries; a new one beyond that deletes the
-//! oldest. Copying something already in the history moves it to the top.
+//! app offers it, else a PNG, JPEG, WebP or GIF (content.rs; what an app calls
+//! an image is kept only if its first bytes are one). Not kept: a password a
+//! password manager marks secret, anything over 1 MB of text or 20 MB of
+//! image, content an app takes over 2 s to hand over, more than a burst of 30
+//! new entries at a time (rate.rs), and anything at all while paused. At most
+//! 500 entries and 500 MB; a new one beyond that deletes the oldest. Copying
+//! something already in the history moves it to the top.
 //!
 //! From the bar (stdin), one object per line:
 //!
@@ -34,8 +36,9 @@
 //! {"event":"cleared"}
 //! {"event":"paused","paused":true}
 //! {"event":"skipped","reason":R}  something copied was not kept: R is "secret",
-//!                                 "too-big", "unsupported" (no text or image) or
-//!                                 "timeout" (the app took over 2 s)
+//!                                 "too-big", "unsupported" (no text or image),
+//!                                 "timeout" (the app took over 2 s) or
+//!                                 "too-fast" (too many new entries at once)
 //! {"event":"imported","count":40} entries added by an import
 //! {"event":"error","message":"..."}   something failed; the job goes on
 //!
@@ -55,6 +58,7 @@
 mod content;
 mod import;
 mod pipe;
+mod rate;
 mod store;
 mod wayland;
 
@@ -78,6 +82,7 @@ use crate::protocol::{self, emit};
 use content::{Kind, TEXT_TYPES};
 use import::{Cliphist, Old};
 use pipe::{Incoming, Outgoing, Pump};
+use rate::Allowance;
 use store::{Added, Store};
 use wayland::{Clipboard, ConnectError, Offer, Source};
 
@@ -86,6 +91,14 @@ const READ_LIMIT: Duration = Duration::from_secs(2);
 
 /// A paste whose app reads nothing for this long is given up.
 const PASTE_LIMIT: Duration = Duration::from_secs(10);
+
+/// A paste is given up after this long even when its app keeps taking a
+/// little: nothing on one machine needs a minute.
+const PASTE_LONGEST: Duration = Duration::from_secs(60);
+
+/// The most pastes answered at the same time. Each holds a pipe open, and an
+/// app could ask for thousands and read none.
+const MAX_PASTES: usize = 32;
 
 /// The password hint is one short word.
 const HINT_LIMIT: usize = 64;
@@ -132,6 +145,7 @@ struct Paste {
     outgoing: Outgoing,
     /// When the app last took some of it.
     moved: Instant,
+    started: Instant,
     pipe: RegistrationToken,
     timer: RegistrationToken,
 }
@@ -147,6 +161,7 @@ pub struct Job {
     owned: Option<Owned>,
     pastes: HashMap<u64, Paste>,
     importing: Option<usize>,
+    allowance: Allowance,
     /// The job is ending because of a failure.
     failed: bool,
 }
@@ -220,6 +235,7 @@ pub fn run() -> ExitCode {
         owned: None,
         pastes: HashMap::new(),
         importing: None,
+        allowance: Allowance::new(Instant::now()),
         failed: false,
     };
     emit(json!({
@@ -362,6 +378,13 @@ impl Job {
             offer.destroy();
             return;
         }
+        // Too many new entries in a short time (rate.rs): this one is not
+        // even read.
+        if !self.allowance.any(Instant::now()) {
+            offer.destroy();
+            skipped("too-fast");
+            return;
+        }
         let types = offer.types();
         // The password hint first, if the app offers one; else the content.
         let (kind, name) = match content::secret_hint(&types) {
@@ -494,8 +517,28 @@ impl Job {
                 if data.is_empty() {
                     return;
                 }
-                match self.store.add(kind, &name, &data, now()) {
-                    Ok(new) => added(new),
+                // An app can call anything an image. Only what starts as a
+                // PNG, JPEG, WebP or GIF is kept, under that format's name.
+                let mime = match kind {
+                    Kind::Text => name.as_str(),
+                    Kind::Image => match content::sniff_image(&data) {
+                        Some(mime) => mime,
+                        None => {
+                            skipped("unsupported");
+                            return;
+                        }
+                    },
+                };
+                // Copying what is already at the top changes nothing and
+                // costs nothing: some apps set the clipboard again and again.
+                let top = self.store.items().next().map(|item| item.id);
+                match self.store.add(kind, mime, &data, now()) {
+                    Ok(new) => {
+                        if Some(new.item.id) != top {
+                            self.allowance.spend(Instant::now());
+                        }
+                        added(new);
+                    }
                     Err(err) => protocol::error(format!("cannot save the history: {err}")),
                 }
             }
@@ -543,6 +586,10 @@ impl Job {
             // An older one: closing the pipe gives the app nothing.
             return;
         };
+        if self.pastes.len() >= MAX_PASTES {
+            // Closing the pipe gives this one nothing; the others go on.
+            return;
+        }
         if let Err(err) = rustix::io::ioctl_fionbio(&pipe, true) {
             protocol::error(format!("cannot answer a paste: {err}"));
             return;
@@ -568,9 +615,11 @@ impl Job {
             protocol::error("cannot start a timer");
             return;
         };
+        let now = Instant::now();
         let paste = Paste {
             outgoing,
-            moved: Instant::now(),
+            moved: now,
+            started: now,
             pipe,
             timer,
         };
@@ -596,9 +645,9 @@ impl Job {
         let Some(paste) = self.pastes.get(&serial) else {
             return TimeoutAction::Drop;
         };
-        let idle = paste.moved.elapsed();
-        if idle < PASTE_LIMIT {
-            return TimeoutAction::ToDuration(PASTE_LIMIT - idle);
+        let left = paste_time_left(paste.moved.elapsed(), paste.started.elapsed());
+        if !left.is_zero() {
+            return TimeoutAction::ToDuration(left);
         }
         if let Some(paste) = self.pastes.remove(&serial) {
             self.handle.remove(paste.pipe);
@@ -677,5 +726,30 @@ impl Job {
                 self.list();
             }
         }
+    }
+}
+
+/// How long a paste may still wait, given how long ago its app last took
+/// some of it and how long ago it began. Zero: it is given up.
+fn paste_time_left(idle: Duration, age: Duration) -> Duration {
+    PASTE_LIMIT
+        .saturating_sub(idle)
+        .min(PASTE_LONGEST.saturating_sub(age))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_paste_is_given_up_when_idle_or_when_it_takes_too_long() {
+        let s = Duration::from_secs;
+        assert_eq!(paste_time_left(s(0), s(0)), s(10));
+        assert_eq!(paste_time_left(s(4), s(30)), s(6));
+        assert_eq!(paste_time_left(s(10), s(30)), Duration::ZERO);
+        // An app that keeps taking a little is not waited for past a minute.
+        assert_eq!(paste_time_left(s(1), s(55)), s(5));
+        assert_eq!(paste_time_left(s(0), s(60)), Duration::ZERO);
+        assert_eq!(paste_time_left(s(0), s(3600)), Duration::ZERO);
     }
 }

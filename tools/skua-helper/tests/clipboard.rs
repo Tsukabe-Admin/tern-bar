@@ -767,6 +767,100 @@ fn a_hint_in_another_spelling_and_a_bad_command_give_nothing_away() {
 }
 
 #[test]
+fn an_image_is_kept_only_if_its_bytes_are_one() {
+    let home = tempfile::tempdir().unwrap();
+    let mut compositor = Compositor::new(Some(ext_protocol()));
+    let job = started(&mut compositor, home.path());
+    job.expect("ready");
+
+    // Anything can be offered as a PNG: a drawing with scripts in it, say.
+    let svg: &[u8] = b"<svg xmlns=\"http://www.w3.org/2000/svg\"><script>1</script></svg>";
+    compositor.copy(&["image/png"], &[("image/png", svg)], Duration::ZERO);
+    assert_eq!(job.expect("skipped")["reason"], "unsupported");
+
+    // A real image is kept under its format's own name, whatever it was
+    // called and however that was spelled.
+    compositor.copy(&["IMAGE/PNG"], &[("IMAGE/PNG", &PNG)], Duration::ZERO);
+    let image = job.expect("added")["item"].clone();
+    assert_eq!(image["mime"], "image/png");
+    let jpeg: &[u8] = b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01";
+    compositor.copy(&["image/png"], &[("image/png", jpeg)], Duration::ZERO);
+    let image = job.expect("added")["item"].clone();
+    assert_eq!(
+        (&image["mime"], &image["preview"]),
+        (&json!("image/jpeg"), &json!("JPEG"))
+    );
+
+    // Only the two real images are on disk, each under its own extension.
+    let folder = home.path().join("skua/clipboard");
+    let mut files: Vec<String> = std::fs::read_dir(&folder)
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name().into_string().unwrap())
+        .collect();
+    files.sort();
+    assert_eq!(files, ["1.png", "2.jpg", "index.json"]);
+    assert_eq!(std::fs::read(folder.join("1.png")).unwrap(), PNG);
+}
+
+#[test]
+fn a_flood_of_copies_does_not_push_the_history_out() {
+    let home = tempfile::tempdir().unwrap();
+    let mut compositor = Compositor::new(Some(ext_protocol()));
+    let mut job = started(&mut compositor, home.path());
+    job.expect("ready");
+
+    // Setting the clipboard to what is already at the top costs nothing.
+    for _ in 0..40 {
+        compositor.copy_text("the same again");
+        assert_eq!(job.expect("added")["item"]["id"], 1);
+    }
+
+    // New entries: a burst of 30 at most, then one every 2 s. 45 in a row
+    // are far faster than that, so some are refused, unread.
+    let (mut kept, mut refused) = (0, 0);
+    for n in 0..45 {
+        compositor.copy_text(&format!("flood {n}"));
+        let line = job.lines.recv_timeout(Duration::from_secs(5)).unwrap();
+        match line["event"].as_str() {
+            Some("added") => kept += 1,
+            Some("skipped") => {
+                assert_eq!(line["reason"], "too-fast");
+                refused += 1;
+            }
+            _ => panic!("unexpected line {line}"),
+        }
+    }
+    assert!(kept >= 29, "a normal burst is kept: {kept}");
+    assert!(refused >= 1, "the flood is not: {kept} kept");
+    let items = job.items();
+    assert_eq!(items.len(), kept + 1);
+    assert_eq!(items.last().unwrap()["preview"], "the same again");
+}
+
+#[test]
+fn more_pastes_than_it_answers_at_once_get_nothing() {
+    let home = tempfile::tempdir().unwrap();
+    let mut compositor = Compositor::new(Some(ext_protocol()));
+    let mut job = started(&mut compositor, home.path());
+    job.expect("ready");
+
+    // Far more than a pipe holds, so a paste nobody reads stays open.
+    let text = "a".repeat(1 << 20);
+    job.send(json!({"copyText": text}));
+    job.expect("added");
+    let stuck: Vec<_> = (0..32)
+        .map(|_| compositor.paste("text/plain", 1, Duration::from_secs(1)))
+        .collect();
+    std::thread::sleep(Duration::from_millis(200));
+
+    let one_more = compositor.paste("text/plain", 4096, Duration::ZERO);
+    let got = one_more.recv_timeout(Duration::from_secs(5)).unwrap();
+    assert!(got.is_empty(), "{} bytes arrived", got.len());
+    assert_eq!(job.items().len(), 1, "the job still answers");
+    drop(stuck);
+}
+
+#[test]
 fn a_slow_paste_does_not_hold_up_the_job() {
     let home = tempfile::tempdir().unwrap();
     let mut compositor = Compositor::new(Some(ext_protocol()));
