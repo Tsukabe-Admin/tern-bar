@@ -35,9 +35,11 @@ edit, it keeps running the old code — restart it with
 - Mention what you tested and on which Quickshell version.
 - `node --test tests/` runs the unit tests (plain Node, nothing to install). They cover the script
   libraries in `singletons/`: the launcher's calculator (`calc.js`), the Looks options, the
-  ink-on-accent contrast and niri's fullscreen check (`looks.js`), and the cleaning of notification
-  text (`notifytext.js`). Run them if you touch one of those files, and add a case for a rule you
-  add. The QML itself has no tests: that is what the real bar is for.
+  ink-on-accent contrast and niri's fullscreen check (`looks.js`), the cleaning of notification
+  text (`notifytext.js`), the built-in themes and the bar's palette (`themesync.js`), the weather
+  replies (`weather.js`), and the folder picker's path rules (`folderpath.js`). Run them if you
+  touch one of those files, and add a case for a rule you add. The QML itself has no tests: that
+  is what the real bar is for.
 - `/usr/lib/qt6/bin/qmllint -I /usr/lib/qt6/qml -I . shell.qml components/*.qml components/views/*.qml singletons/*.qml`
   must not report an error (the path is Arch's; qmllint comes with Qt's declarative tools). It
   prints a couple of hundred warnings about Quickshell types it cannot see; those are expected.

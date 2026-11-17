@@ -6,7 +6,7 @@ import "../singletons"
 // it is drawn, what colours the desktop takes from it, and whether it rotates.
 //
 // Every change goes through the Wallpaper singleton, which writes
-// ~/.config/skua/wallpaper.json and runs scripts/wallpaper.sh and scripts/theme-sync.sh.
+// ~/.config/skua/wallpaper.json, runs scripts/wallpaper.sh and does the recolouring.
 Item {
     id: page
 

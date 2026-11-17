@@ -76,7 +76,6 @@ spawn-at-startup "quickshell" "-c" "skua"
 
 window-rule {
     match title="^skua settings$"
-    match title="^Wallpaper folder$"
     open-floating true
 }
 
@@ -114,7 +113,6 @@ configs):
 ```lua
 hl.on("hyprland.start", function() hl.exec_cmd("quickshell -c skua") end)
 hl.window_rule({ match = { title = "^skua settings$" }, float = true })
-hl.window_rule({ match = { title = "^Wallpaper folder$" }, float = true })
 hl.bind("SUPER + B", hl.dsp.exec_cmd("quickshell ipc -c skua call settings toggle"))
 hl.bind("SUPER + W", hl.dsp.exec_cmd("quickshell ipc -c skua call settings wallpaper"))
 hl.bind("SUPER + SPACE", hl.dsp.exec_cmd("quickshell ipc -c skua call launcher toggle"))
@@ -142,8 +140,6 @@ Each one is only needed for the part it powers; the rest of the bar works withou
 |---|---|
 | `awww` (and its `awww-daemon`) | setting the wallpaper (Wallpaper tab) |
 | `matugen` | colours taken from the wallpaper (the built-in themes don't need it) |
-| `jq`, `python3` | the wallpaper, colour and weather scripts |
-| `zenity` | the "Change folder…" picker |
 | `cliphist`, `wl-clipboard` | clipboard history in the launcher (with `wl-paste --watch cliphist store` running); copying calculator answers |
 | `swaylock` | Lock and Suspend (without it `loginctl lock-session` is sent instead, which only locks if a screen locker is listening for it) |
 | `wlsunset` | night light |
@@ -158,9 +154,8 @@ Each one is only needed for the part it powers; the rest of the bar works withou
 | NetworkManager | the Wi-Fi tile and the list of Wi-Fi networks; `nm-connection-editor` for networks that need more than a password |
 | `pavucontrol`, PipeWire | right-click on volume or microphone; the volume and microphone pills and quick-settings controls, choosing the sound output and input |
 | `ip` (iproute2), `nm-connection-editor`, `nmcli` or `iwgetid` | the network pill (it reads "Offline" without `ip`); right-click on network; the Wi-Fi name |
-| `notify-send` | the "IP hidden / shown" message |
 | `tern` | the Tern pill — it hides itself when `tern` isn't on your PATH or in `~/.local/bin` |
-| tern-poke (a Tern plugin, not released yet) | the PokeToken pill and the desktop pet — both stay hidden without it |
+| tern-poke (a Tern plugin, not released yet; its engine runs on `python3`) | the PokeToken pill and the desktop pet — both stay hidden without it |
 
 ## Looks
 
@@ -209,15 +204,15 @@ Things to know:
 The settings page has four tabs: **Layout** (see [Make it yours](#make-it-yours)), **Look** (see
 [Looks](#looks)), **Wallpaper** and **ASCII**.
 The Wallpaper tab is a thumbnail grid of your wallpaper folder (`~/Pictures/Wallpapers` until you
-pick another) — search, favourites, shuffle and automatic rotation — plus a per-screen choice (one
-image everywhere, or a single screen with its own), fill mode and edge colour, animated
-transitions, and the colour controls below. Wallpapers are drawn by `awww`; the bar starts it when
-needed and puts your wallpaper back every time it starts. Until you pick one, the bar leaves your
-desktop's wallpaper alone.
+pick another with **Change folder…**, a folder picker inside the tab) — search, favourites, shuffle
+and automatic rotation — plus a per-screen choice (one image everywhere, or a single screen with
+its own), fill mode and edge colour, animated transitions, and the colour controls below.
+Wallpapers are drawn by `awww`; the bar starts it when needed and puts your wallpaper back every
+time it starts. Until you pick one, the bar leaves your desktop's wallpaper alone.
 
-Everything the tab does is two scripts in `scripts/`: `wallpaper.sh` puts an image on screen and
-`theme-sync.sh` recolours. Your choices are saved in `~/.config/skua/wallpaper.json`; the bar is
-its only writer.
+The tab puts images on screen with `scripts/wallpaper.sh` (it drives `awww`) and does the
+recolouring itself. Your choices are saved in `~/.config/skua/wallpaper.json`; the bar is the
+only program that reads or writes it.
 
 ### Colors from the wallpaper
 
@@ -241,7 +236,7 @@ for is one of them or a mix of two (shadow and scrim are black).
 
 ### Recolour your other apps
 
-After every recolour, `theme-sync.sh` runs `~/.config/skua/theme-hook.sh` if it exists and is
+After every recolour, the bar runs `~/.config/skua/theme-hook.sh` if it exists and is
 executable, as `theme-hook.sh <colors.json> <label>`. `colors.json` holds every Material colour
 role in matugen's format (`.colors.primary.default.color`, …), and `<label>` is the theme's name
 or the wallpaper's file name. Use it to reload apps that don't notice new colours on their own,
@@ -341,7 +336,7 @@ which part of the bar, edit `matugen/palette.json`.
   terminal. For trying things without the real hardware or network: `SKUA_BATTERY_MOCK="85:charging"`,
   `SKUA_BACKLIGHT_DIR` (a folder to use instead of `/sys/class/backlight`),
   `SKUA_UPDATES_MOCK=<count>`, `SKUA_CHECKUPDATES_CMD`, `SKUA_WEATHER_MOCK=<json>`, and the
-  weather script's servers: `SKUA_WEATHER_METEO_URL`, `SKUA_WEATHER_WTTR_BASE`,
+  weather lookup's servers: `SKUA_WEATHER_METEO_URL`, `SKUA_WEATHER_WTTR_BASE`,
   `SKUA_WEATHER_GEO_URL`, `SKUA_WEATHER_GEOCODE_URL`.
 - **Tray menus** close when you click anywhere else. A submenu opens in place, with a **Back** row.
 - **ASCII animations:** the settings window's **ASCII** tab (right-click the ASCII pill, or
@@ -363,7 +358,7 @@ components/             the bar and each of its pills, and the two looks' hosts 
 components/views/       what is inside each popup, shared by the Pills cards and the Frame drawers
 singletons/             shared pieces: theme, looks, settings, wallpaper, compositor connection (niri, Hyprland)
 shaders/                the Frame look's shadows: GLSL sources and the compiled .qsb files the bar loads
-scripts/                helpers: wallpaper, colours, network status, IP hiding
+scripts/                helpers: putting the wallpaper up, network status, IP hiding
 themes/                 the ten built-in colour themes
 matugen/                an optional template, for driving the colours from your own matugen setup
 screenshots/            pictures for this page
