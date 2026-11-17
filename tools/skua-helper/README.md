@@ -8,6 +8,7 @@ process of its own, so one job failing never stops another.
 |---|---|
 | `skua-helper bluetooth` | answers BlueZ's pairing questions (a PIN, a passkey, "does the device show 123456?") through the bar |
 | `skua-helper night-light` | warms the screens' colours (night light) through the compositor's gamma control |
+| `skua-helper clipboard` | keeps the clipboard history the launcher lists after `;`, and puts an entry back on the clipboard (replaces cliphist and wl-clipboard) |
 
 ```sh
 cargo install --path tools/skua-helper --root ~/.local    # from the repository's top folder
@@ -70,6 +71,36 @@ job's gamma controls are gone.
 
 Gamma cannot be read back over Wayland, so the colours on a real screen are checked by eye.
 
+## Clipboard history
+
+An app only sees the clipboard while one of its windows has the keyboard, so the bar runs
+`skua-helper clipboard` (`singletons/ClipboardHistory.qml`). It watches the clipboard through the
+compositor's *data-control* protocol (`ext_data_control_manager_v1`, or the older
+`zwlr_data_control_manager_v1`; niri and Hyprland have both) and keeps what is copied:
+
+- plain text when the app offers it, otherwise a PNG, JPEG, WebP or GIF image; anything else is
+  left out;
+- not a password that a password manager marks secret (the `x-kde-passwordManagerHint` type, which
+  `wl-copy --sensitive` sets too), not text over 1 MB or an image over 20 MB, not content an app takes
+  over 2 seconds to hand over, and nothing at all while paused;
+- at most 500 entries: a new one beyond that deletes the oldest, and copying something already kept
+  moves it to the top.
+
+The history is in `~/.local/state/skua/clipboard` (`$XDG_STATE_HOME/skua/clipboard`): an
+`index.json` and one file per entry, readable only by you (folder 0700, files 0600). It is kept as
+plain files, like cliphist's: the secret hint, the size limits, pausing and clearing are its only
+protections. When the launcher puts an entry back on the clipboard, this job holds it and answers
+every paste itself, so `wl-copy` is not needed. Like anything on a Wayland clipboard, it is gone
+when the program holding it ends: a bar restart empties a clipboard the history had filled.
+
+The first time it runs, the bar asks it to import the newest 500 entries of an existing cliphist
+history (`cliphist list` and `cliphist decode`, so cliphist must still be installed then); it
+remembers that it did, also when there was nothing to import. `SKUA_CLIPHIST_DB=/path/to/db` imports
+from another cliphist database (passed to cliphist as `-db-path`). A compositor without data
+control gets an error line, and the job ends with status 3.
+
+The job's lines are described at the top of `src/clipboard/mod.rs`.
+
 ## Checking a change
 
 `cargo test`, `cargo clippy -- -D warnings` and `cargo fmt --check`. When a job's lines change, bump
@@ -79,3 +110,8 @@ For the Bluetooth job without a real device, a stand-in BlueZ service on a priva
 to the job as `DBUS_SYSTEM_BUS_ADDRESS`) can call the agent's `org.bluez.Agent1` methods
 (`RequestPinCode`, `RequestPasskey`, `RequestConfirmation`, `RequestAuthorization`,
 `AuthorizeService`) directly, so each kind of question can be checked without pairing anything.
+
+`tests/clipboard.rs` runs the clipboard job against a stand-in compositor: a small Wayland server,
+reached through `WAYLAND_SOCKET`, that offers data control and plays the apps that copy and paste
+(text, an image, a secret, a slow app, a slow paste, a restart, the wlroots protocol, none at all,
+the cliphist import). It never touches your own session or clipboard.

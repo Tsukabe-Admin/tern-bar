@@ -23,4 +23,5 @@ singleton KeepAwake 1.0 KeepAwake.qml
 singleton WifiNetworks 1.0 WifiNetworks.qml
 singleton Looks 1.0 Looks.qml
 singleton SkuaHelper 1.0 SkuaHelper.qml
+singleton ClipboardHistory 1.0 ClipboardHistory.qml
 HelperJob 1.0 HelperJob.qml

@@ -106,7 +106,6 @@ Singleton {
         root.open = false;
         root.query = "";
         root.unarm();
-        root.clipsLoaded = false;
     }
 
     Connections {
@@ -124,16 +123,8 @@ Singleton {
         }
     }
 
-    onQueryChanged: {
-        // Typing withdraws a confirmation that was pending.
-        root.unarm();
-        if (root.open && root.query.indexOf(";") === 0 && !root.clipsLoaded)
-            root.loadClips();
-    }
-    onOpenChanged: {
-        if (root.open && root.query.indexOf(";") === 0 && !root.clipsLoaded)
-            root.loadClips();
-    }
+    // Typing withdraws a confirmation that was pending.
+    onQueryChanged: root.unarm()
 
     // ── Matching ───────────────────────────────────────────────────────────
     // 100 exact, 90 prefix, 75 word start, 60 substring, 1..40 for the letters
@@ -252,9 +243,13 @@ Singleton {
         if (answer === null)
             return null;
         const shown = Calc.format(answer);
+        // Copying goes through the clipboard history's helper job.
+        const copies = ClipboardHistory.active ? "Enter copies"
+            : ClipboardHistory.installed ? "can't copy: clipboard history is not running"
+            : "copying needs skua-helper";
         return {
             kind: "calc", key: "calc", title: shown,
-            subtitle: expr.trim() + "  ·  Enter copies", icon: "", glyph: "\uf1ec", value: shown
+            subtitle: expr.trim() + "  ·  " + copies, icon: "", glyph: "\uf1ec", value: shown
         };
     }
 
@@ -296,62 +291,58 @@ Singleton {
             .map(root.powerRow);
     }
 
-    // ── Clipboard history (cliphist) ───────────────────────────────────────
-    property var clips: []          // [{ id, text }], newest first
-    property bool clipsLoaded: false
-    property bool clipsFailed: false
-    property string clipBuffer: ""
-
-    function loadClips() {
-        if (clipProc.running || !Programs.has("cliphist"))
-            return;
-        root.clipBuffer = "";
-        clipProc.running = true;
-    }
-
-    Process {
-        id: clipProc
-        command: ["cliphist", "list"]
-        stdout: SplitParser {
-            onRead: (line) => root.clipBuffer += line + "\n"
-        }
-        onExited: (exitCode, exitStatus) => {
-            const out = [];
-            const lines = root.clipBuffer.split("\n");
-            for (let i = 0; i < lines.length; i++) {
-                const tab = lines[i].indexOf("\t");
-                if (tab > 0)
-                    out.push({ id: lines[i].slice(0, tab), text: lines[i].slice(tab + 1) });
-            }
-            root.clipBuffer = "";
-            root.clipsFailed = exitCode !== 0;
-            root.clips = out;
-            root.clipsLoaded = true;
-        }
-    }
+    // ── Clipboard history (ClipboardHistory, skua-helper clipboard) ────────
+    // The rows follow the history as it changes, also while the card is open.
 
     function clipRows(q) {
-        if (!Programs.has("cliphist") || !Programs.has("wl-copy") || root.clipsFailed) {
-            return [{
-                kind: "info", key: "info:clip", title: "Clipboard history needs cliphist",
-                subtitle: "and wl-clipboard, with `wl-paste --watch cliphist store` running",
-                icon: "", glyph: "\uf0ea"
-            }];
-        }
+        const info = root.clipInfo();
+        if (info !== null)
+            return [info];
         const rows = [];
-        for (let i = 0; i < root.clips.length && rows.length < 50; i++) {
-            const c = root.clips[i];
-            if (q !== "" && c.text.toLowerCase().indexOf(q) === -1)
+        const items = ClipboardHistory.items;
+        for (let i = 0; i < items.length && rows.length < 50; i++) {
+            const c = items[i];
+            if (q !== "" && c.preview.toLowerCase().indexOf(q) === -1)
                 continue;
-            const image = c.text.indexOf("[[ binary data") === 0;
+            const image = c.kind === "image";
             rows.push({
                 kind: "clip", key: "clip:" + c.id, clipId: c.id,
-                title: image ? "Image" : c.text.replace(/\s+/g, " "),
-                subtitle: image ? c.text.replace(/^\[\[ binary data\s*/, "").replace(/\s*\]\]$/, "") : "",
+                title: image ? "Image" : (c.preview || "Blank text"),
+                subtitle: image ? root.imageSubtitle(c) : "",
                 icon: "", glyph: image ? "\uf03e" : "\uf0ea"
             });
         }
         return rows;
+    }
+
+    // Why there is no history to show, or null when there is one.
+    function clipInfo() {
+        if (!ClipboardHistory.installed)
+            return root.clipNote("info:clip", "Clipboard history needs skua-helper",
+                "Install it from Skua's folder: " + SkuaHelper.installCommand);
+        if (ClipboardHistory.active)
+            return null;
+        if (ClipboardHistory.outdated)
+            return root.clipNote("info:clip", "skua-helper is too old for clipboard history",
+                "Reinstall it from Skua's folder: " + SkuaHelper.installCommand);
+        return root.clipNote("info:clip", "Clipboard history is not running",
+            ClipboardHistory.problem || "skua-helper clipboard is starting");
+    }
+
+    function clipNote(key, title, subtitle) {
+        return { kind: "info", key: key, title: title, subtitle: subtitle, icon: "", glyph: "\uf0ea" };
+    }
+
+    // "PNG · 1920×1080 · 1.4 MB"
+    function imageSubtitle(c) {
+        const parts = [c.mime.replace(/^image\//, "").toUpperCase()];
+        if (c.width > 0 && c.height > 0)
+            parts.push(c.width + "×" + c.height);
+        if (c.size >= 1024 * 1024)
+            parts.push((c.size / (1024 * 1024)).toFixed(1) + " MB");
+        else
+            parts.push(Math.max(1, Math.round(c.size / 1024)) + " KB");
+        return parts.join(" · ");
     }
 
     // ── Usage counts (apps you launch often rise to the top) ──────────────
@@ -413,10 +404,10 @@ Singleton {
             Compositor.focusWindow(row.windowId);
             root.close();
         } else if (row.kind === "calc") {
-            Quickshell.execDetached(["wl-copy", "--", row.value]);
+            ClipboardHistory.copyText(row.value);
             root.close();
         } else if (row.kind === "clip") {
-            Quickshell.execDetached(["sh", "-c", "cliphist decode \"$1\" | wl-copy", "sh", row.clipId]);
+            ClipboardHistory.copy(row.clipId);
             root.close();
         } else if (row.kind === "power") {
             root.runPower(row.action);

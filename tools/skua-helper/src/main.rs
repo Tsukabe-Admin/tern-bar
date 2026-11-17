@@ -3,6 +3,7 @@
 //! ```text
 //! skua-helper bluetooth     answer BlueZ's pairing questions (bluetooth.rs)
 //! skua-helper night-light   warm the screens' colours (night_light.rs, gamma.rs)
+//! skua-helper clipboard     keep a clipboard history (clipboard/mod.rs)
 //! skua-helper --version
 //! ```
 //!
@@ -10,6 +11,7 @@
 //! another, and talks to it one line of JSON at a time (protocol.rs).
 
 mod bluetooth;
+mod clipboard;
 mod gamma;
 mod night_light;
 mod protocol;
@@ -21,6 +23,7 @@ const USAGE: &str = "usage: skua-helper <job>
 jobs:
   bluetooth    answer BlueZ's pairing questions for Skua
   night-light  warm the screens' colours to a temperature Skua sends
+  clipboard    keep Skua's clipboard history and answer pastes from it
 
   --version    print the version
 ";
@@ -29,6 +32,7 @@ fn main() -> ExitCode {
     match std::env::args().nth(1).as_deref() {
         Some("bluetooth") => bluetooth::run(),
         Some("night-light") => night_light::run(),
+        Some("clipboard") => clipboard::run(),
         Some("--version" | "-V") => {
             println!("skua-helper {}", protocol::VERSION);
             ExitCode::SUCCESS
