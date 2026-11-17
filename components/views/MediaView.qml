@@ -20,8 +20,8 @@ Item {
 
     // Album art is remote content controlled by the MPRIS player. Loading an
     // https URL here is a tracking pixel, so local schemes only by default;
-    // set TERN_BAR_REMOTE_ART=1 to opt back into remote art.
-    readonly property bool allowRemoteArt: Quickshell.env("TERN_BAR_REMOTE_ART") === "1"
+    // set SKUA_REMOTE_ART=1 to opt back into remote art.
+    readonly property bool allowRemoteArt: Quickshell.env("SKUA_REMOTE_ART") === "1"
 
     function artSource(url) {
         const s = url ? String(url) : "";

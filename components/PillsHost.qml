@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import "../singletons"
 
-// Classic Tern host: floating translucent top PanelWindow plus animated
+// Pills host: floating translucent top PanelWindow plus animated
 // PopoutPopupHost cards anchored beneath each pill.
 // The bar is a row of capsules ("pills"), one per group of items, floating on
 // a transparent surface. Geometry matches waybar's occupancy exactly: 8px from

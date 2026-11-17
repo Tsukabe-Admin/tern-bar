@@ -7,12 +7,12 @@ var DEFAULT_LOOK = "pills";
 var LOOK_META = {
     pills: {
         id: "pills",
-        label: "Classic Tern",
+        label: "Pills",
         summary: "Floating translucent capsule pills with independent drop-down cards."
     },
     frame: {
         id: "frame",
-        label: "Tern Frame",
+        label: "Frame",
         summary: "Continuous screen border lip with curved cutouts and morphing drawers."
     }
 };

@@ -35,7 +35,7 @@ PanelWindow {
     property var accept: (text) => true
     property string primaryText: ""
     property string secondaryText: "Cancel"
-    property string layerNamespace: "tern-bar-prompt"
+    property string layerNamespace: "skua-prompt"
 
     readonly property bool ready: !win.typed || win.accept(field.text)
     property bool keysArmed: false

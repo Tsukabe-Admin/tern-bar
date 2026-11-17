@@ -1,7 +1,7 @@
 import QtQuick
 
 // Inward drop shadow for top-attached drawers/launcher, bottom-docked OSDs,
-// and fullscreen floating OSD capsules in Tern Frame Look (compiled .frag.qsb).
+// and fullscreen floating OSD capsules in the Frame look (compiled .frag.qsb).
 ShaderEffect {
     id: patch
 

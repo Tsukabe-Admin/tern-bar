@@ -20,7 +20,7 @@ Singleton {
     readonly property bool restyling: BarConfig.restyling
 
     // The frame options are stored whichever Look is active, but they only
-    // act in Tern Frame: Classic Tern has no control that could change them.
+    // act in the Frame look: the Pills look has no control that could change them.
     readonly property int frameThickness: root.isFramed ? root.options.frameThickness : 0
     readonly property int innerRounding: root.isFramed ? root.options.innerRounding : 0
     readonly property bool solidSurface: root.isFramed && root.options.surfaceFinish === "solid"
@@ -33,7 +33,7 @@ Singleton {
     // default 18), so the junctions and the screen corners read as one shape.
     readonly property int wingRadius: root.isFramed ? Math.round(root.options.innerRounding * 7 / 9) : 0
 
-    // Classic Tern: a 40px surface under an 8px top margin. Quickshell adds the
+    // Pills: a 40px surface under an 8px top margin. Quickshell adds the
     // margin to exclusiveZone, so 40 + 8 = 48 is reserved (identical to
     // waybar's). The outer pill sits barMarginSide + barPadding = 18px from
     // the screen edge.
@@ -57,7 +57,7 @@ Singleton {
         frameAlpha: 0.92        // 92%: the requested backdrop blur keeps a hint of the wallpaper
     })
 
-    // Tern Frame: the bar is the frame's top lip, flush with the screen edges.
+    // Frame: the bar is the frame's top lip, flush with the screen edges.
     // Pills never merge (PillRow) and nothing reads exclusiveZone (FrameHost
     // reserves each edge itself); both stay so the two specs have one shape.
     readonly property var _frameSpec: ({

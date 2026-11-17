@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Renders an ASCII wallpaper GIF for tern-bar's ASCII tab; all arguments go to
+# Renders an ASCII wallpaper GIF for Skua's ASCII tab; all arguments go to
 # tools/ascii/gen.mjs. Exit codes: 3 node missing, 4 `npm install` not run in
 # tools/ascii, 5 ffmpeg missing, 1 anything gen.mjs reports.
 set -uo pipefail

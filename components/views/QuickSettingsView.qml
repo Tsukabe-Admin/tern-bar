@@ -572,7 +572,7 @@ Item {
                 wrapMode: Text.WordWrap
                 text: BluetoothAgent.active
                     ? "Check that the device is still in pairing mode, then click it again."
-                    : "Check that the device is still in pairing mode, then click it again. A device that asks for a PIN code needs tern-bar's pairing helper; the README says how to install it."
+                    : "Check that the device is still in pairing mode, then click it again. A device that asks for a PIN code needs Skua's pairing helper; the README says how to install it."
                 color: Theme.t3
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSize - 2

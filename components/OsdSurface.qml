@@ -2,8 +2,8 @@ import QtQuick
 import QtQuick.Shapes
 import "../singletons"
 
-// Shared OSD surface container. Classic Tern: a floating capsule that appears
-// and goes at once, as it always has. Tern Frame: a tab docked into the
+// Shared OSD surface container. Pills: a floating capsule that appears
+// and goes at once, as it always has. Frame: a tab docked into the
 // bottom lip with curved ConcaveCorner wings, which grows out of the lip and
 // retracts into it; over a fullscreen window (the frame is hidden under it)
 // a floating capsule that fades in.

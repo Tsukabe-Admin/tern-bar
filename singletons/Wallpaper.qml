@@ -4,7 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// The Wallpaper tab's backend. One settings file, ~/.config/tern-bar/wallpaper.json,
+// The Wallpaper tab's backend. One settings file, ~/.config/skua/wallpaper.json,
 // which this bar is the only writer of — the scripts only read it — plus the
 // two scripts in this repo that act on it:
 //

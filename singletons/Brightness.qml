@@ -6,13 +6,13 @@ import Quickshell.Io
 
 // Screen backlight brightness for Quick Settings and BrightnessOsd.
 // Reads the first backlight device in /sys/class/backlight (or
-// $TERN_BAR_BACKLIGHT_DIR for testing) and stays quiet on desktop machines
+// $SKUA_BACKLIGHT_DIR for testing) and stays quiet on desktop machines
 // with no backlight hardware.
 Singleton {
     id: root
 
     readonly property string sysfsDir:
-        String(Quickshell.env("TERN_BAR_BACKLIGHT_DIR") || "/sys/class/backlight")
+        String(Quickshell.env("SKUA_BACKLIGHT_DIR") || "/sys/class/backlight")
 
     property bool available: false
     property string device: ""
@@ -116,7 +116,7 @@ Singleton {
     }
 
     // Watch the brightness file directly (covers both sysfs notifications and
-    // test directories under $TERN_BAR_BACKLIGHT_DIR).
+    // test directories under $SKUA_BACKLIGHT_DIR).
     FileView {
         id: watchFile
         path: root.available && root.device !== ""

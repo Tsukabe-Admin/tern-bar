@@ -1,9 +1,9 @@
-//! tern-bar-bt-agent: answers BlueZ's pairing questions for tern-bar.
+//! skua-bt-agent: answers BlueZ's pairing questions for Skua.
 //!
 //! BlueZ, the Linux Bluetooth service, hands every question a pairing can
 //! raise to a "pairing agent": a PIN to type, a passkey, "does the device show
 //! 123456?", "may this device pair or connect?". Quickshell has no agent, so
-//! tern-bar starts this program. It registers with BlueZ as the default agent
+//! Skua starts this program. It registers with BlueZ as the default agent
 //! and passes each question to the bar as one line of JSON on stdout; the bar
 //! shows it and writes the answer back as one line of JSON on stdin.
 //!
@@ -43,7 +43,7 @@ use zbus::zvariant::{ObjectPath, OwnedObjectPath};
 use zbus::{fdo, interface, proxy, Connection};
 
 /// Where the agent lives on the bus. Any path works; BlueZ is told this one.
-const AGENT_PATH: &str = "/org/ternbar/agent";
+const AGENT_PATH: &str = "/org/skua/agent";
 
 /// What the agent can do. "KeyboardDisplay" (it can show a code and have one
 /// typed in) lets BlueZ use every pairing method, so any device can pair.

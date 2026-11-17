@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Put tern-bar's chosen wallpaper on screen with awww.
+# Put Skua's chosen wallpaper on screen with awww.
 #
 #   wallpaper.sh                        every screen, no transition (bar start, hotplug)
 #   wallpaper.sh --animate              every screen, using the saved transition
 #   wallpaper.sh --animate DP-3 DP-2    only the named screens
 #
-# Settings come from ${XDG_CONFIG_HOME:-~/.config}/tern-bar/wallpaper.json. The
+# Settings come from ${XDG_CONFIG_HOME:-~/.config}/skua/wallpaper.json. The
 # bar's Wallpaper tab is the only writer; this script only reads. A missing file,
 # or a key that is absent or out of range, falls back to the defaults. A screen
 # with no image of its own and no "All screens" image is left alone.
@@ -23,7 +23,7 @@ if ! command -v jq >/dev/null 2>&1; then
     exit 5
 fi
 
-STATE="${XDG_CONFIG_HOME:-$HOME/.config}/tern-bar/wallpaper.json"
+STATE="${XDG_CONFIG_HOME:-$HOME/.config}/skua/wallpaper.json"
 
 ANIMATE=0
 OUTPUTS=()

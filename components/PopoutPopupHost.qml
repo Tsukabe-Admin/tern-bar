@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import "../singletons"
 
-// Floating PopupWindow wrapper used by the Classic Pills look. Provides the
+// Floating PopupWindow wrapper used by the Pills look. Provides the
 // click-outside backstop, exact pill-anchored positioning, and smooth 0.97->1.0
 // fade+scale motion on both open and close. The surface covers the screen, so
 // it takes input only while the card is open: during the closing fade a click

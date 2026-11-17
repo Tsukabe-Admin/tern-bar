@@ -11,7 +11,7 @@ import "../singletons"
 // scratchpad (special workspace) open on this output adds one more chip,
 // which hides it again.
 //
-// Classic Tern draws the chips alone, each a BarItem. Tern Frame draws them
+// The Pills look draws the chips alone, each a BarItem. The Frame look draws them
 // "connected": a strip joins neighbouring occupied workspaces, and a capsule
 // slides to the active one (accent on the focused monitor), with that chip's
 // glyph redrawn on top of it in Theme.accentInk.
@@ -147,7 +147,7 @@ Item {
         interval: 200
     }
 
-    // Tern Frame, back layer: one strip uniting adjacent occupied workspaces.
+    // Frame, back layer: one strip uniting adjacent occupied workspaces.
     Item {
         anchors.fill: row
         visible: root.connected
@@ -185,7 +185,7 @@ Item {
     readonly property bool hasCapsule: root.connected && root.activeIdx >= 0 && root.shown.length > 0
         && root.capsuleWidth > 0
 
-    // Tern Frame: the active workspace on a monitor that does not have the
+    // Frame: the active workspace on a monitor that does not have the
     // focus. Behind `row`, so the row's own glyph stays crisp on Theme.l3.
     Rectangle {
         x: root.capsuleLeft
@@ -198,7 +198,7 @@ Item {
         color: Theme.l3
     }
 
-    // Tern Frame: the focused workspace. An opaque accent capsule above `row`
+    // Frame: the focused workspace. An opaque accent capsule above `row`
     // with the glyphs redrawn inside it in Theme.accentInk, clipped to the
     // capsule and faded as a whole, so the translucent Theme.l3 never shows
     // behind an accentInk glyph (animating the colour itself did that).
@@ -260,7 +260,7 @@ Item {
         }
     }
 
-    // Classic Tern: a chip is a plain bar item, coloured by its state.
+    // Pills: a chip is a plain bar item, coloured by its state.
     Component {
         id: classicChip
 
@@ -277,7 +277,7 @@ Item {
         }
     }
 
-    // Tern Frame: a fixed-width chip (the capsule aims at it, so it must not
+    // Frame: a fixed-width chip (the capsule aims at it, so it must not
     // glide), brighter where a workspace has windows, with no hover fill
     // under the focused capsule.
     Component {

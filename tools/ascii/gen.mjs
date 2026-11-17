@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Turns ascii.rest "looks" (https://github.com/bas3line/ascii, MIT) into things
-// tern-bar can show. Two outputs:
+// Skua can show. Two outputs:
 //
 //   wallpaper <look>   an animated GIF sized for a screen, which `awww img` plays
 //   assets             the small JSON files the bar plays itself: the pill's
@@ -14,7 +14,7 @@
 //   node gen.mjs assets
 //
 // `--palette theme` (the default) draws in the bar's current colours:
-// palette.json in $XDG_STATE_HOME/tern-bar (~/.local/state/tern-bar), or the
+// palette.json in $XDG_STATE_HOME/skua (~/.local/state/skua), or the
 // bar's built-in colours while that file does not exist yet. Any other palette
 // id is listed in the manifest.
 //
@@ -121,7 +121,7 @@ function mix(a, b, amount) {
 const THEME_FALLBACK = { card: "#050F16", faint: "#263238", accent: "#2979FF", live: "#00E5FF" };
 
 function loadTheme() {
-    const file = join(process.env.XDG_STATE_HOME || join(homedir(), ".local/state"), "tern-bar/palette.json");
+    const file = join(process.env.XDG_STATE_HOME || join(homedir(), ".local/state"), "skua/palette.json");
     let text;
     try {
         text = readFileSync(file, "utf8");

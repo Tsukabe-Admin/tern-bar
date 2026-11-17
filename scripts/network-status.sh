@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Network status for tern-bar, with an option to hide your IP address.
+# Network status for Skua, with an option to hide your IP address.
 # Prints one line of JSON: {"text", "tooltip", "class"}.
 #
-# The IP is hidden unless $XDG_STATE_HOME/tern-bar/show_ip exists, so a fresh
+# The IP is hidden unless $XDG_STATE_HOME/skua/show_ip exists, so a fresh
 # install never shows it.
 
-STATE_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/tern-bar/show_ip"
+STATE_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/skua/show_ip"
 
 # Escape a value for a JSON string literal.
 json_escape() {

@@ -565,6 +565,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "skua-bt-agent"
+version = "0.1.0"
+dependencies = [
+ "async-io",
+ "futures-channel",
+ "futures-lite",
+ "serde",
+ "serde_json",
+ "zbus",
+]
+
+[[package]]
 name = "slab"
 version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -603,18 +615,6 @@ dependencies = [
  "once_cell",
  "rustix",
  "windows-sys",
-]
-
-[[package]]
-name = "tern-bar-bt-agent"
-version = "0.1.0"
-dependencies = [
- "async-io",
- "futures-channel",
- "futures-lite",
- "serde",
- "serde_json",
- "zbus",
 ]
 
 [[package]]

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Recolour tern-bar, and (through matugen, if you use it) the rest of your desktop.
+# Recolour Skua, and (through matugen, if you use it) the rest of your desktop.
 #
 # The colours come from one of two sources, chosen by `colorSource` in
-# ${XDG_CONFIG_HOME:-~/.config}/tern-bar/wallpaper.json (the bar writes it):
+# ${XDG_CONFIG_HOME:-~/.config}/skua/wallpaper.json (the bar writes it):
 #
 #   "wallpaper"  matugen reads the "All screens" image with the saved scheme and
 #                contrast. Needs matugen.
@@ -10,11 +10,11 @@
 #                matugen is installed it runs too, so your own matugen templates
 #                follow the preset.
 #
-# Writes, in ${XDG_STATE_HOME:-~/.local/state}/tern-bar/:
+# Writes, in ${XDG_STATE_HOME:-~/.local/state}/skua/:
 #   colors.json   every Material role, in matugen's JSON format
 #   palette.json  the bar's eight colours; singletons/Theme.qml watches this file
 #
-# Then, if ${XDG_CONFIG_HOME:-~/.config}/tern-bar/theme-hook.sh exists and is
+# Then, if ${XDG_CONFIG_HOME:-~/.config}/skua/theme-hook.sh exists and is
 # executable, runs it as:   theme-hook.sh <path to colors.json> <label>
 # where <label> is the preset's name or the wallpaper's file name. Use it to
 # reload apps that do not watch their own colour files.
@@ -32,8 +32,8 @@ if ! command -v jq >/dev/null 2>&1; then
     exit 5
 fi
 
-CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/tern-bar"
-STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/tern-bar"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/skua"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/skua"
 STATE="$CONFIG_DIR/wallpaper.json"
 HOOK="$CONFIG_DIR/theme-hook.sh"
 PRESETS="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/themes/presets.json"
@@ -146,7 +146,7 @@ PYEOF
 
     if command -v matugen >/dev/null 2>&1; then
         matugen json "$COLORS_TMP" >/dev/null \
-            || echo "theme-sync.sh: matugen could not render every template; tern-bar itself was recoloured" >&2
+            || echo "theme-sync.sh: matugen could not render every template; Skua itself was recoloured" >&2
     fi
 else
     # ── Colours from the wallpaper ──

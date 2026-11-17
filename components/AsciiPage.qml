@@ -5,7 +5,7 @@ import "../singletons"
 // looks on the left, and on the right the colour, speed, size and brightness of
 // the animated wallpaper plus the piece, colour and speed of the bar's pill.
 //
-// Choices go through the Ascii singleton, which writes ~/.config/tern-bar/ascii.json.
+// Choices go through the Ascii singleton, which writes ~/.config/skua/ascii.json.
 // The previews are played live; the wallpaper is a GIF, so it only changes when
 // "Render & set wallpaper" has run scripts/ascii-render.sh.
 Item {

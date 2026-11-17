@@ -6,7 +6,7 @@ import Quickshell.Io
 import "looks.js" as LooksLib
 
 // Colors follow the wallpaper or a preset theme. scripts/theme-sync.sh (run by
-// the Wallpaper tab) writes ~/.local/state/tern-bar/palette.json; this
+// the Wallpaper tab) writes ~/.local/state/skua/palette.json; this
 // singleton watches that file and crossfades to the new colors. With no
 // palette file yet the bar keeps the fallbacks below, which are the
 // dark-midnight entry of Tern's theme registry (src/themes.rs):
@@ -44,7 +44,7 @@ Singleton {
 
     // theme-sync.sh just wrote a new palette. Toggling watchChanges rebuilds
     // the file watcher, then the file is read at once. Needed on a fresh
-    // install: ~/.local/state/tern-bar did not exist when the bar started, so
+    // install: ~/.local/state/skua did not exist when the bar started, so
     // the watcher had no folder to watch and would never see the first palette.
     function reloadPalette() {
         paletteFile.watchChanges = false;
@@ -102,7 +102,7 @@ Singleton {
 
     // Capsule / frame fill: the card at Tern's --pop-bg alpha (92%, so the
     // requested backdrop blur keeps a hint of the wallpaper), or solid ink
-    // with Tern Frame's Solid finish.
+    // with the Frame look's Solid finish.
     readonly property color popBg: Qt.alpha(root.card, Looks.activeSpec.frameAlpha)
     // Hairline: ink 9% PRE-computed over the card (instead of a translucent
     // border) so the 1px line stays neutral — a translucent border picks up the
@@ -134,7 +134,7 @@ Singleton {
     readonly property int barPadding: Looks.activeSpec.barPadding
 
     // Launch morph: mirrors of niri's geometry (config.kdl: gaps 12; the bar
-    // reserves workAreaTop from the top, and Tern Frame its thickness on the
+    // reserves workAreaTop from the top, and the Frame look its thickness on the
     // other three edges) used to aim the morph at the tile a new terminal lands in.
     readonly property int workAreaTop: Looks.activeSpec.workAreaTop
     readonly property int workAreaGap: 12

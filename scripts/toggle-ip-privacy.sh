@@ -2,7 +2,7 @@
 # Switch the bar between showing and hiding your IP address.
 # The state file exists only while the IP is shown, so hiding is the default.
 
-STATE_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/tern-bar/show_ip"
+STATE_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/skua/show_ip"
 
 mkdir -p "$(dirname "$STATE_FILE")"
 

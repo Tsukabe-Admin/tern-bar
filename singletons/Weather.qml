@@ -7,7 +7,7 @@ import Quickshell.Io
 // Shared weather state for the bar's weather pill and the forecast inside
 // CalendarPopup. Polled once every 30 minutes while either the weather or clock
 // pill is shown on the bar, and seeded immediately from the cached state file
-// ($XDG_STATE_HOME/tern-bar/weather.json) so restarts never blank the pill.
+// ($XDG_STATE_HOME/skua/weather.json) so restarts never blank the pill.
 Singleton {
     id: root
 

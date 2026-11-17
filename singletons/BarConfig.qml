@@ -5,7 +5,7 @@ import Quickshell
 import Quickshell.Io
 import "looks.js" as LooksLib
 
-// Bar preferences, persisted to ~/.config/tern-bar/bar.json: the order of the pills in the
+// Bar preferences, persisted to ~/.config/skua/bar.json: the order of the pills in the
 // bar's three groups ("left", "center", "right") and which of them are hidden.
 // Edit it from the settings page — the gear in the tools pill, a right-click on
 // the launcher, or Mod+B — or by hand, then restart the bar (the file is read
@@ -297,16 +297,16 @@ Singleton {
         }
     }
 
-    // Where things live. Your settings go in $XDG_CONFIG_HOME/tern-bar
-    // (~/.config/tern-bar), files the bar generates in $XDG_STATE_HOME/tern-bar
-    // (~/.local/state/tern-bar), and everything else ships in this repo — so the
+    // Where things live. Your settings go in $XDG_CONFIG_HOME/skua
+    // (~/.config/skua), files the bar generates in $XDG_STATE_HOME/skua
+    // (~/.local/state/skua), and everything else ships in this repo — so the
     // bar works for anyone who clones it, and `git pull` never touches your
     // settings. scripts/*.sh compute the same two folders the same way.
     readonly property string home: String(Quickshell.env("HOME") || "")
     readonly property string configDir:
-        (String(Quickshell.env("XDG_CONFIG_HOME") || "") || (root.home + "/.config")) + "/tern-bar"
+        (String(Quickshell.env("XDG_CONFIG_HOME") || "") || (root.home + "/.config")) + "/skua"
     readonly property string stateDir:
-        (String(Quickshell.env("XDG_STATE_HOME") || "") || (root.home + "/.local/state")) + "/tern-bar"
+        (String(Quickshell.env("XDG_STATE_HOME") || "") || (root.home + "/.local/state")) + "/skua"
     readonly property string scriptsDir: Quickshell.shellDir + "/scripts"
     readonly property string configPath: root.configDir + "/bar.json"
     // The Wallpaper tab: the settings file it alone writes, the palette
@@ -352,7 +352,7 @@ Singleton {
         blockLoading: true
         // Quiet about reads: a missing bar.json is the normal first start.
         printErrors: false
-        onSaveFailed: (error) => console.warn("tern-bar: could not save " + root.configPath
+        onSaveFailed: (error) => console.warn("skua: could not save " + root.configPath
             + ": " + FileViewError.toString(error))
     }
 
@@ -364,9 +364,9 @@ Singleton {
         path: root.configPath + ".bad"
         preload: false
         printErrors: false
-        onSaved: console.warn("tern-bar: " + root.configPath + " does not hold a JSON object, so the default"
+        onSaved: console.warn("skua: " + root.configPath + " does not hold a JSON object, so the default"
             + " layout is used. Your text was kept in " + root.configPath + ".bad")
-        onSaveFailed: (error) => console.warn("tern-bar: " + root.configPath + " does not hold a JSON object,"
+        onSaveFailed: (error) => console.warn("skua: " + root.configPath + " does not hold a JSON object,"
             + " so the default layout is used. A copy could not be written to " + root.configPath + ".bad: "
             + FileViewError.toString(error))
     }

@@ -33,7 +33,7 @@ Item {
 
         Text {
             textFormat: Text.PlainText
-            text: "Choose how tern-bar sits on every monitor. Saved immediately to bar.json."
+            text: "Choose how Skua sits on every monitor. Saved immediately to bar.json."
             color: Theme.t2
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSize
@@ -678,7 +678,7 @@ Item {
 
             Text {
                 textFormat: Text.PlainText
-                text: "IPC: quickshell ipc -c tern-bar call bar cycleLook · quickshell ipc -c tern-bar call settings look"
+                text: "IPC: quickshell ipc -c skua call bar cycleLook · quickshell ipc -c skua call settings look"
                 color: Theme.t3
                 font.family: Theme.fontFamily
                 font.pixelSize: 11

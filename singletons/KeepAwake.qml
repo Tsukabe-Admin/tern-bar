@@ -45,7 +45,7 @@ Singleton {
             mask: Region {}
             exclusionMode: ExclusionMode.Ignore
             WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.namespace: "tern-keepawake"
+            WlrLayershell.namespace: "skua-keepawake"
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
             // Hyprland looks at an inhibitor when it is made and when focus or

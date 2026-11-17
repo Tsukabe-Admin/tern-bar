@@ -81,7 +81,7 @@ ShellRoot {
         }
     }
 
-    // Keyboard shortcuts: quickshell ipc -c tern-bar call launcher <toggle|clipboard|power|close>
+    // Keyboard shortcuts: quickshell ipc -c skua call launcher <toggle|clipboard|power|close>
     IpcHandler {
         target: "launcher"
 
@@ -112,7 +112,7 @@ ShellRoot {
         }
     }
 
-    // quickshell ipc -c tern-bar call bar <calendar|media|quickSettings|notifications|cycleLook|close>
+    // quickshell ipc -c skua call bar <calendar|media|quickSettings|notifications|cycleLook|close>
     IpcHandler {
         target: "bar"
 
@@ -141,7 +141,7 @@ ShellRoot {
         }
     }
 
-    // quickshell ipc -c tern-bar call notifications <clear|toggleDnd>
+    // quickshell ipc -c skua call notifications <clear|toggleDnd>
     IpcHandler {
         target: "notifications"
 

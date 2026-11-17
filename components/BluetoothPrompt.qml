@@ -24,7 +24,7 @@ PromptWindow {
     inputPattern: win.kind === "passkey" ? /[0-9]{0,6}/ : /[0-9A-Za-z]{0,16}/
     accept: (text) => win.kind === "pin" ? /^[0-9A-Za-z]{1,16}$/.test(text)
         : win.kind === "passkey" ? /^[0-9]{1,6}$/.test(text) : true
-    layerNamespace: "tern-bar-bluetooth"
+    layerNamespace: "skua-bluetooth"
 
     message: {
         if (win.kind === "pin")

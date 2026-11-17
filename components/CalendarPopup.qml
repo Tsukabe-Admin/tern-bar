@@ -2,7 +2,7 @@ import QtQuick
 import "../singletons"
 import "views"
 
-// Month calendar and forecast popup under the clock/weather pills (Classic Pills look).
+// Month calendar and forecast popup under the clock/weather pills (Pills look).
 PopoutPopupHost {
     id: pop
 

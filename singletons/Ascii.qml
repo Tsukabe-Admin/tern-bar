@@ -9,7 +9,7 @@ import Quickshell.Io
 //
 //   assets/ascii/manifest.json   the looks, palettes and speeds on offer, written
 //                                by `node tools/ascii/gen.mjs assets`
-//   ~/.config/tern-bar/ascii.json  the choices; this singleton is its only writer
+//   ~/.config/skua/ascii.json    the choices; this singleton is its only writer
 //
 // The pill's colour and speed apply at once (assets/ascii/pill-*.json are
 // tinted and played by components/AsciiArt.qml). The wallpaper is a GIF that

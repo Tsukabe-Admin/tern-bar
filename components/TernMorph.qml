@@ -63,7 +63,7 @@ PanelWindow {
         overlay.fromRect = Qt.rect(Theme.barMarginSide + p.x, Theme.barMarginTop + p.y, item.width, item.height);
         // The overlay window is not realized yet, so aim with the screen size
         // (the work area, inset by niri's gaps below the reserved bar strip;
-        // Tern Frame also reserves its thickness on the sides and the bottom).
+        // the Frame look also reserves its thickness on the sides and the bottom).
         // config.kdl's default-column-width is 0.5, so the new terminal lands
         // centered at half the work area — aim there for a seamless dissolve.
         const inset = Theme.frameThickness;

@@ -25,7 +25,7 @@ PromptWindow {
     accept: (text) => /^.{8,63}$/.test(text) || /^[0-9A-Fa-f]{64}$/.test(text)
     primaryText: "Connect"
     secondaryText: "Cancel"
-    layerNamespace: "tern-bar-wifi"
+    layerNamespace: "skua-wifi"
 
     onPrimary: (text) => WifiNetworks.submit(text)
     onSecondary: WifiNetworks.cancel()

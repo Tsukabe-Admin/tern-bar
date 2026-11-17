@@ -2,7 +2,7 @@ import QtQuick
 import "../singletons"
 import "views"
 
-// Notification centre popup under the bell (Classic Pills look).
+// Notification centre popup under the bell (Pills look).
 PopoutPopupHost {
     id: pop
 

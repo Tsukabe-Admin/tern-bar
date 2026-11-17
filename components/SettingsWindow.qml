@@ -2,11 +2,11 @@ import QtQuick
 import Quickshell
 import "../singletons"
 
-// tern-bar's settings window: four tabs, switched by the chips at the top-left.
+// Skua's settings window: four tabs, switched by the chips at the top-left.
 //
 //   Layout     the bar's pill layout — opened by the tools pill's gear, a
 //              right-click on the launcher, or Mod+B
-//   Look       bar look ("Classic Tern" / "Tern Frame") and Frame options —
+//   Look       bar look ("Pills" / "Frame") and Frame options —
 //              opened by `qs ipc call settings look`
 //   Wallpaper  the wallpaper picker and colour controls — opened by Mod+W or
 //              the tools pill's wallpaper button
@@ -19,7 +19,7 @@ import "../singletons"
 FloatingWindow {
     id: win
 
-    title: "tern-bar settings"
+    title: "skua settings"
     visible: true
     implicitWidth: 1120
     implicitHeight: 720

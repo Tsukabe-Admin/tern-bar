@@ -2,7 +2,7 @@ import QtQuick
 import "../singletons"
 import "views"
 
-// Quick settings popup (Classic Pills look).
+// Quick settings popup (Pills look).
 PopoutPopupHost {
     id: pop
 

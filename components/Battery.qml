@@ -4,13 +4,13 @@ import Quickshell.Services.UPower
 import "../singletons"
 
 // System battery pill: reads UPower's aggregate displayDevice (or
-// $TERN_BAR_BATTERY_MOCK="85:charging" for testing on desktops) and hides
+// $SKUA_BATTERY_MOCK="85:charging" for testing on desktops) and hides
 // itself on desktop machines with no system battery.
 BarItem {
     id: root
 
     readonly property var dev: UPower.displayDevice
-    readonly property string mockSpec: String(Quickshell.env("TERN_BAR_BATTERY_MOCK") || "")
+    readonly property string mockSpec: String(Quickshell.env("SKUA_BATTERY_MOCK") || "")
     readonly property bool hasMock: root.mockSpec !== ""
 
     readonly property bool available: root.hasMock

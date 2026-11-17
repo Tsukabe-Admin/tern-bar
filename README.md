@@ -1,20 +1,28 @@
-# tern-bar
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo/skua-logo-dark.svg">
+    <img src="assets/logo/skua-logo-light.svg" alt="Skua" width="320">
+  </picture>
+</h1>
 
 A clean top bar for the [niri](https://github.com/YaLTeR/niri) and [Hyprland](https://hypr.land)
-desktops, in two looks you can switch between while it runs. **Classic Tern** puts everything in
-small floating rounded "pills". **Tern Frame** draws a border around the whole screen, with the bar
-as its top edge and the popups as drawers that grow out of it. Both can follow your wallpaper's
-colors.
+desktops, in two looks you can switch between while it runs. **Pills** puts everything in small
+floating rounded "pills". **Frame** draws a border around the whole screen, with the bar as its top
+edge and the popups as drawers that grow out of it. Both can follow your wallpaper's colors.
 
-**Classic Tern**: floating pills, and each popup is a card under its pill (here the calendar, under
-the clock).
+A skua is a seabird that steals fish from other birds, hence the logo. Until November 2026 this
+project was called tern-bar: its look was inspired by the Tern terminal, but it is not made by or
+connected with Tern's developers. Used tern-bar before? See [Coming from tern-bar](#coming-from-tern-bar).
 
-![Classic Tern: floating pills over the wallpaper, with the calendar card open under the clock](screenshots/classic.png)
+**Pills**: floating pills, and each popup is a card under its pill (here the calendar, under the
+clock).
 
-**Tern Frame**: a border around the whole screen with rounded inner corners. The launcher grows out
-of the top edge, and the brightness pop-up out of the bottom one.
+![Pills: floating pills over the wallpaper, with the calendar card open under the clock](screenshots/classic.png)
 
-![Tern Frame: a dark border around the screen, the launcher hanging from its top edge and the brightness tab in its bottom edge](screenshots/frame.png)
+**Frame**: a border around the whole screen with rounded inner corners. The launcher grows out of
+the top edge, and the brightness pop-up out of the bottom one.
+
+![Frame: a dark border around the screen, the launcher hanging from its top edge and the brightness tab in its bottom edge](screenshots/frame.png)
 
 The pills up close:
 
@@ -50,7 +58,7 @@ are stand-ins.)
 - A Tern pill that shows how many Tern windows are open, and opens a terminal tab in one — or a new
   window when none is open (only if you use Tern)
 - A wallpaper picker and colour controls, in the same window as the layout editor
-- Two looks, Classic Tern and Tern Frame, switched from the same window or with a key (see
+- Two looks, Pills and Frame, switched from the same window or with a key (see
   [Looks](#looks))
 - An optional little desktop pet — needs the tern-poke plugin for Tern (not released yet)
 
@@ -60,31 +68,31 @@ You'll need [Quickshell](https://quickshell.org) 0.3 or newer, [niri](https://gi
 [Hyprland](https://hypr.land) (tested on 0.57 with a Lua config), and the JetBrainsMono Nerd Font.
 
 ```bash
-git clone https://github.com/Tsukabe-Admin/tern-bar ~/.config/quickshell/tern-bar
-quickshell -c tern-bar
+git clone https://github.com/Tsukabe-Admin/skua ~/.config/quickshell/skua
+quickshell -c skua
 ```
 
 To start it every time you log in, and to make the settings window float, add this to your niri
 config (`~/.config/niri/config.kdl`):
 
 ```kdl
-spawn-at-startup "quickshell" "-c" "tern-bar"
+spawn-at-startup "quickshell" "-c" "skua"
 
 window-rule {
-    match title="^tern-bar settings$"
+    match title="^skua settings$"
     match title="^Wallpaper folder$"
     open-floating true
 }
 
 binds {
-    Mod+B repeat=false { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "settings" "toggle"; }
-    Mod+W repeat=false { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "settings" "wallpaper"; }
-    Mod+Space repeat=false { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "launcher" "toggle"; }
-    Mod+V repeat=false { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "launcher" "clipboard"; }
-    Mod+Return repeat=false { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "tern" "open"; }
-    Mod+N repeat=false { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "bar" "notifications"; }
-    Mod+Shift+N repeat=false { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "notifications" "clear"; }
-    Mod+Shift+D repeat=false { spawn "quickshell" "ipc" "-c" "tern-bar" "call" "notifications" "toggleDnd"; }
+    Mod+B repeat=false { spawn "quickshell" "ipc" "-c" "skua" "call" "settings" "toggle"; }
+    Mod+W repeat=false { spawn "quickshell" "ipc" "-c" "skua" "call" "settings" "wallpaper"; }
+    Mod+Space repeat=false { spawn "quickshell" "ipc" "-c" "skua" "call" "launcher" "toggle"; }
+    Mod+V repeat=false { spawn "quickshell" "ipc" "-c" "skua" "call" "launcher" "clipboard"; }
+    Mod+Return repeat=false { spawn "quickshell" "ipc" "-c" "skua" "call" "tern" "open"; }
+    Mod+N repeat=false { spawn "quickshell" "ipc" "-c" "skua" "call" "bar" "notifications"; }
+    Mod+Shift+N repeat=false { spawn "quickshell" "ipc" "-c" "skua" "call" "notifications" "clear"; }
+    Mod+Shift+D repeat=false { spawn "quickshell" "ipc" "-c" "skua" "call" "notifications" "toggleDnd"; }
 }
 ```
 
@@ -100,7 +108,7 @@ The bar is also your notification daemon: take swaync, mako or dunst out of your
 of them runs, the bar logs two warnings about it and takes over the moment it exits.
 
 Edit any file and the bar updates on the spot. Your own settings are saved in
-`~/.config/tern-bar/`, never inside this folder, so `git pull` is always safe.
+`~/.config/skua/`, never inside this folder, so `git pull` is always safe.
 
 ### On Hyprland
 
@@ -108,17 +116,17 @@ Add this to your Hyprland config (`~/.config/hypr/hyprland.lua`; Hyprland 0.57 r
 configs):
 
 ```lua
-hl.on("hyprland.start", function() hl.exec_cmd("quickshell -c tern-bar") end)
-hl.window_rule({ match = { title = "^tern-bar settings$" }, float = true })
+hl.on("hyprland.start", function() hl.exec_cmd("quickshell -c skua") end)
+hl.window_rule({ match = { title = "^skua settings$" }, float = true })
 hl.window_rule({ match = { title = "^Wallpaper folder$" }, float = true })
-hl.bind("SUPER + B", hl.dsp.exec_cmd("quickshell ipc -c tern-bar call settings toggle"))
-hl.bind("SUPER + W", hl.dsp.exec_cmd("quickshell ipc -c tern-bar call settings wallpaper"))
-hl.bind("SUPER + SPACE", hl.dsp.exec_cmd("quickshell ipc -c tern-bar call launcher toggle"))
-hl.bind("SUPER + V", hl.dsp.exec_cmd("quickshell ipc -c tern-bar call launcher clipboard"))
-hl.bind("SUPER + RETURN", hl.dsp.exec_cmd("quickshell ipc -c tern-bar call tern open"))
-hl.bind("SUPER + N", hl.dsp.exec_cmd("quickshell ipc -c tern-bar call bar notifications"))
-hl.bind("SUPER + SHIFT + N", hl.dsp.exec_cmd("quickshell ipc -c tern-bar call notifications clear"))
-hl.bind("SUPER + SHIFT + D", hl.dsp.exec_cmd("quickshell ipc -c tern-bar call notifications toggleDnd"))
+hl.bind("SUPER + B", hl.dsp.exec_cmd("quickshell ipc -c skua call settings toggle"))
+hl.bind("SUPER + W", hl.dsp.exec_cmd("quickshell ipc -c skua call settings wallpaper"))
+hl.bind("SUPER + SPACE", hl.dsp.exec_cmd("quickshell ipc -c skua call launcher toggle"))
+hl.bind("SUPER + V", hl.dsp.exec_cmd("quickshell ipc -c skua call launcher clipboard"))
+hl.bind("SUPER + RETURN", hl.dsp.exec_cmd("quickshell ipc -c skua call tern open"))
+hl.bind("SUPER + N", hl.dsp.exec_cmd("quickshell ipc -c skua call bar notifications"))
+hl.bind("SUPER + SHIFT + N", hl.dsp.exec_cmd("quickshell ipc -c skua call notifications clear"))
+hl.bind("SUPER + SHIFT + D", hl.dsp.exec_cmd("quickshell ipc -c skua call notifications toggleDnd"))
 ```
 
 On Hyprland 0.55 or 0.56 with a `hyprland.conf`, write the same lines in that file's syntax
@@ -161,20 +169,20 @@ Each one is only needed for the part it powers; the rest of the bar works withou
 ## Looks
 
 A look is how the bar sits on the screen; the colours are a separate choice (see the next section).
-Pick one in the settings window's **Look** tab (`quickshell ipc -c tern-bar call settings look` opens
-it), or switch to the other one with `quickshell ipc -c tern-bar call bar cycleLook`, which you can
+Pick one in the settings window's **Look** tab (`quickshell ipc -c skua call settings look` opens
+it), or switch to the other one with `quickshell ipc -c skua call bar cycleLook`, which you can
 bind to a key. The change applies at once, on every screen, and is saved in
-`~/.config/tern-bar/bar.json`.
+`~/.config/skua/bar.json`.
 
-- **Classic Tern** (the default): floating pills under an 8 px gap, with each popup as a card under
+- **Pills** (the default): floating pills under an 8 px gap, with each popup as a card under
   its pill.
-- **Tern Frame**: a border around the whole screen. The bar is its top edge. The calendar, media,
+- **Frame**: a border around the whole screen. The bar is its top edge. The calendar, media,
   quick settings and notification popups, and the launcher, become drawers that grow out of that
   edge under their pill and retract into it; Esc or a click outside closes one. The volume and
   brightness pop-up is a tab in the bottom edge. New notifications appear inside the top-right
   corner. Tray menus and the password and pairing questions are still floating cards.
 
-The Look tab has five settings for Tern Frame, and **Reset Frame** puts them back:
+The Look tab has five settings for Frame, and **Reset Frame** puts them back:
 
 | Setting | Choices | `lookOptions` key in `bar.json` |
 |---|---|---|
@@ -196,8 +204,8 @@ Things to know:
 - A fullscreen window covers the bar in both looks. An open popup or the launcher closes when a
   window goes fullscreen, and popups stay shut until it leaves. The launcher and the volume pop-up
   still work over it, as floating cards.
-- Tern Frame draws one see-through surface over the whole screen, so anything that moves in the
-  bar (the ASCII pill) redraws more than it does in Classic Tern. Measured idle on two monitors:
+- Frame draws one see-through surface over the whole screen, so anything that moves in the
+  bar (the ASCII pill) redraws more than it does in Pills. Measured idle on two monitors:
   about 1.3% of one CPU core against 1.0%.
 
 ## Wallpaper and colors
@@ -212,7 +220,7 @@ needed and puts your wallpaper back every time it starts. Until you pick one, th
 desktop's wallpaper alone.
 
 Everything the tab does is two scripts in `scripts/`: `wallpaper.sh` puts an image on screen and
-`theme-sync.sh` recolours. Your choices are saved in `~/.config/tern-bar/wallpaper.json`; the bar is
+`theme-sync.sh` recolours. Your choices are saved in `~/.config/skua/wallpaper.json`; the bar is
 its only writer.
 
 ### Colors from the wallpaper
@@ -237,7 +245,7 @@ for is one of them or a mix of two (shadow and scrim are black).
 
 ### Recolour your other apps
 
-After every recolour, `theme-sync.sh` runs `~/.config/tern-bar/theme-hook.sh` if it exists and is
+After every recolour, `theme-sync.sh` runs `~/.config/skua/theme-hook.sh` if it exists and is
 executable, as `theme-hook.sh <colors.json> <label>`. `colors.json` holds every Material colour
 role in matugen's format (`.colors.primary.default.color`, …), and `<label>` is the theme's name
 or the wallpaper's file name. Use it to reload apps that don't notice new colours on their own,
@@ -249,9 +257,9 @@ If you'd rather run matugen yourself (from another wallpaper tool), add this to
 `~/.config/matugen/config.toml` and don't use the Wallpaper tab's colour switch:
 
 ```toml
-[templates.tern-bar]
-input_path = "~/.config/quickshell/tern-bar/matugen/palette.json"
-output_path = "~/.local/state/tern-bar/palette.json"
+[templates.skua]
+input_path = "~/.config/quickshell/skua/matugen/palette.json"
+output_path = "~/.local/state/skua/palette.json"
 ```
 
 The bar watches that file and fades to the new colours. To change which Material You colour feeds
@@ -261,20 +269,20 @@ which part of the bar, edit `matugen/palette.json`.
 
 - **Sizes and the fallback colors:** the colours are in `singletons/Theme.qml`; the sizes of each look
   (bar height, margins, radii, spacing) are in `singletons/Looks.qml`.
-- **Crowded rows:** in Classic Tern a row with four or more visible pills merges into one continuous
+- **Crowded rows:** in Pills a row with four or more visible pills merges into one continuous
   island (`pillMergeThreshold` in `singletons/Looks.qml`). Set it to 5 to keep more capsules separate.
 - **Rearrange the bar:** open the settings page — the gear in the tools pill, a right-click on the
   launcher, or Mod+B — then drag a pill to another group or click it to show/hide it. Every change
-  lands in `~/.config/tern-bar/bar.json`, and the page applies to all screens at once. Right-clicking the Tern pill
+  lands in `~/.config/skua/bar.json`, and the page applies to all screens at once. Right-clicking the Tern pill
   still hops it straight to the next group. Any other key can call the same thing:
-  `quickshell ipc -c tern-bar call settings toggle` (also `open` / `close`). You can edit `bar.json` by
+  `quickshell ipc -c skua call settings toggle` (also `open` / `close`). You can edit `bar.json` by
   hand too (restart the bar afterwards). If the edit leaves it invalid, the bar starts with the default
   layout, says so in its log, and keeps your text in `bar.json.bad` instead of losing it.
 - **Wallpaper:** Mod+W, or the wallpaper button in the tools pill, opens the settings page straight
-  on its Wallpaper tab — `quickshell ipc -c tern-bar call settings wallpaper` does the same, and
+  on its Wallpaper tab — `quickshell ipc -c skua call settings wallpaper` does the same, and
   pressing it again closes the page.
 - **Album art:** the media popup only loads local cover art (`file:`, `image:`, `data:image`), because a
-  remote `https` cover is a tracking pixel the player controls. Start the bar with `TERN_BAR_REMOTE_ART=1`
+  remote `https` cover is a tracking pixel the player controls. Start the bar with `SKUA_REMOTE_ART=1`
   to allow it.
 - **Launch animation:** there's a fancy "grow into a new window" effect. It's off by default. Turn it
   on with `morphEnabled` in `singletons/BarConfig.qml`, but don't run it in a loop.
@@ -284,7 +292,7 @@ which part of the bar, edit `matugen/palette.json`.
   a sum like `2*(3+4)` to see the answer (Enter copies it; whole numbers are exact up to
   9,007,199,254,740,991, anything larger or with a fraction is shown to 10 significant digits); start
   with `;` to search clipboard history. Up/Down pick, Enter opens, Esc clears and then closes. Apps
-  you open often move to the top (counts in `~/.local/state/tern-bar/launcher.json`). The ⏻ button
+  you open often move to the top (counts in `~/.local/state/skua/launcher.json`). The ⏻ button
   opens the power actions; Log out, Reboot and Power off need a second Enter (or click) within 3
   seconds. Holding Enter down does not count, and moving the selection or typing cancels it.
 - **Quick settings:** the sliders button in the right-hand pill. **Calendar:** click the clock.
@@ -315,7 +323,7 @@ which part of the bar, edit `matugen/palette.json`.
   install the pairing helper once and restart the bar:
 
   ```bash
-  cargo install --path tools/bt-agent --root ~/.local    # puts tern-bar-bt-agent in ~/.local/bin
+  cargo install --path tools/bt-agent --root ~/.local    # puts skua-bt-agent in ~/.local/bin
   ```
 
   The bar then shows each question in a small window under the bar (on its own, too, when a device
@@ -324,27 +332,27 @@ which part of the bar, edit `matugen/palette.json`.
   keeps the adapter pairable; it is never made discoverable. `~/.local/bin` has to be on the `PATH`
   the bar starts with. See `tools/bt-agent/README.md`.
 - **Your IP stays hidden:** the network pill shows only the Wi-Fi name until you click it; click
-  again to hide the IP. The choice is the file `~/.local/state/tern-bar/show_ip`.
+  again to hide the IP. The choice is the file `~/.local/state/skua/show_ip`.
 - **Weather lookup:** the weather pill is on by default and asks a geolocation service
   (`ipwho.is`, or `wttr.in`) where you are, then fetches the forecast from Open-Meteo — no API
-  key, but your IP is sent. Set `TERN_BAR_WEATHER_LOCATION="City"` or
-  `TERN_BAR_WEATHER_COORDS="lat,lon"` in the bar's environment to skip the IP lookup.
+  key, but your IP is sent. Set `SKUA_WEATHER_LOCATION="City"` or
+  `SKUA_WEATHER_COORDS="lat,lon"` in the bar's environment to skip the IP lookup.
 - **Weather units:** open the forecast (click the weather or clock pill) and tap °C / °F. The
   choice is saved in `bar.json` (`weatherFahrenheit`); it re-formats the cached numbers, so no new
   fetch is needed.
 - **Environment variables:** settings and generated files follow `XDG_CONFIG_HOME` and
   `XDG_STATE_HOME`; the folders named in this README are the defaults. `TERMINAL` chooses the
-  terminal. For trying things without the real hardware or network: `TERN_BAR_BATTERY_MOCK="85:charging"`,
-  `TERN_BAR_BACKLIGHT_DIR` (a folder to use instead of `/sys/class/backlight`),
-  `TERN_BAR_UPDATES_MOCK=<count>`, `TERN_BAR_CHECKUPDATES_CMD`, `TERN_BAR_WEATHER_MOCK=<json>`, and the
-  weather script's servers: `TERN_BAR_WEATHER_METEO_URL`, `TERN_BAR_WEATHER_WTTR_BASE`,
-  `TERN_BAR_WEATHER_GEO_URL`, `TERN_BAR_WEATHER_GEOCODE_URL`.
+  terminal. For trying things without the real hardware or network: `SKUA_BATTERY_MOCK="85:charging"`,
+  `SKUA_BACKLIGHT_DIR` (a folder to use instead of `/sys/class/backlight`),
+  `SKUA_UPDATES_MOCK=<count>`, `SKUA_CHECKUPDATES_CMD`, `SKUA_WEATHER_MOCK=<json>`, and the
+  weather script's servers: `SKUA_WEATHER_METEO_URL`, `SKUA_WEATHER_WTTR_BASE`,
+  `SKUA_WEATHER_GEO_URL`, `SKUA_WEATHER_GEOCODE_URL`.
 - **Tray menus** close when you click anywhere else. A submenu opens in place, with a **Back** row.
 - **ASCII animations:** the settings window's **ASCII** tab (right-click the ASCII pill, or
-  `quickshell ipc -c tern-bar call settings ascii`) picks a look, colour, speed, size and brightness for
+  `quickshell ipc -c skua call settings ascii`) picks a look, colour, speed, size and brightness for
   an animated ASCII wallpaper and renders it to a GIF that `awww` plays (about 15–45 s; saved in
   `<wallpaper folder>/ascii/`). The same tab sets the bar pill's piece, colour and speed, which apply
-  at once; left-click the pill for the next piece. Choices are saved in `~/.config/tern-bar/ascii.json`.
+  at once; left-click the pill for the next piece. Choices are saved in `~/.config/skua/ascii.json`.
   The launcher's "No matches" line uses the same player. The frames are plain text in `assets/ascii/`,
   so nothing is computed while the bar runs. Everything is made by `tools/ascii/gen.mjs` from
   [ascii.rest](https://github.com/bas3line/ascii) (MIT) looks. The pill, previews and launcher line work
@@ -356,30 +364,57 @@ which part of the bar, edit `matugen/palette.json`.
 ```
 shell.qml               starts the bar on every screen
 components/             the bar and each of its pills, and the two looks' hosts (PillsHost, FrameHost)
-components/views/       what is inside each popup, shared by the Classic cards and the Frame drawers
+components/views/       what is inside each popup, shared by the Pills cards and the Frame drawers
 singletons/             shared pieces: theme, looks, settings, wallpaper, compositor connection (niri, Hyprland)
-shaders/                the Tern Frame shadows: GLSL sources and the compiled .qsb files the bar loads
+shaders/                the Frame look's shadows: GLSL sources and the compiled .qsb files the bar loads
 scripts/                helpers: wallpaper, colours, network status, IP hiding
 themes/                 the ten built-in colour themes
 matugen/                an optional template, for driving the colours from your own matugen setup
 screenshots/            pictures for this page
 assets/ascii/           text frames for the ASCII pill and the launcher's empty state
+assets/logo/            the logo: app icon, the bird alone, and the heading for light and dark pages
 tests/                  unit tests for the script libraries (node --test tests/)
 tools/ascii/            generator for those frames and for animated ASCII wallpapers (needs node)
 tools/bt-agent/         the Bluetooth pairing helper, in Rust (see Bluetooth above)
 tools/build-shaders.sh  rebuilds the compiled shaders after a change to their sources
 ```
 
+## Coming from tern-bar
+
+Skua is tern-bar under a new name, with the same features. To move an existing install over, stop the
+bar and move its folders (these are the default places; use yours if you set `XDG_CONFIG_HOME` or
+`XDG_STATE_HOME`):
+
+```bash
+quickshell kill -c tern-bar
+mv ~/.config/quickshell/tern-bar ~/.config/quickshell/skua
+mv ~/.config/tern-bar ~/.config/skua
+mv ~/.local/state/tern-bar ~/.local/state/skua
+git -C ~/.config/quickshell/skua remote set-url origin https://github.com/Tsukabe-Admin/skua
+```
+
+Then, in your niri or Hyprland config, change every `-c tern-bar` to `-c skua` and the settings
+window's title rule to `^skua settings$`. Rename any `TERN_BAR_…` variable you set to `SKUA_…`, and
+in a matugen template `[templates.tern-bar]` becomes `[templates.skua]` with the new paths. If you
+installed the Bluetooth pairing helper, install it again under its new name and remove the old one:
+
+```bash
+cargo install --path ~/.config/quickshell/skua/tools/bt-agent --root ~/.local
+rm ~/.local/bin/tern-bar-bt-agent
+```
+
+Start the bar with `quickshell -c skua` (or log out and in again).
+
 ## If it misbehaves
 
 To restart it by hand on niri:
 
 ```bash
-quickshell kill -c tern-bar
-NIRI_SOCKET=$(ls /run/user/$UID/niri.wayland-1.*.sock) quickshell -c tern-bar --daemonize
+quickshell kill -c skua
+NIRI_SOCKET=$(ls /run/user/$UID/niri.wayland-1.*.sock) quickshell -c skua --daemonize
 ```
 
-On Hyprland, run `quickshell kill -c tern-bar` and then `quickshell -c tern-bar --daemonize` from a
+On Hyprland, run `quickshell kill -c skua` and then `quickshell -c skua --daemonize` from a
 terminal inside Hyprland, which already has `HYPRLAND_INSTANCE_SIGNATURE`.
 
 Without `NIRI_SOCKET` (niri) or `HYPRLAND_INSTANCE_SIGNATURE` (Hyprland) the bar still starts, but
@@ -393,7 +428,7 @@ and OMP while I described the behaviour, tested it on the live desktop and decid
 It is a new way to work, and I wanted to see how far it can go: not a toy demo, but a daily-driver
 bar with a launcher, settings, wallpaper tools, weather, media controls and the rest.
 
-It runs every day on my machine (Arch, niri, Quickshell 0.3.2, two monitors), in the Tern Frame look.
+It runs every day on my machine (Arch, niri, Quickshell 0.3.2, two monitors), in the Frame look.
 Hyprland support, in both looks, was checked in a nested Hyprland 0.57 with a Lua config, but is
 not used day to day yet. The brightness pop-up was checked against a stand-in backlight folder: the
 machine has no backlight. It has not been tested on every distro, GPU or Quickshell version, so

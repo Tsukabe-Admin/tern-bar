@@ -1,8 +1,8 @@
 [package]
-name = "tern-bar-bt-agent"
+name = "skua-bt-agent"
 version = "0.1.0"
 edition = "2021"
-description = "Answers BlueZ's pairing questions (PIN, passkey, number check) for tern-bar"
+description = "Answers BlueZ's pairing questions (PIN, passkey, number check) for Skua"
 license = "MIT"
 publish = false
 

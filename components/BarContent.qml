@@ -4,7 +4,7 @@ import "../singletons"
 
 // All the bar's pills, their layout rows, and group islands for one screen.
 // Owned inside ScreenBarShell so timers, sockets, and pill objects stay alive
-// when hot-swapping between Classic Pills and Tern Frame hosts.
+// when hot-swapping between Pills and Frame hosts.
 //
 // Which pill sits in which of the three rows, and in what order, comes from
 // BarConfig.layout; hidden pills stay alive in pillStore. Reparenting keeps the

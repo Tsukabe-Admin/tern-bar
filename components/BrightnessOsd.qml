@@ -23,7 +23,7 @@ PanelWindow {
     }
 
     // Mapped for as long as the surface has something to show: while `shown`,
-    // and in Tern Frame while the docked tab retracts afterwards.
+    // and in the Frame look while the docked tab retracts afterwards.
     screen: Popups.screenNamed(osd.screenName)
     visible: surface.presented
     anchors.bottom: true
@@ -36,7 +36,7 @@ PanelWindow {
     color: "transparent"
     mask: Region {}
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.namespace: "tern-bar-osd"
+    WlrLayershell.namespace: "skua-osd"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
     onVisibleChanged: osd.syncDock()

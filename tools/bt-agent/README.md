@@ -1,8 +1,8 @@
 # tools/bt-agent
 
-`tern-bar-bt-agent`, the Bluetooth pairing helper. When a pairing needs a person (a PIN to type, a
+`skua-bt-agent`, the Bluetooth pairing helper. When a pairing needs a person (a PIN to type, a
 passkey, "does the device show 123456?", "may this device pair or connect?"), BlueZ asks its
-*pairing agent*. Quickshell has none, so tern-bar starts this small program: it registers with
+*pairing agent*. Quickshell has none, so Skua starts this small program: it registers with
 BlueZ as the default agent and passes every question to the bar, which shows it in a window under
 the bar and sends your answer back.
 
@@ -10,8 +10,8 @@ the bar and sends your answer back.
 cargo install --path tools/bt-agent --root ~/.local    # from the repository's top folder
 ```
 
-That puts `tern-bar-bt-agent` in `~/.local/bin`. The bar looks for it once when it starts, so
-restart the bar after installing it. To remove it: `rm ~/.local/bin/tern-bar-bt-agent`. Without it,
+That puts `skua-bt-agent` in `~/.local/bin`. The bar looks for it once when it starts, so
+restart the bar after installing it. To remove it: `rm ~/.local/bin/skua-bt-agent`. Without it,
 only devices that pair without a code can be paired from the bar.
 
 ## How the bar talks to it

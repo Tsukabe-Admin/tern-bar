@@ -27,7 +27,7 @@ PanelWindow {
     implicitHeight: Math.max(1, column.implicitHeight)
     color: "transparent"
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.namespace: "tern-bar-notifications"
+    WlrLayershell.namespace: "skua-notifications"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
     Column {

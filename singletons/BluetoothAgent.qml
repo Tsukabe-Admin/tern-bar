@@ -5,11 +5,11 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Bluetooth
 
-// tern-bar's Bluetooth pairing agent. A pairing can need a person: a PIN or a
+// Skua's Bluetooth pairing agent. A pairing can need a person: a PIN or a
 // passkey to type, a number to compare with the one on the device, "may this
 // device pair or connect?". BlueZ puts those questions to a pairing agent, and
 // Quickshell has none, so the bar runs tools/bt-agent (installed as
-// tern-bar-bt-agent). It registers with BlueZ as the default agent and passes
+// skua-bt-agent). It registers with BlueZ as the default agent and passes
 // each question here as one line of JSON (the format is described at the top of
 // tools/bt-agent/src/main.rs). BluetoothPrompt shows it, and the answer goes
 // back the same way.
@@ -19,7 +19,7 @@ import Quickshell.Bluetooth
 Singleton {
     id: root
 
-    readonly property string program: "tern-bar-bt-agent"
+    readonly property string program: "skua-bt-agent"
     readonly property bool installed: Programs.has(root.program)
     // Registered with BlueZ: its questions come to the bar.
     property bool active: false
@@ -89,7 +89,7 @@ Singleton {
         try {
             message = JSON.parse(line);
         } catch (e) {
-            console.warn("tern-bar-bt-agent wrote a line that is not JSON:", line);
+            console.warn("skua-bt-agent wrote a line that is not JSON:", line);
             return;
         }
         if (message.event === "ready") {
@@ -105,7 +105,7 @@ Singleton {
         } else if (message.event === "cancel") {
             root.prompt = null;
         } else if (message.event === "error") {
-            console.warn("tern-bar-bt-agent:", message.message);
+            console.warn("skua-bt-agent:", message.message);
         }
     }
 
@@ -188,7 +188,7 @@ Singleton {
         }
         // Only a crash writes here.
         stderr: SplitParser {
-            onRead: (line) => console.warn("tern-bar-bt-agent:", line)
+            onRead: (line) => console.warn("skua-bt-agent:", line)
         }
         onRunningChanged: {
             if (helper.running)

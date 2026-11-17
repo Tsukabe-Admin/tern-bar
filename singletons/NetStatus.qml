@@ -8,7 +8,7 @@ import Quickshell.Io
 // JSON contract waybar consumed), but runs it once for the whole shell instead
 // of once per screen, and only while the pill is actually on the bar.
 //
-// The mask is one state file ($XDG_STATE_HOME/tern-bar/show_ip), so the pill
+// The mask is one state file ($XDG_STATE_HOME/skua/show_ip), so the pill
 // both watches it and re-reads right after its own toggle: a toggle from
 // anywhere (this pill, Mod+P) shows up at once instead of at the next poll.
 Singleton {

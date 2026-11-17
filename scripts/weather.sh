@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Weather helper for tern-bar: fetches current conditions and multi-day forecast
+# Weather helper for Skua: fetches current conditions and multi-day forecast
 # without requiring an API key (Open-Meteo, with wttr.in as the fallback) and
-# caches the normalized JSON in $XDG_STATE_HOME/tern-bar/weather.json.
+# caches the normalized JSON in $XDG_STATE_HOME/skua/weather.json.
 
 set -eu
 
-STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/tern-bar"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/skua"
 CACHE_FILE="$STATE_DIR/weather.json"
 
 if ! command -v python3 >/dev/null 2>&1; then
@@ -106,7 +106,7 @@ WMO_ICONS = {
 }
 
 def fetch_json(url, timeout=5):
-    req = urllib.request.Request(url, headers={"User-Agent": "tern-bar/1.0"})
+    req = urllib.request.Request(url, headers={"User-Agent": "skua/1.0"})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         return json.loads(resp.read().decode("utf-8", errors="replace"))
 
@@ -114,13 +114,13 @@ def from_wttr():
     # The same order as from_open_meteo: coordinates, then a place name. With
     # neither, the path is empty and wttr.in works the place out from the
     # request's IP address, so coordinates must never be dropped here.
-    coords = os.environ.get("TERN_BAR_WEATHER_COORDS", "").strip()
+    coords = os.environ.get("SKUA_WEATHER_COORDS", "").strip()
     if "," in coords:
         parts = coords.split(",", 1)
         target = f"{float(parts[0])},{float(parts[1])}"    # wttr.in reads "lat,lon" as GPS coordinates
     else:
-        target = urllib.parse.quote(os.environ.get("TERN_BAR_WEATHER_LOCATION", "").strip())
-    base = os.environ.get("TERN_BAR_WEATHER_WTTR_BASE", "https://wttr.in").rstrip("/")
+        target = urllib.parse.quote(os.environ.get("SKUA_WEATHER_LOCATION", "").strip())
+    base = os.environ.get("SKUA_WEATHER_WTTR_BASE", "https://wttr.in").rstrip("/")
     url = f"{base}/{target}?format=j1"
     data = fetch_json(url, timeout=5)
     cur = (data.get("current_condition") or [{}])[0]
@@ -166,15 +166,15 @@ def from_wttr():
     }
 
 def from_open_meteo():
-    coords = os.environ.get("TERN_BAR_WEATHER_COORDS", "").strip()
-    loc = os.environ.get("TERN_BAR_WEATHER_LOCATION", "").strip()
+    coords = os.environ.get("SKUA_WEATHER_COORDS", "").strip()
+    loc = os.environ.get("SKUA_WEATHER_LOCATION", "").strip()
     lat, lon = None, None
     if "," in coords:
         parts = coords.split(",", 1)
         lat, lon = float(parts[0]), float(parts[1])
     elif loc:
         geo_base = os.environ.get(
-            "TERN_BAR_WEATHER_GEOCODE_URL",
+            "SKUA_WEATHER_GEOCODE_URL",
             "https://geocoding-api.open-meteo.com/v1/search",
         )
         q = urllib.parse.quote(loc)
@@ -183,13 +183,13 @@ def from_open_meteo():
         lat = float(first["latitude"])
         lon = float(first["longitude"])
     else:
-        geo_url = os.environ.get("TERN_BAR_WEATHER_GEO_URL", "https://ipwho.is/")
+        geo_url = os.environ.get("SKUA_WEATHER_GEO_URL", "https://ipwho.is/")
         geo = fetch_json(geo_url, timeout=4)
         lat = float(geo["latitude"])
         lon = float(geo["longitude"])
 
     meteo_base = os.environ.get(
-        "TERN_BAR_WEATHER_METEO_URL",
+        "SKUA_WEATHER_METEO_URL",
         "https://api.open-meteo.com/v1/forecast",
     )
     url = (
@@ -238,7 +238,7 @@ def from_open_meteo():
     }
 
 result = None
-mock = os.environ.get("TERN_BAR_WEATHER_MOCK", "").strip()
+mock = os.environ.get("SKUA_WEATHER_MOCK", "").strip()
 if mock:
     try:
         result = json.loads(mock)

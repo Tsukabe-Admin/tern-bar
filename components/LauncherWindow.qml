@@ -10,10 +10,10 @@ import "../singletons/looks.js" as LooksLib
 // pill's screen. One full-screen transparent overlay surface: it holds the
 // keyboard while open, and a click outside the card closes it.
 //
-// In Tern Frame the card is attached to the frame's top lip: it grows out of
+// In the Frame look the card is attached to the frame's top lip: it grows out of
 // it and, after closing, retracts into it (the window stays mapped for that
 // moment, without keyboard or pointer). Over a fullscreen window the frame is
-// hidden under that window, so there the card floats as in Classic Tern.
+// hidden under that window, so there the card floats as in the Pills look.
 //
 // Keys: type to search · Up/Down, Tab/Shift+Tab, Ctrl+N/Ctrl+P move ·
 // Enter opens · Esc clears the search, then closes.
@@ -35,7 +35,7 @@ PanelWindow {
         win.selectedKey = row ? row.key : "";
     }
 
-    // Mapped: while the launcher is open, and in Tern Frame for the moment
+    // Mapped: while the launcher is open, and in the Frame look for the moment
     // its card takes to retract afterwards.
     property bool shown: false
     readonly property bool attached: Theme.isFramed && !Compositor.isOutputFullscreen(Launcher.screenName)
@@ -51,7 +51,7 @@ PanelWindow {
     }
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.namespace: "tern-bar-launcher"
+    WlrLayershell.namespace: "skua-launcher"
     WlrLayershell.keyboardFocus: Launcher.open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
     Region {

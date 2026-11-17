@@ -7,7 +7,7 @@ import "../singletons"
 import "../singletons/looks.js" as LooksLib
 import "views"
 
-// Tern Frame host: four invisible edge exclusion strips plus one fullscreen
+// Frame host: four invisible edge exclusion strips plus one fullscreen
 // Top-layer surface rendering the connected screen frame, concave corners,
 // flat top-lip bar slot, and one morphing popout drawer with curved wings.
 Scope {
@@ -94,7 +94,7 @@ Scope {
         implicitHeight: Theme.barHeight
         exclusiveZone: Theme.barHeight
         WlrLayershell.layer: WlrLayer.Top
-        WlrLayershell.namespace: "tern-frame-edge"
+        WlrLayershell.namespace: "skua-frame-edge"
         focusable: false
         color: "transparent"
         mask: Region {}
@@ -107,7 +107,7 @@ Scope {
         implicitHeight: Theme.frameThickness
         exclusiveZone: Theme.frameThickness
         WlrLayershell.layer: WlrLayer.Top
-        WlrLayershell.namespace: "tern-frame-edge"
+        WlrLayershell.namespace: "skua-frame-edge"
         focusable: false
         color: "transparent"
         mask: Region {}
@@ -120,7 +120,7 @@ Scope {
         implicitHeight: 1
         exclusiveZone: Theme.frameThickness
         WlrLayershell.layer: WlrLayer.Top
-        WlrLayershell.namespace: "tern-frame-edge"
+        WlrLayershell.namespace: "skua-frame-edge"
         focusable: false
         color: "transparent"
         mask: Region {}
@@ -133,7 +133,7 @@ Scope {
         implicitHeight: 1
         exclusiveZone: Theme.frameThickness
         WlrLayershell.layer: WlrLayer.Top
-        WlrLayershell.namespace: "tern-frame-edge"
+        WlrLayershell.namespace: "skua-frame-edge"
         focusable: false
         color: "transparent"
         mask: Region {}
@@ -152,7 +152,7 @@ Scope {
         }
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Top
-        WlrLayershell.namespace: "tern-frame"
+        WlrLayershell.namespace: "skua-frame"
         // Exclusive, like the launcher: a drawer opened from a keybind (or a
         // click on its pill) has to hear Esc without first being clicked.
         WlrLayershell.keyboardFocus: root.drawerOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None

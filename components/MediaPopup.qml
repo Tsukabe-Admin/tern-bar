@@ -2,7 +2,7 @@ import QtQuick
 import "../singletons"
 import "views"
 
-// Expanded MPRIS media player popup (Classic Pills look).
+// Expanded MPRIS media player popup (Pills look).
 PopoutPopupHost {
     id: pop
 

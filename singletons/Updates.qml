@@ -6,7 +6,7 @@ import Quickshell.Io
 
 // Pending system package updates (Arch/Pacman + AUR when paru or yay is present).
 // Polled once for the whole shell while the updates pill is not hidden, and
-// cached in $XDG_STATE_HOME/tern-bar/updates.json so a restart shows the last
+// cached in $XDG_STATE_HOME/skua/updates.json so a restart shows the last
 // known count immediately while checkupdates refreshes in the background.
 Singleton {
     id: root
@@ -54,13 +54,13 @@ Singleton {
     Process {
         id: checker
         command: ["sh", "-c",
-            "state=\"${XDG_STATE_HOME:-$HOME/.local/state}/tern-bar\"; "
+            "state=\"${XDG_STATE_HOME:-$HOME/.local/state}/skua\"; "
             + "mkdir -p \"$state\"; "
-            + "if [ -n \"${TERN_BAR_UPDATES_MOCK:-}\" ]; then "
-            + "  total=$TERN_BAR_UPDATES_MOCK; "
+            + "if [ -n \"${SKUA_UPDATES_MOCK:-}\" ]; then "
+            + "  total=$SKUA_UPDATES_MOCK; "
             + "else "
             + "  repo=0; aur=0; "
-            + "  cu_cmd=\"${TERN_BAR_CHECKUPDATES_CMD:-checkupdates}\"; "
+            + "  cu_cmd=\"${SKUA_CHECKUPDATES_CMD:-checkupdates}\"; "
             + "  if command -v \"$cu_cmd\" >/dev/null 2>&1; then "
             + "    rc=0; out=$(\"$cu_cmd\" 2>/dev/null) || rc=$?; "
             + "    if [ \"$rc\" -eq 0 ]; then "

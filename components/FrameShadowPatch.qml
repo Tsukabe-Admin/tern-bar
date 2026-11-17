@@ -1,6 +1,6 @@
 import QtQuick
 
-// One perimeter slice of the Tern Frame inward bezel shadow (compiled .frag.qsb).
+// One perimeter slice of the Frame look's inward bezel shadow (compiled .frag.qsb).
 ShaderEffect {
     id: patch
 
