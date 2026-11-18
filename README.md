@@ -376,6 +376,7 @@ tests/                  unit tests for the script libraries (node --test tests/)
 tools/ascii/            generator for those frames and for animated ASCII wallpapers (needs node)
 tools/skua-helper/      Skua's helper program, in Rust: night light, clipboard history, Bluetooth pairing
 tools/build-shaders.sh  rebuilds the compiled shaders after a change to their sources
+.github/workflows/      the checks GitHub runs on every push: tests, linters, secret and dependency scanners
 ```
 
 ## Coming from tern-bar

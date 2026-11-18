@@ -33,6 +33,10 @@ edit, it keeps running the old code — restart it with
   from the same file in `components/views/`. Pills is the default everyone gets, so a change meant
   for Frame should leave it looking exactly as it did.
 - Mention what you tested and on which Quickshell version.
+- Every push and pull request runs the checks below on GitHub, from a clean clone
+  (`.github/workflows/ci.yml`: an Arch container with the packages of one fixed day), together with
+  shellcheck on the scripts, gitleaks on the history and osv-scanner on the dependencies. A red
+  cross on a pull request is no reason to hold it back: say so and we will look at it together.
 - `node --test tests/` runs the unit tests (plain Node, nothing to install). They cover the script
   libraries in `singletons/`: the launcher's calculator (`calc.js`), the Looks options, the
   ink-on-accent contrast and niri's fullscreen check (`looks.js`), the cleaning of notification
@@ -41,14 +45,16 @@ edit, it keeps running the old code — restart it with
   touch one of those files, and add a case for a rule you add. The QML itself has no tests: that
   is what the real bar is for.
 - `/usr/lib/qt6/bin/qmllint -I /usr/lib/qt6/qml -I . shell.qml components/*.qml components/views/*.qml singletons/*.qml`
-  must not report an error (the path is Arch's; qmllint comes with Qt's declarative tools). It
-  prints a couple of hundred warnings about Quickshell types it cannot see; those are expected.
+  must end without an error status (`echo $?` says 0; the path is Arch's, and qmllint comes with
+  Qt's declarative tools). It prints a couple of hundred warnings about Quickshell types it cannot
+  see; those are expected. What it calls an error is a syntax error or an id used twice.
 - `tools/skua-helper` (Rust): `cargo test`, `cargo clippy --all-targets -- -D warnings` and
   `cargo fmt --check` from that folder. Its README says how each job is checked without touching
   your own session, and when to bump its version.
 - The Frame look's shadows are two GLSL shaders in `shaders/`. The bar loads the compiled
   `.frag.qsb` files, not the sources, so after editing a `.frag` run `tools/build-shaders.sh` and
-  commit both. `tools/build-shaders.sh --check` says whether the compiled files match their sources.
+  commit both. `tools/build-shaders.sh --check` says whether the compiled files hold what their
+  sources give (it compares their contents: the files' bytes differ from one system to the next).
 - Match the existing style: plain QML, comments that explain *why*, and no hardcoded home paths.
 - New text labels need `textFormat: Text.PlainText` — window titles, clipboard entries, SSIDs and
   media metadata are untrusted, and Qt would otherwise parse them as rich text.

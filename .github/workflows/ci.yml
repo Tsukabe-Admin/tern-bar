@@ -1,0 +1,103 @@
+# Every check, on every push and pull request, from a clean clone.
+#
+# A check that only ever ran on one machine can pass there and nowhere else.
+# GitHub's runner is that other machine. The first try of these steps in a
+# clean container showed it: the shader check compared compressed bytes, which
+# only matched on the machine that had built them.
+#
+# The job runs in an Arch Linux container, because Arch has Quickshell, Qt's
+# tools and cliphist as packages: the same ones the bar is developed with. The
+# packages are those of one day of Arch's archive (ARCH_DATE), so a new
+# compiler or a new Qt cannot turn a commit red that changed nothing. To move
+# the tools forward, change the date (and the image, to one from about that
+# day) in a commit of its own, and fix what the newer tools report.
+#
+# CONTRIBUTING.md has the same commands for running them by hand.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  checks:
+    name: Tests, linters, scanners
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    container:
+      image: archlinux:base-20261108.0.623074@sha256:d4594bb2300cba11f41c2f27923eb56f63d9988909c402f9c95517d1e362c899
+    env:
+      ARCH_DATE: 2026/11/17
+    steps:
+      - name: Install the tools
+        run: |
+          echo "Server = https://archive.archlinux.org/repos/$ARCH_DATE/\$repo/os/\$arch" > /etc/pacman.d/mirrorlist
+          pacman -Syyuu --noconfirm --needed --noprogressbar \
+              git gcc rust nodejs \
+              qt6-declarative qt6-shadertools quickshell \
+              cliphist shellcheck gitleaks osv-scanner
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # gitleaks reads every commit, not only the newest.
+          fetch-depth: 0
+          persist-credentials: false
+
+      # The container runs as root and the clone belongs to the runner's user;
+      # git refuses to read such a folder until it is told this one is fine.
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: No secret in any commit (gitleaks)
+        run: gitleaks git . --no-banner --redact --log-opts="--all"
+
+      # This one can fail on a commit that changed nothing: when an advisory is
+      # published for a dependency in tools/skua-helper/Cargo.lock or
+      # tools/ascii/package-lock.json. It prints the advisory's address.
+      - name: No dependency with a known problem (osv-scanner)
+        run: osv-scanner scan source -r .
+
+      - name: Shell scripts (shellcheck)
+        run: shellcheck -x scripts/*.sh tools/build-shaders.sh
+
+      - name: Script libraries (node --test)
+        run: node --test tests/
+
+      # qmllint ends with an error status for what it calls an error (a syntax
+      # error, an id used twice) and not for its warnings; a couple of hundred
+      # of those are about Quickshell types it cannot see. Its output is shown
+      # only when it fails.
+      - name: QML (qmllint)
+        run: |
+          if ! /usr/lib/qt6/bin/qmllint -I /usr/lib/qt6/qml -I . \
+                  shell.qml components/*.qml components/views/*.qml singletons/*.qml \
+                  > "$RUNNER_TEMP/qmllint.txt" 2>&1; then
+              cat "$RUNNER_TEMP/qmllint.txt"
+              exit 1
+          fi
+          echo "no errors; $(grep -c '^Warning' "$RUNNER_TEMP/qmllint.txt") warnings"
+
+      - name: Compiled shaders match their sources
+        run: tools/build-shaders.sh --check
+
+      - name: skua-helper, formatting (cargo fmt)
+        working-directory: tools/skua-helper
+        run: cargo fmt --check
+
+      - name: skua-helper, lints (cargo clippy)
+        working-directory: tools/skua-helper
+        run: cargo clippy --locked --all-targets -- -D warnings
+
+      - name: skua-helper, tests (cargo test)
+        working-directory: tools/skua-helper
+        run: cargo test --locked
