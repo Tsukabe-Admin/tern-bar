@@ -238,7 +238,9 @@ After every recolour, the bar runs `~/.config/skua/theme-hook.sh` if it exists a
 executable, as `theme-hook.sh <colors.json> <label>`. `colors.json` holds every Material colour
 role in matugen's format (`.colors.primary.default.color`, …), and `<label>` is the theme's name
 or the wallpaper's file name. Use it to reload apps that don't notice new colours on their own,
-for example `pkill -SIGUSR1 kitty`.
+for example `pkill -SIGUSR1 kitty`. The hook gets 30 seconds: one still running then is stopped,
+together with the programs it started, and the Wallpaper tab says so. The next recolour waits for
+the hook, so one that never ended would hold every later recolour back.
 
 ### Using your own matugen setup instead
 

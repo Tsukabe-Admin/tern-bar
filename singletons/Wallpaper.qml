@@ -486,9 +486,15 @@ Singleton {
     // Each step is a Process run through `sh`, which is always there, so a missing
     // matugen is an exit code and not a Process that never starts (and so never
     // reports back, which would leave themeBusy set for good).
+    //
+    // The hook is somebody's own script, and one that never ends (a program it
+    // calls waits for a service that is not running) would do the same: no later
+    // recolour would start. So it gets hookSeconds, and is then stopped together
+    // with what it started.
     property bool themeBusy: false
     property bool pendingThemeSync: false
     property string themeLabel: ""
+    readonly property int hookSeconds: 30
     // A failed write of either file. The write may report after the run has moved
     // on, so finishThemeSync() shows it rather than a success.
     property string saveFailure: ""
@@ -562,8 +568,15 @@ Singleton {
         view.setText(text);
     }
 
+    // `timeout` (coreutils, busybox) puts the hook in a process group of its own
+    // and stops the whole group when the time is up, ending with status 124, or
+    // 137 if it had to kill. Where there is no `timeout`, the hook runs without
+    // a limit, as it did before.
     function runThemeHook() {
-        hookProcess.command = ["sh", "-c", "[ -x \"$1\" ] || exit 0; exec \"$@\"", "skua-theme-hook",
+        hookProcess.command = ["sh", "-c",
+            "[ -x \"$1\" ] || exit 0; limit=$2; shift 2; "
+            + "if command -v timeout >/dev/null 2>&1; then exec timeout -k 5 \"$limit\" \"$@\"; fi; exec \"$@\"",
+            "skua-theme-hook", BarConfig.configDir + "/theme-hook.sh", String(root.hookSeconds),
             BarConfig.configDir + "/theme-hook.sh", root.colorsPath, root.themeLabel];
         hookProcess.running = true;
     }
@@ -611,9 +624,15 @@ Singleton {
         id: hookProcess
 
         onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0)
+            const stopped = exitCode === 124 || exitCode === 137;
+            if (stopped)
+                console.warn("Wallpaper: theme-hook.sh was still running after " + root.hookSeconds + " s and was stopped");
+            else if (exitCode !== 0)
                 console.warn("Wallpaper: theme-hook.sh exited " + exitCode);
-            root.finishThemeSync("");
+            // The colours are in place either way; the page says why the apps
+            // the hook reloads may not have followed.
+            root.finishThemeSync(stopped
+                ? "theme-hook.sh did not finish within " + root.hookSeconds + " s and was stopped" : "");
         }
     }
 
