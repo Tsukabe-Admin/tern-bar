@@ -39,8 +39,7 @@ use futures_channel::oneshot;
 use futures_lite::StreamExt;
 use serde::Deserialize;
 use serde_json::{json, Value};
-use zbus::zvariant::{ObjectPath, OwnedObjectPath};
-use zbus::{fdo, interface, proxy, Connection};
+use zbus::{fdo, interface, proxy, Connection, ObjectPath, OwnedObjectPath};
 
 use crate::protocol::{self, emit};
 
@@ -252,11 +251,23 @@ async fn register_with_retries(connection: &Connection) {
             }
             Err(err) => last_error = Some(err),
         }
-        async_io::Timer::after(Duration::from_secs(1)).await;
+        sleep(Duration::from_secs(1)).await;
     }
     if let Some(err) = last_error {
         protocol::error(format!("could not register with BlueZ: {err}"));
     }
+}
+
+/// Waits, on any executor. zbus's runtime offers no timer, and this one wait
+/// (a second between tries, five tries each time BlueZ starts) does not need
+/// one: a short thread does it.
+async fn sleep(duration: Duration) {
+    let (done, slept) = oneshot::channel::<()>();
+    std::thread::spawn(move || {
+        std::thread::sleep(duration);
+        let _ = done.send(());
+    });
+    let _ = slept.await;
 }
 
 async fn run_agent(waiting: Waiting) -> zbus::Result<()> {
@@ -264,8 +275,8 @@ async fn run_agent(waiting: Waiting) -> zbus::Result<()> {
         waiting,
         next_id: AtomicU64::new(1),
     };
-    let connection = zbus::connection::Builder::system()?
-        .serve_at(AGENT_PATH, agent)?
+    let connection = zbus::connection::Builder::system()
+        .serve_at(AGENT_PATH, agent)
         .build()
         .await?;
     let bus = fdo::DBusProxy::new(&connection).await?;
@@ -310,7 +321,7 @@ pub fn run() -> ExitCode {
         // stdin closed: the bar quit or reloaded.
         std::process::exit(0);
     });
-    match async_io::block_on(run_agent(waiting)) {
+    match zbus::block_on(run_agent(waiting)) {
         Ok(()) => ExitCode::SUCCESS,
         Err(err) => {
             protocol::error(err);

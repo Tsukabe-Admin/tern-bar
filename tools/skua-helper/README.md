@@ -23,7 +23,7 @@ command again: the bar compares the version the helper reports with the one in t
 
 One JSON object per line, both ways: lines to the bar (stdout) carry an `"event"`, lines from the
 bar (stdin) are commands. The first line of every job is
-`{"event":"hello","job":"bluetooth","version":"0.1.2"}`. A problem the job carries on after is
+`{"event":"hello","job":"bluetooth","version":"0.1.3"}`. A problem the job carries on after is
 `{"event":"error","message":"..."}`; stderr is only for crashes. The bar writes error messages to
 its log, so a message names a command it could not use by its keys and never quotes what the
 command held (a copied text, a pairing code). When the bar quits, reloads or no
@@ -114,8 +114,8 @@ The job's lines are described at the top of `src/clipboard/mod.rs`.
 
 ## Checking a change
 
-`cargo test`, `cargo clippy -- -D warnings` and `cargo fmt --check`. When a job's lines change, bump
-`version` in `Cargo.toml`, so a helper built before the change is noticed.
+`cargo test`, `cargo clippy -- -D warnings` and `cargo fmt --check`. Bump `version` in `Cargo.toml`
+whenever the helper changes, so the bar asks for a reinstall when one built before the change runs.
 
 For the Bluetooth job without a real device, a stand-in BlueZ service on a private D-Bus bus (passed
 to the job as `DBUS_SYSTEM_BUS_ADDRESS`) can call the agent's `org.bluez.Agent1` methods
