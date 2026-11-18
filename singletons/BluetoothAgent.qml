@@ -69,6 +69,7 @@ Singleton {
         if (!p)
             return;
         root.prompt = null;
+        console.info("Bluetooth: the question (" + p.kind + ") for " + p.address + " was closed here");
         if (p.id !== undefined)
             helper.send({ id: p.id });
         const device = root.deviceFor(p);
@@ -76,17 +77,24 @@ Singleton {
             BluetoothDevices.cancelPair(device);
     }
 
+    // What BlueZ asks goes to the log, by kind and device and never with the
+    // code or the answer: when a pairing fails, the log is all there is to tell
+    // whether a question ever arrived and who ended it.
     function handle(message) {
         if (message.event === "ready") {
             root.active = true;
+            console.info("Bluetooth: registered with BlueZ as the pairing agent");
         } else if (message.event === "waiting") {
             root.active = false;
             root.prompt = null;
+            console.info("Bluetooth: BlueZ is not running; no pairing agent until it is");
         } else if (message.event === "request") {
             root.open(message, message.kind);
         } else if (message.event === "show") {
             root.open(message, "show-" + message.kind);
         } else if (message.event === "cancel") {
+            if (root.prompt !== null)
+                console.info("Bluetooth: BlueZ withdrew its question for " + root.prompt.address);
             root.prompt = null;
         } else if (message.event === "error") {
             console.warn("skua-helper bluetooth:", message.message);
@@ -99,6 +107,8 @@ Singleton {
     function open(message, kind) {
         const old = root.prompt;
         const same = old !== null && old.device === message.device && old.kind === kind;
+        if (!same)
+            console.info("Bluetooth: BlueZ asks (" + kind + ") for " + String(message.address || ""));
         root.prompt = {
             id: message.id,
             kind: kind,

@@ -546,12 +546,7 @@ Item {
                         : nearbyRow.attempt === "failed" ? "Couldn't pair" : "Pair"
                     statusColor: nearbyRow.attempt === "failed" ? Theme.bad
                         : nearbyRow.attempt === "pairing" ? Theme.t3 : Theme.accent
-                    onTapped: {
-                        if (nearbyRow.attempt === "pairing")
-                            BluetoothDevices.cancelPair(nearbyRow.modelData);
-                        else
-                            BluetoothDevices.pair(nearbyRow.modelData);
-                    }
+                    onTapped: BluetoothDevices.tapped(nearbyRow.modelData)
                 }
             }
 

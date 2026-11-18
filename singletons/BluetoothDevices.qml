@@ -108,6 +108,18 @@ Singleton {
             device.cancelPair();
     }
 
+    // A click on a nearby device: it starts a pairing, or cancels the one that
+    // is running. The second click of a double-click is neither: it comes
+    // within a double-click's time of the first, and would cancel the pairing
+    // that click had just started.
+    function tapped(device) {
+        const attempt = root.attempts[device.address];
+        if (!attempt || attempt.state !== "pairing")
+            root.pair(device);
+        else if (Date.now() - attempt.since >= Qt.styleHints.mouseDoubleClickInterval)
+            root.cancelPair(device);
+    }
+
     function toggleConnection(device) {
         if (device.connected)
             device.disconnect();
