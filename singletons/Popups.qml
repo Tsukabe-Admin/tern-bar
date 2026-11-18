@@ -17,6 +17,30 @@ Singleton {
     property string preferredPlayer: ""
     // Active bottom-docked OSD spans by key ("volume" / "brightness" / "notice") -> { screenName, spanWidth }.
     property var osdDocks: ({})
+    // Where each screen's open Frame drawer rests, by screen name:
+    // { left, right, bottom } in that screen's pixels. The toasts keep clear
+    // of it. Its resting place, not its shape while it moves.
+    property var drawers: ({})
+
+    function reportDrawer(screenName, rect) {
+        if (!screenName)
+            return;
+        const old = root.drawers[screenName];
+        if (!rect && !old)
+            return;
+        if (rect && old && old.left === rect.left && old.right === rect.right && old.bottom === rect.bottom)
+            return;
+        const next = Object.assign({}, root.drawers);
+        if (rect)
+            next[screenName] = rect;
+        else
+            delete next[screenName];
+        root.drawers = next;
+    }
+
+    function drawerOn(screenName) {
+        return root.drawers[screenName] || null;
+    }
 
     function reportOsdDock(key, screenName, active, spanWidth) {
         const prev = root.osdDocks || {};

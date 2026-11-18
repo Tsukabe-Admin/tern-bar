@@ -29,6 +29,9 @@ Singleton {
 
     signal fullscreenChanged(string output, bool isFullscreen)
 
+    // niri's overview is open. It shows the bar even over a fullscreen window.
+    property bool overviewOpen: false
+
     readonly property var fullscreenOutputs: {
         const sizes = {};
         const screens = Quickshell.screens;
@@ -72,7 +75,9 @@ Singleton {
         if (!obj)
             return;
 
-        if (obj.WorkspacesChanged) {
+        if (obj.OverviewOpenedOrClosed) {
+            root.overviewOpen = obj.OverviewOpenedOrClosed.is_open === true;
+        } else if (obj.WorkspacesChanged) {
             root.workspaces = obj.WorkspacesChanged.workspaces || [];
         } else if (obj.WorkspaceActivated) {
             // niri emits one event for the newly active workspace only: the

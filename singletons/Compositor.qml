@@ -144,6 +144,14 @@ Singleton {
         return Boolean(root.fullscreenOutputs && root.fullscreenOutputs[output]);
     }
 
+    // Whether the frame of the Frame look is out of sight on `output`: under a
+    // fullscreen window, and not while niri's overview shows the bar anyway.
+    readonly property bool overviewOpen: root.isNiri ? Niri.overviewOpen : false
+
+    function isOutputCovered(output) {
+        return root.isOutputFullscreen(output) && !root.overviewOpen;
+    }
+
     signal fullscreenChanged(string output, bool isFullscreen)
 
     // `target: Niri` alone would build the Niri singleton, and open its

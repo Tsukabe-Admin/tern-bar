@@ -18,6 +18,8 @@ Scope {
     readonly property var panelWindow: frameWin
 
     readonly property string screenName: root.screenInfo ? root.screenInfo.name : ""
+    // Out of sight under a fullscreen window.
+    readonly property bool covered: root.screenName !== "" && Compositor.isOutputCovered(root.screenName)
     readonly property bool mediaReady: Popups.pickPlayer(Mpris.players.values || []) !== null
     readonly property string requestedKind: {
         if (!root.screenInfo || Popups.screenName !== root.screenName)
@@ -29,6 +31,8 @@ Scope {
     readonly property bool drawerOpen: root.requestedKind !== ""
 
     property string displayKind: ""
+    // The view being left while the drawer morphs to another one (DrawerSlot).
+    property string fadingKind: ""
     property bool drawerVis: false
     property bool trackMorph: false
 
@@ -40,14 +44,27 @@ Scope {
     onBarContentChanged: root.attachContent()
     Component.onCompleted: root.attachContent()
     Component.onDestruction: {
+        Popups.reportDrawer(root.screenName, null);
         if (root.barContent && root.barContent.parent === barSlot)
             root.barContent.parent = null;
     }
+
+    // Where the open drawer comes to rest, for the toasts to keep clear of.
+    readonly property var drawerRect: root.drawerOpen ? ({
+        left: Math.round(frameScope.targetX),
+        right: Math.round(frameScope.targetX + frameScope.targetW),
+        bottom: Math.round(frameScope.barH + frameScope.targetH)
+    }) : null
+    onDrawerRectChanged: Popups.reportDrawer(root.screenName, root.drawerRect)
 
     onRequestedKindChanged: {
         if (root.requestedKind !== "") {
             const wasClosed = !root.drawerVis;
             closeTimer.stop();
+            if (!wasClosed && root.displayKind !== root.requestedKind) {
+                root.fadingKind = root.displayKind;
+                fadeOutTimer.restart();
+            }
             root.displayKind = root.requestedKind;
             root.drawerVis = true;
             if (wasClosed) {
@@ -65,13 +82,24 @@ Scope {
         }
     }
 
+    function dropDrawer() {
+        fadeOutTimer.stop();
+        root.drawerVis = false;
+        root.displayKind = "";
+        root.fadingKind = "";
+    }
+
     Timer {
         id: closeTimer
         interval: Theme.motionBase
-        onTriggered: {
-            root.drawerVis = false;
-            root.displayKind = "";
-        }
+        onTriggered: root.dropDrawer()
+    }
+
+    // The view being left is unloaded once it has faded out.
+    Timer {
+        id: fadeOutTimer
+        interval: Theme.motionFast
+        onTriggered: root.fadingKind = ""
     }
 
     Connections {
@@ -80,8 +108,7 @@ Scope {
             if (Launcher.open && root.drawerVis) {
                 closeTimer.stop();
                 root.trackMorph = false;
-                root.drawerVis = false;
-                root.displayKind = "";
+                root.dropDrawer();
             }
         }
     }
@@ -186,6 +213,22 @@ Scope {
             anchors.fill: parent
             focus: root.drawerOpen
             Keys.onEscapePressed: Popups.close()
+
+            // Under a fullscreen window the compositor hides this surface, and
+            // shows it again the moment the window leaves fullscreen: before
+            // the bar hears of it. So the frame is already transparent while
+            // it is covered, and fades up when it no longer is. The way out is
+            // quicker; the window is covering it then.
+            opacity: root.covered ? 0 : 1
+
+            Behavior on opacity {
+                enabled: !Looks.restyling
+                NumberAnimation {
+                    duration: root.covered ? Theme.motionFast : Theme.motionBase
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Theme.curveEffects
+                }
+            }
 
             readonly property int barH: Theme.barHeight
             readonly property int borderT: Theme.frameThickness
@@ -586,14 +629,6 @@ Scope {
                 frameScope.anchorCenterX, frameScope.targetW,
                 frameScope.drawerMinX, frameScope.drawerMaxX)
 
-            Connections {
-                target: root
-                function onDisplayKindChanged() {
-                    if (root.trackMorph && root.displayKind !== "")
-                        deckSwapAnim.restart();
-                }
-            }
-
             AttachedShadow {
                 id: drawerShadow
                 readonly property real pad: frameScope.shadowExt
@@ -729,22 +764,10 @@ Scope {
                             height: Math.max(drawerScroll.height,
                                 frameScope.currentViewItem ? frameScope.currentViewItem.implicitHeight : 0)
 
-                            NumberAnimation {
-                                id: deckSwapAnim
-                                target: viewDeck
-                                property: "opacity"
-                                from: 0.35
-                                to: 1.0
-                                duration: Theme.motionFast
-                                easing.type: Easing.BezierSpline
-                                easing.bezierCurve: Theme.curveEffects
-                            }
-
-                            Loader {
+                            DrawerSlot {
                                 id: calLoader
-                                active: root.drawerVis && root.displayKind === "calendar"
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                opacity: item ? 1 : 0
+                                kind: "calendar"
+                                host: root
                                 sourceComponent: Component {
                                     CalendarView {
                                         screenInfo: root.screenInfo
@@ -753,11 +776,10 @@ Scope {
                                 }
                             }
 
-                            Loader {
+                            DrawerSlot {
                                 id: mediaLoader
-                                active: root.drawerVis && root.displayKind === "media"
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                opacity: item ? 1 : 0
+                                kind: "media"
+                                host: root
                                 sourceComponent: Component {
                                     MediaView {
                                         screenInfo: root.screenInfo
@@ -766,11 +788,10 @@ Scope {
                                 }
                             }
 
-                            Loader {
+                            DrawerSlot {
                                 id: quickLoader
-                                active: root.drawerVis && root.displayKind === "quick"
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                opacity: item ? 1 : 0
+                                kind: "quick"
+                                host: root
                                 sourceComponent: Component {
                                     QuickSettingsView {
                                         screenInfo: root.screenInfo
@@ -779,11 +800,10 @@ Scope {
                                 }
                             }
 
-                            Loader {
+                            DrawerSlot {
                                 id: notifyLoader
-                                active: root.drawerVis && root.displayKind === "notifications"
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                opacity: item ? 1 : 0
+                                kind: "notifications"
+                                host: root
                                 sourceComponent: Component {
                                     NotificationsView {
                                         screenInfo: root.screenInfo
